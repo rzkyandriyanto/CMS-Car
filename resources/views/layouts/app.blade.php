@@ -5,6 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <title>@yield('title', config('app.name'))</title>
+    <link rel="icon" type="image/png" href="{{ asset('assets/images/branding/logo-yza.png') }}">
+    <link rel="apple-touch-icon" href="{{ asset('assets/images/branding/logo-yza.png') }}">
     <script src="{{ asset('assets/js/rupiah-input.js') }}?v={{ filemtime(public_path('assets/js/rupiah-input.js')) }}" defer></script>
     <link rel="stylesheet" href="{{ asset('css/app.css') }}">
     <link rel="stylesheet" href="{{ asset('assets/css/vehicle-badges.css') }}?v=stock-badges-20261010">
@@ -17,7 +19,6 @@
     @endphp
     @if($isMemberShell)
         <link rel="stylesheet" href="{{ asset('assets/css/member-portal.css') }}?v={{ filemtime(public_path('assets/css/member-portal.css')) }}">
-        <link rel="stylesheet" href="{{ asset('assets/css/member-navbar-final.css') }}?v={{ filemtime(public_path('assets/css/member-navbar-final.css')) }}">
     @endif
     @if($isAdminShell)
         <link rel="stylesheet" href="{{ asset('assets/css/admin-portal.css') }}?v={{ filemtime(public_path('assets/css/admin-portal.css')) }}">
@@ -27,6 +28,9 @@
         <link rel="stylesheet" href="{{ asset('assets/css/owner-executive.css') }}?v={{ filemtime(public_path('assets/css/owner-executive.css')) }}">
     @endif
     @include('components.responsive-foundation')
+    @if($isMemberShell)
+        <link rel="stylesheet" href="{{ asset('assets/css/member-navbar-final.css') }}?v={{ filemtime(public_path('assets/css/member-navbar-final.css')) }}">
+    @endif
     @if($isAdminShell && !$isOwnerShell)
         <link rel="stylesheet" href="{{ asset('assets/css/admin-navigation.css') }}?v={{ filemtime(public_path('assets/css/admin-navigation.css')) }}">
     @endif
@@ -46,7 +50,6 @@
                 request()->routeIs('pelanggan.booking-cuci.*') => 'Car Wash',
                 request()->routeIs('pelanggan.trade-in.*', 'pelanggan.pengajuan-mobil.*') => 'Trade-In',
                 request()->routeIs('pelanggan.promo.*') => 'Promo Member',
-                request()->routeIs('pelanggan.poin') => 'YZA Points',
                 request()->routeIs('pelanggan.profile') => 'Profil Member',
                 request()->routeIs('pelanggan.membership.*') => 'Membership',
                 request()->routeIs('pelanggan.servis.*') => 'Riwayat Servis',
@@ -57,9 +60,9 @@
         <div class="member-app-shell member-horizontal-shell" data-member-shell>
             <div class="member-workspace">
                 <header class="member-topbar">
-                    <div class="member-topbar-left"><button class="member-mobile-toggle" type="button" data-member-mobile-toggle aria-label="Buka navigasi" aria-expanded="false">☰</button><a class="member-topbar-brand" href="{{ route('pelanggan.member') }}" aria-label="Kembali ke Beranda YZA Automotive"><img src="{{ asset('images/branding/logo-yza.png') }}" alt="YZA Automotive"><span><strong>YZA AUTOMOTIVE</strong><small>Premium Member Portal</small></span></a></div>
+                    <div class="member-topbar-left"><button class="member-mobile-toggle" type="button" data-member-mobile-toggle aria-label="Buka navigasi" aria-expanded="false">☰</button></div>
                     @include('components.member-horizontal-nav')
-                    <div class="member-topbar-right"><div class="member-notification-wrap"><button class="member-notification" type="button" data-member-notification-toggle data-member-notification-sync-url="{{ route('notifications.sync') }}" aria-expanded="false" aria-label="Buka notifikasi" title="Notifikasi"><span aria-hidden="true">🔔</span><i data-member-notification-count aria-hidden="true" @if($memberNotificationUnreadCount < 1) hidden @endif>{{ $memberNotificationUnreadCount > 99 ? '99+' : $memberNotificationUnreadCount }}</i></button></div><div class="member-profile-wrap"><button class="member-profile-trigger" type="button" data-member-profile-toggle aria-expanded="false"><span class="member-avatar">{{ strtoupper(substr($memberName, 0, 1)) }}</span><span><strong>{{ $memberName }}</strong><small>YZA MEMBER</small></span><b>⌄</b></button><div class="member-profile-menu" data-member-profile-menu hidden><a href="{{ route('pelanggan.profile') }}">Profil Saya</a><a href="{{ route('pelanggan.member') }}">Member Center</a><form method="post" action="{{ route('logout') }}">@csrf<button type="submit">Logout</button></form></div></div></div>
+                    <div class="member-topbar-right"><div class="member-notification-wrap"><button class="member-notification" type="button" data-member-notification-toggle data-member-notification-sync-url="{{ route('notifications.sync') }}" aria-expanded="false" aria-label="Buka notifikasi" title="Notifikasi"><span aria-hidden="true">🔔</span><i data-member-notification-count aria-hidden="true" @if($memberNotificationUnreadCount < 1) hidden @endif>{{ $memberNotificationUnreadCount > 99 ? '99+' : $memberNotificationUnreadCount }}</i></button></div><div class="member-profile-wrap"><button class="member-profile-trigger" type="button" data-member-profile-toggle aria-expanded="false"><span class="member-avatar">{{ strtoupper(substr($memberName, 0, 1)) }}</span><span><strong>{{ $memberName }}</strong><small>YZA MEMBER</small></span><b>⌄</b></button><div class="member-profile-menu" data-member-profile-menu hidden><a href="{{ route('pelanggan.profile') }}">Profil Saya</a><a href="{{ route('pelanggan.promo.index') }}">Benefit Member</a><a href="#yza-points" data-open-yza-points-modal>YZA Points</a><form method="post" action="{{ route('logout') }}">@csrf<button type="submit">Logout</button></form></div></div></div>
                 </header>
                 <main class="member-main-content">
                     @if(session('offline_payment_submitted') || session('status') || $errors->any())
@@ -88,13 +91,11 @@
                     @endif
                     @yield('content')
                 </main>
-                @unless($isCheckoutPage)
-                    @include('components.member-footer')
-                @endunless
             </div>
             @if($isCheckoutPage)
                 @include('components.member-footer')
             @endif
+            @include('components.yza-points-modal')
             <div class="member-overlay" data-member-overlay></div>
             <div class="member-live-toast-stack" data-member-live-toast-stack aria-live="polite" aria-atomic="false"></div>
         </div>

@@ -20,6 +20,7 @@ class NotificationDestinationService
                 'booking_servis' => $this->memberBooking($id, (int) $customer, $fallback),
                 'pesanan_mobil_member' => PesananMobilMember::whereKey($id)->where('id_pelanggan', $customer)->exists() ? route('pelanggan.pesanan-mobil.show', $id) : $fallback,
                 'pre_order_mobil' => $this->memberPreorder($notification, (int) $customer, $fallback),
+                'promo' => route('pelanggan.promo.index'),
                 default => $fallback,
             };
         }

@@ -1,0 +1,176 @@
+/* ==========================================================================
+   YZA Automotive - Section 2: McLaren Reference Manifesto Section
+   Clean luxury editorial layout with scroll-scrubbed text reveal animation
+   ========================================================================== */
+
+.mclaren-manifest-section {
+    position: relative;
+    width: 100%;
+    background-color: #ffffff !important;
+    color: #0b0d11 !important;
+    padding: clamp(5.5rem, 11vh, 8.5rem) clamp(1.5rem, 6vw, 5rem) !important;
+    border-top: 1px solid rgba(0, 0, 0, 0.05);
+    border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+    box-sizing: border-box;
+    overflow: hidden;
+    z-index: 10;
+}
+
+.mclaren-manifest-container {
+    max-width: 82rem;
+    margin: 0 auto;
+    width: 100%;
+    box-sizing: border-box;
+}
+
+/* Kicker / Overline (MCLAREN AUTOMOTIVE -> YZA AUTOMOTIVE) */
+.mclaren-manifest-kicker {
+    display: inline-block;
+    font-size: clamp(0.72rem, 0.9vw, 0.8125rem) !important;
+    font-weight: 700 !important;
+    letter-spacing: 0.22em !important;
+    text-transform: uppercase !important;
+    color: #111317 !important;
+    margin-bottom: clamp(2.5rem, 5vh, 3.75rem) !important;
+    line-height: 1.2 !important;
+    opacity: 0.95;
+    transition: opacity 0.4s ease, transform 0.4s ease;
+}
+
+/* Main Statement / Quote wrapper */
+.mclaren-manifest-quote-wrap {
+    max-width: 48rem;
+    margin: 0;
+}
+
+.mclaren-manifest-action {
+    display: none !important;
+}
+
+.mclaren-manifest-quote {
+    font-family: inherit;
+    font-size: clamp(1.625rem, 3.2vw, 2.5rem) !important;
+    line-height: 1.34 !important;
+    font-weight: 400 !important;
+    letter-spacing: -0.015em !important;
+    color: #0b0d11 !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    text-rendering: optimizeLegibility;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+}
+
+/* Words for scroll scrub animation */
+.mclaren-manifest-quote .manifest-word {
+    display: inline-block;
+    margin-right: 0.28em;
+    color: #0b0d11;
+    transition: color 0.32s cubic-bezier(0.16, 1, 0.3, 1),
+                opacity 0.32s cubic-bezier(0.16, 1, 0.3, 1),
+                transform 0.32s cubic-bezier(0.16, 1, 0.3, 1);
+    will-change: color, opacity, transform;
+}
+
+/* Scroll reveal active state: inactive words are dimmed */
+.mclaren-manifest-section.has-scroll-reveal .manifest-word {
+    color: #b9bec6;
+    opacity: 0.22;
+    transform: translateY(2px);
+}
+
+/* Illuminated words during scroll */
+.mclaren-manifest-section.has-scroll-reveal .manifest-word.is-active {
+    color: #0b0d11 !important;
+    opacity: 1 !important;
+    transform: translateY(0) !important;
+}
+
+/* Action Link (EXPLORE OUR PURSUIT OF PERFECTION) */
+.mclaren-manifest-action {
+    display: flex;
+    align-items: center;
+}
+
+.mclaren-manifest-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.75rem;
+    font-size: clamp(0.72rem, 0.9vw, 0.8125rem) !important;
+    font-weight: 700 !important;
+    letter-spacing: 0.2em !important;
+    text-transform: uppercase !important;
+    color: #0b0d11 !important;
+    text-decoration: none !important;
+    position: relative;
+    padding: 0.4rem 0;
+    transition: color 0.22s ease;
+}
+
+.mclaren-manifest-link::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    height: 1.5px;
+    background-color: #0b0d11;
+    transform-origin: left;
+    transition: background-color 0.25s ease, transform 0.25s ease;
+}
+
+.mclaren-manifest-link .manifest-link-arrow {
+    display: inline-block;
+    font-size: 1.05rem;
+    line-height: 1;
+    transition: transform 0.25s cubic-bezier(0.2, 0.8, 0.2, 1), color 0.22s ease;
+}
+
+.mclaren-manifest-link:hover {
+    color: #e31b23 !important;
+}
+
+.mclaren-manifest-link:hover::after {
+    background-color: #e31b23;
+}
+
+.mclaren-manifest-link:hover .manifest-link-arrow {
+    transform: translateX(6px);
+    color: #e31b23;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .mclaren-manifest-section {
+        padding: clamp(3.75rem, 8vh, 5rem) 1.5rem !important;
+    }
+
+    .mclaren-manifest-quote {
+        font-size: clamp(1.35rem, 5.8vw, 1.85rem) !important;
+        line-height: 1.38 !important;
+    }
+
+    .mclaren-manifest-kicker {
+        margin-bottom: 2rem !important;
+    }
+
+    .mclaren-manifest-quote-wrap {
+        margin-bottom: 2.25rem !important;
+    }
+}
+
+/* Accessibility / Reduced Motion */
+@media (prefers-reduced-motion: reduce) {
+    .mclaren-manifest-section.has-scroll-reveal .manifest-word {
+        opacity: 1 !important;
+        color: #0b0d11 !important;
+        transform: none !important;
+        transition: none !important;
+    }
+
+    .mclaren-manifest-link,
+    .mclaren-manifest-link::after,
+    .mclaren-manifest-link .manifest-link-arrow {
+        transition: none !important;
+    }
+}

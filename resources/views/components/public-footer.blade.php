@@ -61,7 +61,7 @@
 
             <div class="catalog-footer-bottom">
                 <span>© {{ now()->year }} YZA Automotive. All rights reserved.</span>
-                <a href="{{ yza_whatsapp_url() }}" target="_blank" rel="noopener">WhatsApp YZA&nbsp; →</a>
+                <a href="{{ yza_whatsapp_url() }}" target="_blank" rel="noopener">WhatsApp YZA</a>
             </div>
         </footer>
     </div>

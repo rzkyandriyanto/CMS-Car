@@ -9,7 +9,13 @@
     @include('components.responsive-foundation')
     <link rel="stylesheet" href="{{ asset('assets/css/pages/landing-original-restore.css?v=full-screen-20261106') }}">
     <link rel="stylesheet" href="{{ asset('assets/css/pages/landing-intro-compact.css') }}?v={{ filemtime(public_path('assets/css/pages/landing-intro-compact.css')) }}">
+    <link rel="stylesheet" href="{{ asset('assets/css/pages/landing-hero-slider.css') }}?v={{ filemtime(public_path('assets/css/pages/landing-hero-slider.css')) }}">
+    <link rel="stylesheet" href="{{ asset('assets/css/pages/landing-manifest-scroll.css') }}?v={{ filemtime(public_path('assets/css/pages/landing-manifest-scroll.css')) }}">
+    <link rel="stylesheet" href="{{ asset('assets/css/pages/landing-unified-slider.css') }}?v={{ filemtime(public_path('assets/css/pages/landing-unified-slider.css')) }}">
     <script src="{{ asset('assets/js/landing-viewport.js?v=20261106') }}" defer></script>
+    <script src="{{ asset('assets/js/hero-slider.js') }}?v={{ filemtime(public_path('assets/js/hero-slider.js')) }}" defer></script>
+    <script src="{{ asset('assets/js/landing-manifest-scroll.js') }}?v={{ filemtime(public_path('assets/js/landing-manifest-scroll.js')) }}" defer></script>
+    <script src="{{ asset('assets/js/landing-unified-slider.js') }}?v={{ filemtime(public_path('assets/js/landing-unified-slider.js')) }}" defer></script>
 </head>
 <body class="showroom landing opening-active">
 @if(true)
@@ -33,22 +39,363 @@
 @endif
 <x-public-navbar :member-state="$landingMemberState ?? 'guest'" />
 <main id="beranda">
-<section class="show-hero"><img class="hero-showroom-mark" src="{{ asset('assets/images/branding/logo-yza.png') }}" alt="YZA Automotive showroom" aria-hidden="true"><div class="show-hero-inner"><div class="hero-copy-premium"><span class="show-kicker">YZA AUTOMOTIVE SHOWROOM</span><h1>Temukan<br><em>Mobil Impian</em><br>Anda</h1><p>Koleksi mobil berkualitas, layanan profesional, dan pengalaman otomotif terbaik hanya di YZA Automotive.</p><div class="hero-buttons"><a class="show-cta" href="#mobil">Lihat Koleksi Mobil&nbsp; →</a><a class="show-ghost" href="#janji-temu">Jadwalkan Janji Temu</a></div><div class="hero-proof-line"><span><b>●</b> Koleksi pilihan terkurasi</span><span><b>●</b> Layanan profesional</span></div></div><div class="hero-car-stage">@php($featured = $featuredHeroCar ?? null)<div class="hero-3d-canvas" data-black-label-scene data-model-url="" aria-label="Podium showroom 3D"></div><div class="hero-podium-back" aria-hidden="true"></div><img class="hero-360-car" src="{{ asset('assets/images/catalog/toyota-gr-supra/front.png') }}" alt="Toyota GR Supra 2024"><div class="hero-car-contact-shadow" aria-hidden="true"></div><div class="hero-podium-front" aria-hidden="true"></div><div class="hero-vehicle-info" data-vehicle-id="{{ $featured?->id_mobil ?? '' }}">@if($featured)<button class="hero-favorite" type="button" data-featured-favorite aria-label="Tambahkan {{ $featured->model }} ke favorit" aria-pressed="false">♡</button><small>{{ strtoupper($featured->merk) }}</small><h2>{{ $featured->model }}</h2><p>{{ $featured->tahun ?: 'Premium collection' }} · {{ strtoupper($featured->transmisi ?: 'Automatic') }}</p><strong>Rp {{ number_format((float) $featured->harga_jual,0,',','.') }}</strong><a href="{{ route('mobil.showcase', ['slug' => 'toyota-gr-supra', 'source' => 'landing']) }}">Lihat Detail</a>@else<small>YZA AUTOMOTIVE</small><h2>Premium Collection</h2><p>Showroom pilihan YZA</p>@endif</div></div></div></section>
-@php($featuredCars = $featuredCars ?? collect())
-<section class="show-section featured-catalog" id="mobil"><div class="show-container"><div class="show-section-heading"><div><span class="section-kicker">Mobil pilihan</span><h2>Kurasi terbaik <em>dari YZA</em></h2></div><div class="featured-carousel-actions"><a class="show-link" href="{{ route('mobil.index') }}"><span>Lihat Semua Mobil</span><b aria-hidden="true">→</b></a></div></div><div class="featured-carousel" data-sport-carousel data-carousel-count="{{ $featuredCars->count() }}"><div class="featured-carousel-viewport"><div class="featured-carousel-track" data-carousel-track>@forelse ($featuredCars as $vehicle)<article class="featured-card{{ $vehicle['isSport'] ? ' is-sport' : '' }}"><a class="featured-media" href="{{ $vehicle['url'] }}">@if($vehicle['photo'])<img src="{{ $vehicle['photo'] }}" alt="{{ $vehicle['name'] }}" draggable="false">@else<span class="vehicle-photo-placeholder"><b>{{ $vehicle['brand'] }}</b></span>@endif<span class="condition-pill">{{ $vehicle['condition'] }}</span><span class="sport-pill">SPORT HIGHLIGHT</span><span class="featured-fav" aria-label="Favorit">♡</span></a><div class="featured-body"><a class="featured-body-link" href="{{ $vehicle['url'] }}"><h3>{{ $vehicle['name'] }}</h3><small>{{ $vehicle['specification'] }}</small></a><div class="featured-bottom"><a class="featured-price-link" href="{{ $vehicle['url'] }}"><strong>Rp {{ number_format($vehicle['price'],0,',','.') }}</strong></a><a class="round-arrow" href="{{ $vehicle['url'] }}" aria-label="Lihat detail">→</a></div></div></article>@empty<div class="featured-card"><div class="featured-body"><h3>Belum ada mobil tersedia</h3></div></div>@endforelse</div></div><div class="featured-carousel-footer" aria-label="Progress mobil pilihan"><div class="featured-carousel-progress" data-carousel-progress role="progressbar" aria-label="Progress mobil pilihan" aria-valuemin="1" aria-valuemax="{{ max(1, $featuredCars->count()) }}" aria-valuenow="1"><span class="is-active"></span></div><span class="featured-carousel-counter" data-carousel-counter>01 / {{ str_pad((string) max(1, $featuredCars->count()), 2, '0', STR_PAD_LEFT) }}</span><span class="featured-carousel-hint">Geser horizontal untuk melihat mobil lainnya</span></div></div></div></section>
+<section class="show-hero hero-slider-container" id="hero-slider" aria-label="Showroom Hero Showcase" data-hero-slider>
+    <img class="hero-showroom-mark" src="{{ asset('assets/images/branding/logo-yza.png') }}" alt="YZA Automotive showroom" aria-hidden="true">
+
+    <!-- Background Slides Viewport -->
+    <div class="hero-slides-viewport" aria-live="off">
+        <!-- Slide 1: Alfa Romeo 33 Stradale (Rotated 90 deg CCW) -->
+        <div class="hero-slide is-active" data-slide-index="0" data-car-name="Alfa Romeo 33 Stradale">
+            <div class="hero-slide-bg" style="background-image: url('{{ asset('assets/images/hero/hero-slide-1.png') }}?v={{ filemtime(public_path('assets/images/hero/hero-slide-1.png')) }}');"></div>
+            <div class="hero-slide-overlay"></div>
+        </div>
+        <!-- Slide 2: Lamborghini Huracán (Rotated 90 deg CW) -->
+        <div class="hero-slide" data-slide-index="1" data-car-name="Lamborghini Huracán">
+            <div class="hero-slide-bg" style="background-image: url('{{ asset('assets/images/hero/hero-slide-2.png') }}?v={{ filemtime(public_path('assets/images/hero/hero-slide-2.png')) }}');"></div>
+            <div class="hero-slide-overlay"></div>
+        </div>
+        <!-- Slide 3: McLaren P1 Track Edition (Rotated 90 deg CCW) -->
+        <div class="hero-slide" data-slide-index="2" data-car-name="McLaren P1 Track Edition">
+            <div class="hero-slide-bg" style="background-image: url('{{ asset('assets/images/hero/hero-slide-3.png') }}?v={{ filemtime(public_path('assets/images/hero/hero-slide-3.png')) }}');"></div>
+            <div class="hero-slide-overlay"></div>
+        </div>
+    </div>
+
+    <!-- Hero Content Overlay (Text and Vehicle Card synced per slide) -->
+    <div class="show-hero-inner">
+        <div class="hero-copy-premium">
+            <!-- Slide 1: Keunggulan YZA - Standar Kualitas & Kurasi Mutlak -->
+            <div class="hero-slide-text-pane is-active" data-text-index="0">
+                <h1>Kualitas Mutlak<br><em>Inspeksi 150+ Titik</em></h1>
+                <div class="hero-buttons">
+                    <a class="show-cta" href="#mobil">Jelajahi Koleksi Mobil</a>
+                    <a class="show-ghost" href="#janji-temu">Konsultasi Showroom</a>
+                </div>
+            </div>
+
+            <!-- Slide 2: Keunggulan YZA - Trade-In Transparan & Valuasi Pasar Terbaik -->
+            <div class="hero-slide-text-pane" data-text-index="1">
+                <h1>Tukar Tambah Cepat<br><em>Valuasi Terbaik</em></h1>
+                <div class="hero-buttons">
+                    <a class="show-cta" href="#jual-mobil">Nilai Mobil Sekarang</a>
+                    <a class="show-ghost" href="{{ route('pelanggan.test-drive.create') }}">Jadwalkan Test Drive</a>
+                </div>
+            </div>
+
+            <!-- Slide 3: Keunggulan YZA - Purna Jual Terpadu & Eksklusivitas Member -->
+            <div class="hero-slide-text-pane" data-text-index="2">
+                <h1>Perawatan Prima<br><em>Keuntungan Eksklusif</em></h1>
+                <div class="hero-buttons">
+                    <a class="show-cta" href="#yza-member">Gabung YZA Member</a>
+                    <a class="show-ghost" href="#servis">Booking Servis Berkala</a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Floating Vehicle Info Card on Right Stage (Minimalist, Positioned at Bottom Right) -->
+        <div class="hero-car-stage">
+            <div class="hero-vehicle-info hero-vehicle-slider-info is-active" data-card-index="0">
+                <small>ALFA ROMEO</small>
+                <h2>33 Stradale</h2>
+                <p>1967 · V8 Mid-Engine</p>
+                <strong>Rp 125.000.000.000</strong>
+                <a href="{{ route('mobil.index', ['q' => 'Alfa Romeo']) }}">Lihat Detail</a>
+            </div>
+            <div class="hero-vehicle-info hero-vehicle-slider-info" data-card-index="1">
+                <small>LAMBORGHINI</small>
+                <h2>Huracán LP610-4</h2>
+                <p>2023 · LDF Dual-Clutch</p>
+                <strong>Rp 8.900.000.000</strong>
+                <a href="{{ route('mobil.index', ['q' => 'Huracan']) }}">Lihat Detail</a>
+            </div>
+            <div class="hero-vehicle-info hero-vehicle-slider-info" data-card-index="2">
+                <small>MCLAREN</small>
+                <h2>P1 Track Edition</h2>
+                <p>2024 · 7-Speed SSG</p>
+                <strong>Rp 35.000.000.000</strong>
+                <a href="{{ route('mobil.index', ['q' => 'McLaren']) }}">Lihat Detail</a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Hyundai-Style Slider Controls Bar (Image 2 Reference - Labels above each individual bar) -->
+    <div class="hero-slider-bar" role="toolbar" aria-label="Kontrol Slider Showroom">
+        <div class="hero-slider-controls">
+            <div class="hero-ctrl-actions">
+                <button type="button" class="hero-ctrl-btn hero-pause-btn" data-slider-pause aria-label="Jeda tayangan otomatis" title="Jeda tayangan">
+                    <span class="icon-pause" aria-hidden="true">❚❚</span>
+                    <span class="icon-play" aria-hidden="true" style="display:none;">▶</span>
+                </button>
+                <button type="button" class="hero-ctrl-btn hero-prev-btn" data-slider-prev aria-label="Slide sebelumnya" title="Sebelumnya">
+                    <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+                </button>
+                <button type="button" class="hero-ctrl-btn hero-next-btn" data-slider-next aria-label="Slide berikutnya" title="Berikutnya">
+                    <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+                </button>
+            </div>
+
+            <!-- Segmented Progress Bars (Labels positioned directly above each individual bar) -->
+            <div class="hero-segmented-bars" role="tablist" aria-label="Pilih Slide">
+                <button type="button" class="hero-segment-item is-active" data-slide-target="0" role="tab" aria-selected="true" aria-label="Slide 1: Alfa Romeo 33 Stradale">
+                    <span class="hero-segment-label">Alfa Romeo 33 Stradale</span>
+                    <span class="hero-segment-bar">
+                        <span class="hero-segment-fill"></span>
+                    </span>
+                </button>
+                <button type="button" class="hero-segment-item" data-slide-target="1" role="tab" aria-selected="false" aria-label="Slide 2: Lamborghini Huracán">
+                    <span class="hero-segment-label">Lamborghini Huracán</span>
+                    <span class="hero-segment-bar">
+                        <span class="hero-segment-fill"></span>
+                    </span>
+                </button>
+                <button type="button" class="hero-segment-item" data-slide-target="2" role="tab" aria-selected="false" aria-label="Slide 3: McLaren P1 Track Edition">
+                    <span class="hero-segment-label">McLaren P1 Track Edition</span>
+                    <span class="hero-segment-bar">
+                        <span class="hero-segment-fill"></span>
+                    </span>
+                </button>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- ==========================================================================
+     Section 2: McLaren Reference Manifesto with Scroll-Scrubbed Text Reveal
+     ========================================================================== -->
+<section class="mclaren-manifest-section" id="filosofi" aria-label="Filosofi YZA Automotive">
+    <div class="mclaren-manifest-container">
+        <span class="mclaren-manifest-kicker">YZA AUTOMOTIVE</span>
+        <div class="mclaren-manifest-quote-wrap">
+            <p class="mclaren-manifest-quote" data-scroll-reveal>
+                YZA Automotive tidak pernah berhenti melangkah. Rekayasa presisi, inovasi tanpa kompromi. Setiap kendaraan disempurnakan tanpa henti. Kami selalu bertanya bagaimana melangkah lebih jauh, dan komitmen itulah yang terus membentuk setiap standar kami hari ini.
+            </p>
+        </div>
+    </div>
+</section>
+
 @php($memberPrimaryHref = match ($landingMemberState) { 'active' => route('pelanggan.member'), 'pending_payment' => route('pelanggan.membership.activation'), 'cancelled' => route('pelanggan.membership.activation'), default => route('register', ['from' => 'membership']) })
 @php($memberPrimaryLabel = match ($landingMemberState) { 'active' => 'BUKA MEMBER CENTER', 'pending_payment' => 'AKTIFKAN YZA MEMBER', 'cancelled' => 'LIHAT STATUS MEMBERSHIP', default => 'BERGABUNG JADI MEMBER' })
 <div class="yza-member-transition" aria-hidden="true"></div>
-<section class="yza-member-section" id="yza-member" data-member-section><div class="show-container yza-member-layout"><div class="yza-member-copy"><span class="section-kicker">YZA EXCLUSIVE MEMBERSHIP</span><h2>LEBIH DARI SEKADAR<br>PELANGGAN,<br><em>JADILAH YZA MEMBER.</em></h2><p class="yza-member-description">Bergabung dengan YZA Member dan nikmati pengalaman otomotif yang lebih lengkap melalui akses layanan eksklusif, promo spesial, YZA Points, service reminder, serta berbagai keuntungan lainnya.</p>@if($landingMemberState === 'pending_payment')<p class="yza-member-state">Membership Anda belum aktif. Selesaikan pembayaran aktivasi untuk menikmati benefit YZA Member.</p>@elseif($landingMemberState === 'active')<p class="yza-member-state is-active">✓ YZA Member Active</p>@endif<div class="yza-member-price"><span>AKTIVASI MEMBER</span><strong>Rp {{ number_format((float) ($membershipFee ?? 249000), 0, ',', '.') }}</strong><small>Sekali aktivasi • Tidak ada biaya bulanan.</small></div><div class="yza-member-actions"><a class="show-cta" href="{{ $memberPrimaryHref }}">♙&nbsp; {{ $memberPrimaryLabel }}&nbsp; →</a></div></div><div class="yza-member-visual"><div class="yza-member-card"><img src="{{ asset('assets/images/branding/logo-yza.png') }}" alt="YZA Automotive"><span class="yza-member-card-line"></span><small>YZA AUTOMOTIVE</small><strong>YZA <em>MEMBER</em></strong><b>YZA-MBR-000001</b><em>PREMIUM AUTOMOTIVE EXPERIENCE</em><span class="yza-member-chip" aria-hidden="true"></span><span class="yza-member-card-status">MEMBER EXCLUSIVE</span></div><div class="yza-member-benefits" id="yza-member-benefits">@foreach ([['⌑','PROMO EKSKLUSIF','Nikmati promo khusus member pada layanan dan transaksi pilihan.'],['⚙','LAYANAN LEBIH LENGKAP','Gunakan berbagai fasilitas YZA Automotive dalam satu akun.'],['↔','TRADE-IN','Dapatkan akses proses trade-in melalui sistem YZA.'],['✦','YZA POINTS','Kumpulkan Points dari setiap transaksi eligible yang berhasil.'],['▣','TEST DRIVE & MOBIL','Kelola kebutuhan kendaraan dan test drive dengan lebih mudah.'],['⌁','SERVICE REMINDER','Pantau riwayat kendaraan dan pengingat servis Anda.']] as $benefit)<div class="yza-member-benefit"><i aria-hidden="true">{{ $benefit[0] }}</i><span><b>{{ $benefit[1] }}</b><small>{{ $benefit[2] }}</small></span></div>@endforeach</div></div></div></section>
-<section class="trade-banner" id="jual-mobil"><div class="show-container trade-layout"><div class="trade-copy"><span class="section-kicker">Jual mobil Anda</span><h2>Jual Mobil Anda<br><em>atau Trade-In</em></h2><p>Dapatkan estimasi harga terbaik dengan proses cepat, aman, dan transparan.</p><a class="show-cta" href="{{ route('login') }}">Nilai Mobil Sekarang&nbsp; →</a></div><div class="benefit-list"><div><i aria-hidden="true">ϟ</i><span><b>Proses Cepat</b>Tanpa ribet dan banyak dokumen.</span></div><div><i aria-hidden="true">♙</i><span><b>Harga Kompetitif</b>Sesuai kondisi pasar terkini.</span></div><div><i aria-hidden="true">♢</i><span><b>Aman &amp; Terpercaya</b>Transaksi profesional dan transparan.</span></div></div></div></section>
-<div class="yza-section-transition" aria-hidden="true"><svg viewBox="0 0 1600 90" preserveAspectRatio="none" focusable="false"><defs><linearGradient id="yza-neon-gradient" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#a70f18"/><stop offset=".42" stop-color="#ff1625"/><stop offset=".78" stop-color="#ff2634"/><stop offset="1" stop-color="#ff6670"/></linearGradient><filter id="yza-neon-glow" x="-10%" y="-50%" width="120%" height="200%"><feGaussianBlur stdDeviation="5" result="blur"/><feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge></filter></defs><path class="yza-neon-outer" d="M -40 82 L 1110 40 L 1435 28 L 1490 15 L 1640 8"/><path class="yza-neon-main" d="M -40 82 L 1110 40 L 1435 28 L 1490 15 L 1640 8"/><path class="yza-neon-core" d="M -40 82 L 1110 40 L 1435 28 L 1490 15 L 1640 8"/></svg></div>
-<section class="service-appointment" id="servis"><div class="service-layout"><div class="service-visual"><div class="service-visual-copy"><span class="section-kicker">Janji temu</span><h2>Janjikan Servis<br><em>dengan mudah</em></h2><p>Pilih tanggal dan waktu yang sesuai, dan tim kami akan siap melayani Anda.</p><div class="steps"><span><b>1</b>Pilih Layanan</span><span><b>2</b>Isi Data</span><span><b>3</b>Konfirmasi</span></div></div></div><div class="appointment-wrap" id="janji-temu"><form class="appointment-form" id="appointment-form"><div class="appointment-form-heading"><div><strong>Buat Janji Temu</strong><span>Isi detail kunjungan Anda. Pesan akan diarahkan ke WhatsApp YZA.</span></div><small><b>WhatsApp YZA</b><br>0877 8430 4417</small></div><div class="appointment-fields"><div class="form-group"><label class="form-label" for="appointment-nama">Nama Lengkap</label><input class="form-control" id="appointment-nama" name="nama" required placeholder="Nama lengkap Anda"></div><div class="form-group"><label class="form-label" for="appointment-hp">Nomor WhatsApp</label><input class="form-control" id="appointment-hp" name="no_hp" type="tel" required placeholder="08xxxxxxxxxx"></div><div class="form-group"><label class="form-label" for="appointment-layanan">Jenis Kebutuhan</label><select class="form-control" id="appointment-layanan" name="layanan" required><option value="">Pilih layanan</option>@foreach (['Konsultasi Mobil','Test Drive','Service','Spare Part','Car Wash','Used Car','Trade-In','Lainnya'] as $service)<option value="{{ $service }}">{{ $service }}</option>@endforeach</select></div><div class="form-group"><label class="form-label" for="appointment-tanggal">Tanggal Janji</label><input class="form-control" id="appointment-tanggal" name="tanggal" type="date" min="{{ now()->format('Y-m-d') }}" required></div><div class="form-group"><label class="form-label" for="appointment-jam">Jam Janji</label><input class="form-control" id="appointment-jam" name="jam" type="time" required></div><div class="form-group full"><label class="form-label" for="appointment-catatan">Catatan Tambahan <span>(opsional)</span></label><textarea class="form-control" id="appointment-catatan" name="catatan" rows="3" placeholder="Contoh: ingin konsultasi trade-in dan cek kondisi kendaraan."></textarea></div></div><button class="show-cta appointment-submit" type="submit">Lanjut ke WhatsApp&nbsp; ↗</button><p class="appointment-microcopy">Pesan tidak dikirim otomatis. Anda tetap menekan Kirim di WhatsApp.</p></form></div></div></section>
+<section class="yza-member-section" id="yza-member" data-member-section><div class="show-container yza-member-layout"><div class="yza-member-copy"><h2>LEBIH DARI SEKADAR<br>PELANGGAN,<br><em>JADILAH YZA MEMBER.</em></h2><p class="yza-member-description">Bergabung dengan YZA Member dan nikmati pengalaman otomotif yang lebih lengkap melalui akses layanan eksklusif, promo spesial, YZA Points, service reminder, serta berbagai keuntungan lainnya.</p>@if($landingMemberState === 'pending_payment')<p class="yza-member-state">Membership Anda belum aktif. Selesaikan pembayaran aktivasi untuk menikmati benefit YZA Member.</p>@elseif($landingMemberState === 'active')<p class="yza-member-state is-active">✓ YZA Member Active</p>@endif<div class="yza-member-price"><span>AKTIVASI MEMBER</span><strong>Rp {{ number_format((float) ($membershipFee ?? 249000), 0, ',', '.') }}</strong><small>Sekali aktivasi • Tidak ada biaya bulanan.</small></div><div class="yza-member-actions"><a class="show-cta" href="{{ $memberPrimaryHref }}">{{ $memberPrimaryLabel }}</a></div></div><div class="yza-member-visual">
+    <div class="yza-card-flipper-wrap" tabindex="0" role="button" aria-label="Kartu YZA Member. Arahkan kursor untuk melihat benefit eksklusif.">
+        <div class="yza-card-flipper-inner">
+            
+            <!-- SISI DEPAN (FRONT FACE - IMAGE 1) -->
+            <div class="yza-card-face yza-card-face--front yza-member-card">
+                <div class="yza-card-front-top">
+                    <img src="{{ asset('assets/images/branding/logo-yza.png') }}" alt="YZA Automotive">
+                    <span class="yza-member-card-status">MEMBER EXCLUSIVE</span>
+                </div>
+                <span class="yza-member-card-line"></span>
+                <div class="yza-card-front-body">
+                    <small>YZA AUTOMOTIVE</small>
+                    <strong>YZA <em>MEMBER</em></strong>
+                </div>
+                <div class="yza-card-front-bottom">
+                    <div class="yza-card-front-numbers">
+                        <b>YZA-MBR-000001</b>
+                        <em>PREMIUM AUTOMOTIVE EXPERIENCE</em>
+                    </div>
+                    <span class="yza-member-chip" aria-hidden="true"></span>
+                </div>
+            </div>
+
+            <!-- SISI BELAKANG (BACK FACE - IMAGE 2) -->
+            <div class="yza-card-face yza-card-face--back">
+                <div class="yza-card-back-grid">
+                    @foreach ([
+                        ['⌑','PROMO EKSKLUSIF','Nikmati promo khusus member pada layanan dan transaksi pilihan.'],
+                        ['✦','YZA POINTS','Kumpulkan Points dari setiap transaksi eligible yang berhasil.'],
+                        ['⚙','LAYANAN LEBIH LENGKAP','Gunakan berbagai fasilitas YZA Automotive dalam satu akun.'],
+                        ['▣','TEST DRIVE & MOBIL','Kelola kebutuhan kendaraan dan test drive dengan lebih mudah.'],
+                        ['↔','TRADE-IN','Dapatkan akses proses trade-in melalui sistem YZA.'],
+                        ['⌁','SERVICE REMINDER','Pantau riwayat kendaraan dan pengingat servis Anda.']
+                    ] as $benefit)
+                        <div class="yza-back-benefit-item">
+                            <i aria-hidden="true">{{ $benefit[0] }}</i>
+                            <div class="benefit-content">
+                                <strong>{{ $benefit[1] }}</strong>
+                                <small>{{ $benefit[2] }}</small>
+                            </div>
+                        </div>
+                    @endforeach
+                </div>
+            </div>
+
+        </div>
+    </div>
+</div></div></section>
+
 @php($serviceMembershipHref = match ($landingMemberState) { 'active' => route('pelanggan.member'), 'pending_payment' => route('pelanggan.membership.activation'), 'cancelled' => route('pelanggan.membership.activation'), default => route('register', ['from' => 'membership']) })
 @php($serviceMembershipLabel = match ($landingMemberState) { 'active' => 'Buka Membership Saya', 'pending_payment' => 'Aktifkan Membership', 'cancelled' => 'Aktifkan Membership', default => 'Lihat YZA Membership' })
-<section class="show-section services-section" id="layanan"><div class="show-container"><div class="services-heading"><span class="section-kicker">Layanan kami</span><h2>Layanan Kami</h2><p>Solusi lengkap untuk semua kebutuhan otomotif Anda.</p></div><div class="services-grid">@foreach ([['⚙','Servis Berkala','Perawatan rutin untuk performa maksimal.'],['▦','Perbaikan Mesin','Diagnosa dan perbaikan oleh teknisi ahli.'],['◉','Ganti Oli','Oli berkualitas untuk performa optimal.'],['◎','Rem & Suspensi','Keamanan berkendara lebih terjamin.'],['▣','AC Mobil','Dingin dan nyaman di setiap perjalanan.'],['▤','Diagnosa Komputer','Teknologi terbaru untuk hasil akurat.']] as $service)<article class="service-card-premium"><i aria-hidden="true">{{ $service[0] }}</i><h3>{{ $service[1] }}</h3><p>{{ $service[2] }}</p></article>@endforeach</div><div class="services-membership-promo"><div class="services-membership-copy"><span class="services-membership-kicker">YZA MEMBERSHIP</span><h3>Rawat Mobil Lebih Maksimal Bersama YZA Member</h3><p>Gabung sebagai YZA Member untuk menikmati pengalaman layanan yang lebih praktis, prioritas, dan benefit eksklusif untuk kendaraan Anda.</p><div class="services-membership-benefits"><span>✓ Promo eksklusif</span><span>✓ Layanan lebih lengkap</span><span>✓ Service reminder</span></div></div><div class="services-membership-actions"><a class="show-cta" href="{{ $serviceMembershipHref }}">{{ $serviceMembershipLabel }}&nbsp; →</a></div></div></div></section>
-<section class="show-section experience" id="tentang"><div class="show-container experience-layout"><div class="experience-copy"><span class="section-kicker">YZA AUTOMOTIVE — TEST DRIVE EXPERIENCE</span><h2>Rasakan Sensasi<br><em>Berkendara Langsung.</em></h2><p>Rasakan pengalaman berada di balik kemudi mobil impian Anda. Jelajahi performa, kenyamanan, dan karakter kendaraan melalui layanan Test Drive YZA Automotive.</p><a class="show-cta" href="{{ route('pelanggan.test-drive.create') }}">Jadwalkan Test Drive&nbsp; →</a></div><div class="video-tile" data-video-tile><video class="video-tile-media" data-video-player muted playsinline preload="metadata" aria-label="Video pengalaman Test Drive YZA Automotive"><source src="{{ asset('assets/videos/test-drive.mp4') }}" type="video/mp4"></video><button class="video-play" data-video-open type="button" aria-label="Putar video Test Drive YZA Automotive">▶</button><button class="video-mute" data-video-mute type="button" aria-label="Aktifkan suara video" aria-pressed="false"><svg class="video-mute-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9v6h4l5 4V5L8 9H4Z"></path><path class="video-mute-wave" d="M16 9.5c1.5 1.4 1.5 3.6 0 5"></path><path class="video-mute-wave" d="M18.5 7c3 2.8 3 7.2 0 10"></path><path class="video-mute-slash" d="m4 4 16 16"></path></svg></button><span class="video-tile-label"><b>Pengalaman Test Drive</b><small>TEST DRIVE HIGHLIGHT</small></span></div></div></section>
-<section class="show-section testimonials" id="testimoni"><div class="show-container"><div class="show-section-heading"><div><span class="section-kicker">Kata mereka</span><h2>Tentang YZA Automotive</h2></div><a class="show-link" href="#testimoni">Lihat Semua Testimoni&nbsp; →</a></div><div class="testimonial-grid">@foreach ([['testimonial-andi.png','Andi Pratama','Pelayanan di YZA Automotive sangat profesional dan ramah. Prosesnya cepat, transparan, dan mobilnya berkualitas. Sangat puas!'],['testimonial-siti.png','Siti Rahmawati','Saya melakukan trade-in di sini dan prosesnya sangat mudah. Harga yang ditawarkan juga sangat kompetitif. Recommended banget!'],['testimonial-budi.png','Budi Santoso','Servis mobil di YZA selalu memuaskan. Teknisi ahli, hasil rapi, dan selalu diberi penjelasan yang jelas. Mobil jadi terasa seperti baru lagi!']] as $testimonial)<article class="testimonial-card"><div class="testimonial-person"><img class="testimonial-photo" src="{{ asset('assets/images/lower-landing/'.$testimonial[0]) }}" alt="{{ $testimonial[1] }}"><span><b>{{ $testimonial[1] }}</b><small>Pelanggan</small></span></div><div class="stars" aria-label="5 dari 5 bintang">★★★★★</div><div class="testimonial-quote"><span class="quote-open" aria-hidden="true">“</span><p>{{ $testimonial[2] }}</p><span class="quote-close" aria-hidden="true">”</span></div></article>@endforeach</div></div></section>
-<section class="show-section location" id="kontak"><div class="show-container location-layout"><div class="location-copy"><span class="section-kicker">Kunjungi showroom kami</span><h2>Kunjungi Showroom Kami<br><em>dan rasakan langsung</em></h2><p>Lihat langsung koleksi mobil berkualitas kami, dapatkan konsultasi dari tim profesional, dan rasakan pengalaman otomotif terbaik hanya di YZA Automotive.</p><div class="location-points"><span><b aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M20 10c0 5-8 11-8 11S4 15 4 10a8 8 0 1 1 16 0Z"/><circle cx="12" cy="10" r="2.5"/></svg></b><strong>Lokasi Strategis</strong><small>Mudah diakses dari berbagai area Jakarta.</small></span><span><b aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M3 14l2-5h14l2 5v5H3zM5 9l2-4h10l2 4M7 18h.01M17 18h.01"/><path d="M3 14h18"/></svg></b><strong>Koleksi Lengkap</strong><small>Ratusan pilihan mobil berkualitas di showroom kami.</small></span><span><b aria-hidden="true"><svg viewBox="0 0 24 24"><circle cx="9" cy="8" r="3"/><circle cx="17" cy="10" r="2.5"/><path d="M3 20c.4-3.5 2.4-5.2 6-5.2s5.6 1.7 6 5.2M14 15.5c2.8 0 4.4 1.4 4.9 4.5"/></svg></b><strong>Tim Profesional</strong><small>Siap memberikan konsultasi terbaik untuk Anda.</small></span></div><a class="show-cta map-button" href="https://www.google.com/maps/search/YZA+Automotive" target="_blank" rel="noopener">Lihat Lokasi di Google Maps&nbsp; →</a></div></div></section>
+<section class="show-section services-section" id="layanan"><div class="show-container"><div class="services-heading"><h2>Layanan Kami</h2><p>Solusi lengkap untuk semua kebutuhan otomotif Anda.</p></div><div class="services-grid">@foreach ([['⚙','Servis Berkala','Perawatan rutin untuk performa maksimal.'],['▦','Perbaikan Mesin','Diagnosa dan perbaikan oleh teknisi ahli.'],['◉','Ganti Oli','Oli berkualitas untuk performa optimal.'],['◎','Rem & Suspensi','Keamanan berkendara lebih terjamin.'],['▣','AC Mobil','Dingin dan nyaman di setiap perjalanan.'],['▤','Diagnosa Komputer','Teknologi terbaru untuk hasil akurat.']] as $service)<article class="service-card-premium"><i aria-hidden="true">{{ $service[0] }}</i><h3>{{ $service[1] }}</h3><p>{{ $service[2] }}</p></article>@endforeach</div><div class="services-membership-promo"><div class="services-membership-copy"><span class="services-membership-kicker">YZA MEMBERSHIP</span><h3>Rawat Mobil Lebih Maksimal Bersama YZA Member</h3><p>Gabung sebagai YZA Member untuk menikmati pengalaman layanan yang lebih praktis, prioritas, dan benefit eksklusif untuk kendaraan Anda.</p><div class="services-membership-benefits"><span>✓ Promo eksklusif</span><span>✓ Layanan lebih lengkap</span><span>✓ Service reminder</span></div></div><div class="services-membership-actions"><a class="show-cta" href="{{ $serviceMembershipHref }}">{{ $serviceMembershipLabel }}</a></div></div></div></section>
+
+<section class="service-appointment" id="servis">
+    <div class="service-layout">
+        <div class="appointment-wrap" id="janji-temu">
+            <form class="appointment-form" id="appointment-form">
+                <div class="appointment-form-heading">
+                    <div>
+                        <strong>Buat Janji Temu</strong>
+                        <span>Isi detail kunjungan Anda. Pesan akan diarahkan ke WhatsApp YZA.</span>
+                    </div>
+                </div>
+                <div class="appointment-fields">
+                    <div class="form-group">
+                        <label class="form-label" for="appointment-nama">Nama Lengkap</label>
+                        <input class="form-control" id="appointment-nama" name="nama" required placeholder="Nama lengkap Anda">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label" for="appointment-hp">Nomor WhatsApp</label>
+                        <input class="form-control" id="appointment-hp" name="no_hp" type="tel" required placeholder="08xxxxxxxxxx">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label" for="appointment-layanan">Jenis Kebutuhan</label>
+                        <select class="form-control" id="appointment-layanan" name="layanan" required>
+                            <option value="">Pilih layanan</option>
+                            @foreach (['Konsultasi Mobil','Test Drive','Service','Spare Part','Car Wash','Used Car','Trade-In','Lainnya'] as $service)
+                                <option value="{{ $service }}">{{ $service }}</option>
+                            @endforeach
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label" for="appointment-tanggal">Tanggal Janji</label>
+                        <input class="form-control" id="appointment-tanggal" name="tanggal" type="date" min="{{ now()->format('Y-m-d') }}" required>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label" for="appointment-jam">Jam Janji</label>
+                        <input class="form-control" id="appointment-jam" name="jam" type="time" required>
+                    </div>
+                    <div class="form-group full">
+                        <label class="form-label" for="appointment-catatan">Catatan Tambahan <span>(opsional)</span></label>
+                        <textarea class="form-control" id="appointment-catatan" name="catatan" rows="3" placeholder="Contoh: ingin konsultasi trade-in dan cek kondisi kendaraan."></textarea>
+                    </div>
+                </div>
+                <button class="show-cta appointment-submit" type="submit">Lanjut ke WhatsApp</button>
+                <p class="appointment-microcopy">Pesan tidak dikirim otomatis. Anda tetap menekan Kirim di WhatsApp.</p>
+            </form>
+        </div>
+        <div class="service-visual">
+            <div class="service-visual-copy">
+                <h2>Janjikan Servis<br><em>dengan mudah</em></h2>
+                <p>Pilih tanggal dan waktu yang sesuai, dan tim kami akan siap melayani Anda.</p>
+            </div>
+        </div>
+    </div>
+</section>
+
+@php($featuredCars = $featuredCars ?? collect())
+<section class="unified-trade-showcase" id="trade-catalog-showcase" data-unified-slider>
+    <div class="unified-slider-viewport">
+        <div class="unified-slider-track" data-unified-track>
+            
+            <!-- SLIDE 0: Jual Mobil Anda / Trade-In (Image 2) -->
+            <div class="unified-slide unified-slide--trade" id="jual-mobil" data-slide-index="0" role="tabpanel" aria-label="Jual Mobil / Trade-In">
+                <div class="trade-banner trade-banner--centered">
+                    <div class="show-container trade-layout trade-layout--centered">
+                        <div class="trade-copy trade-copy--centered">
+                            <h2>Jual Mobil Anda<br><em>atau Trade-In</em></h2>
+                            <p>Dapatkan estimasi harga terbaik dengan proses cepat, aman, dan transparan.</p>
+                            
+                            <!-- Tombol > Trigger Geser ke Katalog Mobil (Image 1) -->
+                            <div class="trade-slide-action">
+                                <button type="button" class="trade-to-catalog-btn" data-unified-next aria-label="Lihat Kurasi Mobil Pilihan">
+                                    <span>Lihat Pilihan Mobil</span>
+                                    <span class="trade-btn-arrow-bubble" aria-hidden="true">
+                                        <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                                            <polyline points="9 18 15 12 9 6"></polyline>
+                                        </svg>
+                                    </span>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- SLIDE 1: Kurasi Mobil Pilihan (Image 1) -->
+            <div class="unified-slide unified-slide--catalog" id="mobil" data-slide-index="1" role="tabpanel" aria-label="Kurasi Mobil Pilihan" aria-hidden="true">
+                <div class="show-section featured-catalog">
+                    <div class="show-container">
+                        <div class="show-section-heading">
+                            <div>
+                                <span class="section-kicker">Mobil pilihan</span>
+                                <h2>Kurasi terbaik <em>dari YZA</em></h2>
+                            </div>
+                            <div class="featured-carousel-actions">
+                                <a class="show-link" href="{{ route('mobil.index') }}">
+                                    <span>Lihat Semua Mobil</span>
+                                </a>
+                            </div>
+                        </div>
+
+                        <!-- Layout dengan Celah di Sebelah Kiri khusus untuk Tombol < -->
+                        <div class="catalog-carousel-with-gutter">
+                            <div class="catalog-gutter-nav" aria-label="Navigasi kembali">
+                                <button type="button" class="catalog-gutter-prev-btn" data-unified-prev aria-label="Kembali ke Jual Mobil / Trade-In" title="Kembali ke Jual Mobil / Trade-In">
+                                    <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                                        <polyline points="15 18 9 12 15 6"></polyline>
+                                    </svg>
+                                    <span class="catalog-gutter-tooltip">‹ Jual Mobil / Trade-In</span>
+                                </button>
+                            </div>
+
+                            <div class="featured-carousel" data-sport-carousel data-carousel-count="{{ $featuredCars->count() }}">
+                                <div class="featured-carousel-viewport">
+                                    <div class="featured-carousel-track" data-carousel-track>
+                                        @forelse ($featuredCars as $vehicle)
+                                            <article class="featured-card{{ $vehicle['isSport'] ? ' is-sport' : '' }}">
+                                                <a class="featured-media" href="{{ $vehicle['url'] }}">
+                                                    @if($vehicle['photo'])
+                                                        <img src="{{ $vehicle['photo'] }}" alt="{{ $vehicle['name'] }}" draggable="false">
+                                                    @else
+                                                        <span class="vehicle-photo-placeholder"><b>{{ $vehicle['brand'] }}</b></span>
+                                                    @endif
+                                                    <span class="condition-pill">{{ $vehicle['condition'] }}</span>
+                                                    <span class="sport-pill">SPORT HIGHLIGHT</span>
+                                                    <span class="featured-fav" aria-label="Favorit">♡</span>
+                                                </a>
+                                                <div class="featured-body">
+                                                    <a class="featured-body-link" href="{{ $vehicle['url'] }}">
+                                                        <h3>{{ $vehicle['name'] }}</h3>
+                                                        <small>{{ $vehicle['specification'] }}</small>
+                                                    </a>
+                                                    <div class="featured-bottom">
+                                                        <a class="featured-price-link" href="{{ $vehicle['url'] }}">
+                                                            <strong>Rp {{ number_format($vehicle['price'],0,',','.') }}</strong>
+                                                        </a>
+                                                        <a class="round-arrow" href="{{ $vehicle['url'] }}" aria-label="Lihat detail">→</a>
+                                                    </div>
+                                                </div>
+                                            </article>
+                                        @empty
+                                            <div class="featured-card">
+                                                <div class="featured-body">
+                                                    <h3>Belum ada mobil tersedia</h3>
+                                                </div>
+                                            </div>
+                                        @endforelse
+                                    </div>
+                                </div>
+                                <div class="featured-carousel-footer" aria-label="Progress mobil pilihan">
+                                    <div class="featured-carousel-progress" data-carousel-progress role="progressbar" aria-label="Progress mobil pilihan" aria-valuemin="1" aria-valuemax="{{ max(1, $featuredCars->count()) }}" aria-valuenow="1">
+                                        <span class="is-active"></span>
+                                    </div>
+                                    <span class="featured-carousel-counter" data-carousel-counter>01 / {{ str_pad((string) max(1, $featuredCars->count()), 2, '0', STR_PAD_LEFT) }}</span>
+                                    <span class="featured-carousel-hint">Geser horizontal untuk melihat mobil lainnya</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+</section>
+<section class="show-section experience" id="tentang"><div class="show-container experience-layout"><div class="experience-copy"><h2>Rasakan Sensasi<br><em>Berkendara Langsung.</em></h2><p>Rasakan pengalaman berada di balik kemudi mobil impian Anda. Jelajahi performa, kenyamanan, dan karakter kendaraan melalui layanan Test Drive YZA Automotive.</p><a class="show-cta" href="{{ route('pelanggan.test-drive.create') }}">Jadwalkan Test Drive</a></div><div class="video-tile" data-video-tile><video class="video-tile-media" data-video-player muted playsinline preload="metadata" aria-label="Video pengalaman Test Drive YZA Automotive"><source src="{{ asset('assets/videos/test-drive.mp4') }}" type="video/mp4"></video><button class="video-play" data-video-open type="button" aria-label="Putar video Test Drive YZA Automotive">▶</button><button class="video-mute" data-video-mute type="button" aria-label="Aktifkan suara video" aria-pressed="false"><svg class="video-mute-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9v6h4l5 4V5L8 9H4Z"></path><path class="video-mute-wave" d="M16 9.5c1.5 1.4 1.5 3.6 0 5"></path><path class="video-mute-wave" d="M18.5 7c3 2.8 3 7.2 0 10"></path><path class="video-mute-slash" d="m4 4 16 16"></path></svg></button><span class="video-tile-label"><b>Pengalaman Test Drive</b><small>TEST DRIVE HIGHLIGHT</small></span></div></div></section>
+<section class="show-section testimonials" id="testimoni"><div class="show-container"><div class="show-section-heading"><div><span class="section-kicker">Kata mereka</span><h2>Tentang YZA Automotive</h2></div><a class="show-link" href="#testimoni">Lihat Semua Testimoni</a></div><div class="testimonial-grid">@foreach ([['testimonial-andi.png','Andi Pratama','Pelayanan di YZA Automotive sangat profesional dan ramah. Prosesnya cepat, transparan, dan mobilnya berkualitas. Sangat puas!'],['testimonial-siti.png','Siti Rahmawati','Saya melakukan trade-in di sini dan prosesnya sangat mudah. Harga yang ditawarkan juga sangat kompetitif. Recommended banget!'],['testimonial-budi.png','Budi Santoso','Servis mobil di YZA selalu memuaskan. Teknisi ahli, hasil rapi, dan selalu diberi penjelasan yang jelas. Mobil jadi terasa seperti baru lagi!']] as $testimonial)<article class="testimonial-card"><div class="testimonial-person"><img class="testimonial-photo" src="{{ asset('assets/images/lower-landing/'.$testimonial[0]) }}" alt="{{ $testimonial[1] }}"><span><b>{{ $testimonial[1] }}</b><small>Pelanggan</small></span></div><div class="stars" aria-label="5 dari 5 bintang">★★★★★</div><div class="testimonial-quote"><span class="quote-open" aria-hidden="true">“</span><p>{{ $testimonial[2] }}</p><span class="quote-close" aria-hidden="true">”</span></div></article>@endforeach</div></div></section>
+<section class="show-section location" id="kontak"><div class="show-container location-layout"><div class="location-copy"><span class="section-kicker">Kunjungi showroom kami</span><h2>Kunjungi Showroom Kami<br><em>dan rasakan langsung</em></h2><p>Lihat langsung koleksi mobil berkualitas kami, dapatkan konsultasi dari tim profesional, dan rasakan pengalaman otomotif terbaik hanya di YZA Automotive.</p><div class="location-points"><span><b aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M20 10c0 5-8 11-8 11S4 15 4 10a8 8 0 1 1 16 0Z"/><circle cx="12" cy="10" r="2.5"/></svg></b><strong>Lokasi Strategis</strong><small>Mudah diakses dari berbagai area Jakarta.</small></span><span><b aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M3 14l2-5h14l2 5v5H3zM5 9l2-4h10l2 4M7 18h.01M17 18h.01"/><path d="M3 14h18"/></svg></b><strong>Koleksi Lengkap</strong><small>Ratusan pilihan mobil berkualitas di showroom kami.</small></span><span><b aria-hidden="true"><svg viewBox="0 0 24 24"><circle cx="9" cy="8" r="3"/><circle cx="17" cy="10" r="2.5"/><path d="M3 20c.4-3.5 2.4-5.2 6-5.2s5.6 1.7 6 5.2M14 15.5c2.8 0 4.4 1.4 4.9 4.5"/></svg></b><strong>Tim Profesional</strong><small>Siap memberikan konsultasi terbaik untuk Anda.</small></span></div><a class="show-cta map-button" href="https://www.google.com/maps/search/YZA+Automotive" target="_blank" rel="noopener">Lihat Lokasi di Google Maps</a></div></div></section>
 </main>
 <footer class="show-footer"><div class="show-container footer-grid"><div class="footer-brand"><img class="footer-logo" src="{{ asset('assets/images/branding/logo-yza.png') }}" alt="YZA Automotive"><strong>YZA <em>AUTOMOTIVE</em></strong><p>Solusi lengkap untuk semua kebutuhan otomotif Anda. Mobil berkualitas, layanan profesional, dan pengalaman berkendara yang tak terlupakan.</p><div class="social-links"><a href="#" aria-label="Instagram">◎</a><a href="#" aria-label="Facebook">f</a><a href="#" aria-label="YouTube">▶</a><a href="#" aria-label="TikTok">♪</a></div></div><div><h3>Menu</h3><a href="#beranda">Beranda</a><a href="#mobil">Mobil</a><a href="#jual-mobil">Jual Mobil</a><a href="#jual-mobil">Trade-In</a><a href="#servis">Servis</a><a href="#tentang">Tentang Kami</a><a href="#kontak">Kontak</a></div><div><h3>Layanan Kami</h3><a href="#servis">Servis Berkala</a><a href="#servis">Perbaikan Mesin</a><a href="#janji-temu">Ganti Oli</a><a href="#janji-temu">Rem &amp; Suspensi</a><a href="#janji-temu">AC Mobil</a><a href="#janji-temu">Diagnosa Komputer</a><a href="#janji-temu">Janji Temu</a></div><div class="footer-contact"><h3>Kontak</h3><a href="#kontak"><span>⌖</span><span>Jakarta, Indonesia</span></a><a href="{{ yza_whatsapp_url() }}" target="_blank" rel="noopener"><span>⌕</span><span>0877 8430 4417</span></a><a href="#janji-temu"><span>✉</span><span>Hubungi melalui form janji temu</span></a><a href="#janji-temu"><span>◷</span><span>Jadwal melalui janji temu</span></a></div><a class="footer-map-card" href="https://www.google.com/maps/search/YZA+Automotive" target="_blank" rel="noopener" aria-label="Buka YZA Automotive di Google Maps"><span class="map-grid-lines" aria-hidden="true"></span><span class="map-pin">●</span><strong>YZA Automotive</strong><small>Jakarta</small></a></div><div class="show-container footer-bottom"><span>© {{ date('Y') }} YZA Automotive. Semua Hak Dilindungi.</span><span><a href="#">Kebijakan Privasi</a><i></i><a href="#">Syarat &amp; Ketentuan</a></span></div></footer>
 <script>document.querySelector('.hero-3d-canvas')?.remove();document.querySelector('.hero-car-stage')?.setAttribute('data-viewer','static-featured-vehicle');</script>

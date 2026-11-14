@@ -125,28 +125,30 @@ body.admin-drawer-open { overflow: hidden !important; }
 :is(.catalog-layout,.catalog-main,.catalog-content,.catalog-grid,.detail-content,.detail-layout,.vehicle-detail-layout) { min-width: 0; }
 :is(.vehicle-grid) { grid-template-columns: repeat(auto-fit,minmax(min(100%,16rem),1fr)) !important; }
 .member-catalog-page :is(.member-catalog-grid,.member-catalog-heading) { width: 100% !important; max-width: 100%; margin-inline: 0 !important; }
-/* Member shell uses a real sticky row, not a fixed header plus compensating offsets. */
+/* Member shell uses fixed navbar with 82px workspace offset and no gap above heroes. */
 .member-horizontal-shell { min-width: 0; width: 100%; }
-.member-horizontal-shell .member-workspace { min-width: 0; padding-top: 0 !important; min-height: 100dvh; display: flex; flex-direction: column; }
-.member-horizontal-shell .member-topbar { position: sticky !important; inset: auto !important; top: 0 !important; height: var(--ui-header) !important; min-height: var(--ui-header) !important; display: grid !important; grid-template-columns: max-content minmax(0,1fr) max-content !important; padding: .5rem var(--ui-gutter) !important; gap: 1rem !important; }
+.member-horizontal-shell .member-workspace { min-width: 0; padding-top: 82px !important; min-height: 100dvh; display: flex; flex-direction: column; }
+.member-horizontal-shell .member-topbar { position: fixed !important; inset: 0 0 auto 0 !important; top: 0 !important; left: 0 !important; right: 0 !important; height: 82px !important; min-height: 82px !important; display: flex !important; align-items: center !important; justify-content: space-between !important; padding: 0 clamp(18px, 2.5vw, 42px) !important; box-sizing: border-box !important; z-index: 200 !important; }
 .member-horizontal-shell .member-topbar-left { width: auto !important; min-width: 0 !important; flex: 0 0 auto !important; }
 .member-horizontal-shell .member-topbar-brand { gap: .5rem !important; }
 .member-horizontal-shell .member-topbar-brand img { width: 2.75rem !important; height: 2.75rem !important; flex-basis: 2.75rem !important; }
 .member-horizontal-shell .member-topbar-brand strong { font-size: .875rem !important; }
 .member-horizontal-shell .member-topbar-brand small { font-size: .55rem !important; }
-.member-horizontal-shell .member-horizontal-nav { position: static; transform: none; min-width: 0; width: auto !important; height: auto !important; align-self: stretch; justify-self: stretch !important; justify-content: center; gap: clamp(.25rem,.5vw,.75rem) !important; margin: 0 !important; }
-.member-horizontal-shell .member-horizontal-nav > :is(a,details) { flex: 0 0 auto; }
+.member-horizontal-shell .member-horizontal-nav { position: static; transform: none; min-width: 0; width: auto !important; height: 82px !important; display: flex !important; align-items: center !important; justify-content: flex-start !important; gap: clamp(10px, 1.35vw, 22px) !important; margin: 0 !important; }
+.member-horizontal-shell .member-horizontal-nav > :is(a,details) { flex: 0 0 auto; height: 82px !important; }
 .member-horizontal-shell .member-horizontal-menu > summary > span { font-size: inherit; }
-.member-horizontal-shell :is(.member-horizontal-link,.member-horizontal-menu > summary) { min-height: 2.75rem !important; padding-inline: .5rem !important; font-size: .8125rem !important; gap: .375rem !important; }
-.member-horizontal-shell .member-menu-icon { width: 1.25rem; height: 1.25rem; font-size: 1.125rem !important; }
-.member-horizontal-shell .member-topbar-right { gap: .625rem !important; margin-left: auto; }
+.member-horizontal-shell :is(.member-horizontal-link,.member-horizontal-menu > summary) { height: 82px !important; min-height: 82px !important; padding-inline: .5rem !important; font-size: .84rem !important; gap: .5rem !important; }
+.member-horizontal-shell .member-menu-icon { width: 1.5rem; height: 1.5rem; font-size: 1.25rem !important; }
+.member-horizontal-shell .member-topbar-right { gap: 1.25rem !important; margin-left: auto; }
 .member-horizontal-shell .member-profile-trigger > span:nth-child(2) { min-width: 0; }
-.member-horizontal-shell .member-profile-trigger { min-height: 2.75rem !important; padding: .25rem !important; max-width: 12rem; }
-.member-horizontal-shell .member-profile-trigger strong { font-size: .75rem !important; white-space: normal; }
+.member-horizontal-shell .member-profile-trigger { min-height: 2.75rem !important; padding: .25rem .75rem .25rem .25rem !important; }
+.member-horizontal-shell .member-profile-trigger strong { font-size: .84rem !important; white-space: normal; }
 .member-horizontal-shell .member-notification { width: 2.75rem !important; height: 2.75rem !important; }
 .member-horizontal-shell .member-notification > span { font-size: 1.5rem !important; }
-.member-horizontal-shell .member-main-content { min-width: 0; width: 100%; flex: 1; padding: var(--ui-gutter) !important; }
-.member-horizontal-shell .member-main-content:has(.member-center-dashboard) { padding: 0 0 2rem !important; }
+.member-horizontal-shell .member-main-content { min-width: 0; width: 100%; flex: 1; margin: 0 !important; padding: 0 !important; }
+.member-horizontal-shell .member-main-content:has(.yza-home-reference),
+.member-horizontal-shell .member-main-content:has(.yza-home),
+.member-horizontal-shell .member-main-content:has(.member-center-dashboard) { padding: 0 !important; margin: 0 !important; }
 .member-center-dashboard { max-width: var(--ui-content) !important; width: 100%; margin-inline: auto; gap: 1.5rem !important; }
 .member-center-dashboard .member-center-hero { min-height: 17.5rem !important; height: auto !important; padding: 1.5rem var(--ui-gutter) !important; grid-template-columns: minmax(0,1fr) minmax(16rem,.45fr) !important; gap: 1.5rem !important; }
 .member-center-dashboard .member-center-hero h1 { font-size: clamp(1.875rem,3.25vw,3rem) !important; line-height: 1.15 !important; }
@@ -376,27 +378,26 @@ body.admin-drawer-open { overflow: hidden !important; }
 /* Reserve clear gutters around the brand, navigation and account controls. */
 @media (min-width: 1440px) {
     .member-horizontal-shell .member-topbar {
-        grid-template-columns: max-content minmax(0, 1fr) max-content !important;
         column-gap: 24px !important;
     }
     .member-horizontal-shell .member-topbar .member-horizontal-nav {
-        justify-content: space-evenly !important;
-        gap: 4px !important;
-        padding-inline: 4px;
+        justify-content: flex-start !important;
+        gap: clamp(10px, 1.35vw, 22px) !important;
+        padding-inline: 0 !important;
     }
     .member-horizontal-shell .member-topbar .member-horizontal-nav :is(.member-horizontal-link,.member-horizontal-menu > summary) {
-        gap: 6px !important;
-        padding-inline: 6px !important;
+        gap: 8px !important;
+        padding-inline: 8px !important;
     }
     .member-horizontal-shell .member-topbar .member-topbar-right {
         padding-left: 0;
         border-left: none !important;
-        gap: 12px !important;
+        gap: 20px !important;
     }
     .member-horizontal-shell .member-topbar .member-horizontal-nav > :is(a,details) .member-menu-icon {
-        width: 30px !important;
-        height: 30px !important;
-        flex-basis: 30px !important;
+        width: 24px !important;
+        height: 24px !important;
+        flex-basis: 24px !important;
     }
 }
 @media (min-width: 1440px) and (max-width: 1650px) {

@@ -1,0 +1,998 @@
+/* ==========================================================================
+   YZA Automotive · Unified Trade-In & Vehicle Catalog Horizontal Showcase
+   Smooth 2-slide horizontal slider combining Section Image 2 and Section Image 1
+   ========================================================================== */
+
+.showroom .unified-trade-showcase {
+    position: relative;
+    width: 100%;
+    overflow: hidden;
+    background: #030406;
+}
+
+/* --------------------------------------------------------------------------
+   Top Navigation Tabs / View Switcher
+   -------------------------------------------------------------------------- */
+.showroom .unified-slider-nav-tabs {
+    position: absolute;
+    top: 22px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 30;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 5px 6px;
+    background: rgba(12, 14, 18, 0.78);
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    border-radius: 999px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.45);
+    transition: opacity 0.3s ease, border-color 0.3s ease;
+}
+
+.showroom .unified-trade-showcase[data-active-slide="1"] .unified-slider-nav-tabs {
+    background: rgba(255, 255, 255, 0.88);
+    border-color: rgba(0, 0, 0, 0.12);
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.12);
+}
+
+.showroom .unified-tab-btn {
+    border: none;
+    background: transparent;
+    color: #9aa0a6;
+    font-size: 11.5px;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    padding: 8px 18px;
+    border-radius: 999px;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    transition: all 0.28s cubic-bezier(0.22, 1, 0.36, 1);
+    font-family: inherit;
+    line-height: 1;
+}
+
+.showroom .unified-trade-showcase[data-active-slide="1"] .unified-tab-btn {
+    color: #555a64;
+}
+
+.showroom .unified-tab-btn .tab-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: currentColor;
+    opacity: 0.6;
+    transition: transform 0.25s ease, opacity 0.25s ease;
+}
+
+.showroom .unified-tab-btn:hover {
+    color: #ffffff;
+}
+
+.showroom .unified-trade-showcase[data-active-slide="1"] .unified-tab-btn:hover {
+    color: #0b0c10;
+}
+
+.showroom .unified-tab-btn.is-active {
+    background: var(--show-red, #e10600);
+    color: #ffffff !important;
+    box-shadow: 0 4px 18px rgba(225, 6, 0, 0.45);
+}
+
+.showroom .unified-tab-btn.is-active .tab-dot {
+    background: #ffffff;
+    opacity: 1;
+    transform: scale(1.3);
+}
+
+/* --------------------------------------------------------------------------
+   Slider Viewport & Track
+   -------------------------------------------------------------------------- */
+.showroom .unified-slider-viewport {
+    position: relative;
+    width: 100%;
+    overflow: hidden;
+    transition: height 0.45s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.showroom .unified-slider-track {
+    display: flex;
+    width: 200%;
+    transform: translate3d(0, 0, 0);
+    transition: transform 0.65s cubic-bezier(0.22, 1, 0.36, 1);
+    will-change: transform;
+}
+
+.showroom .unified-slide {
+    width: 50%;
+    flex: 0 0 50%;
+    box-sizing: border-box;
+    position: relative;
+    min-height: 560px;
+}
+
+/* --------------------------------------------------------------------------
+   Slide 0: Jual Mobil / Trade-In (Image 2)
+   -------------------------------------------------------------------------- */
+.showroom .unified-slide--trade {
+    background: #030406;
+    display: flex;
+    align-items: stretch;
+}
+
+.showroom .unified-slide--trade .trade-banner {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    min-height: 580px;
+    padding: clamp(80px, 12vh, 120px) 1.5rem !important;
+    background-image: linear-gradient(rgba(3, 4, 6, 0.82), rgba(3, 4, 6, 0.86)), url('../../images/middle/trade-in-neon.png') !important;
+    background-position: center !important;
+    background-size: cover !important;
+    box-sizing: border-box;
+}
+
+.showroom .unified-slide--trade .trade-layout--centered {
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: center !important;
+    justify-content: center !important;
+    text-align: center !important;
+    margin: 0 auto !important;
+    max-width: 900px !important;
+}
+
+.showroom .unified-slide--trade .trade-copy--centered {
+    max-width: 780px !important;
+    margin: 0 auto !important;
+    text-align: center !important;
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: center !important;
+}
+
+.showroom .unified-slide--trade .trade-copy--centered h2 {
+    margin: 0 0 1rem !important;
+    text-align: center !important;
+    font-size: clamp(2.3rem, 4.4vw, 3.8rem) !important;
+    line-height: 1.15 !important;
+}
+
+.showroom .unified-slide--trade .trade-copy--centered p {
+    max-width: 560px !important;
+    margin: 0 auto !important;
+    text-align: center !important;
+    color: #c9cdd4 !important;
+    font-size: clamp(0.95rem, 1.2vw, 1.1rem) !important;
+    line-height: 1.6 !important;
+}
+
+/* Center CTA button with '>' trigger */
+.showroom .trade-slide-action {
+    margin-top: 2.2rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.showroom .trade-to-catalog-btn {
+    border: 1.5px solid rgba(225, 6, 0, 0.65) !important;
+    background: rgba(225, 6, 0, 0.15) !important;
+    backdrop-filter: blur(10px) !important;
+    -webkit-backdrop-filter: blur(10px) !important;
+    color: #ffffff !important;
+    font-family: inherit !important;
+    font-size: 13.5px !important;
+    font-weight: 700 !important;
+    letter-spacing: 0.08em !important;
+    text-transform: uppercase !important;
+    padding: 12px 20px 12px 28px !important;
+    border-radius: 999px !important;
+    cursor: pointer !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    gap: 14px !important;
+    transition: all 0.3s cubic-bezier(0.22, 1, 0.36, 1) !important;
+    box-shadow: 0 8px 24px rgba(225, 6, 0, 0.22) !important;
+}
+
+.showroom .trade-to-catalog-btn .trade-btn-arrow-bubble {
+    display: inline-grid !important;
+    place-items: center !important;
+    width: 36px !important;
+    height: 36px !important;
+    border-radius: 50% !important;
+    background: var(--show-red, #e10600) !important;
+    color: #ffffff !important;
+    box-shadow: 0 4px 12px rgba(225, 6, 0, 0.5) !important;
+    transition: transform 0.3s cubic-bezier(0.22, 1, 0.36, 1), background 0.3s ease, color 0.3s ease !important;
+}
+
+.showroom .trade-to-catalog-btn .trade-btn-arrow-bubble svg {
+    display: block !important;
+    transition: transform 0.25s ease !important;
+}
+
+.showroom .trade-to-catalog-btn:hover {
+    background: var(--show-red, #e10600) !important;
+    border-color: var(--show-red, #e10600) !important;
+    transform: translateY(-2px) !important;
+    box-shadow: 0 12px 32px rgba(225, 6, 0, 0.55) !important;
+}
+
+.showroom .trade-to-catalog-btn:hover .trade-btn-arrow-bubble {
+    background: #ffffff !important;
+    color: var(--show-red, #e10600) !important;
+    transform: translateX(4px) !important;
+}
+
+.showroom .trade-to-catalog-btn:hover .trade-btn-arrow-bubble svg {
+    transform: translateX(2px) !important;
+}
+
+/* --------------------------------------------------------------------------
+   Slide 1: Kurasi Mobil Pilihan (Image 1)
+   -------------------------------------------------------------------------- */
+.showroom .unified-slide--catalog {
+    background: #ffffff;
+    color: #111111;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    --catalog-gutter-w: 54px;
+    --catalog-gutter-gap: 24px;
+}
+
+.showroom .unified-slide--catalog .featured-catalog {
+    width: 100%;
+    padding: clamp(65px, 9vh, 90px) 0 clamp(45px, 6vh, 60px) !important;
+    background: transparent !important;
+    box-sizing: border-box;
+}
+
+/* Align heading text directly above car cards */
+.showroom .unified-slide--catalog .featured-catalog .show-section-heading {
+    padding-left: calc(var(--catalog-gutter-w) + var(--catalog-gutter-gap)) !important;
+    box-sizing: border-box !important;
+    transition: padding-left 0.25s ease;
+}
+
+/* --------------------------------------------------------------------------
+   Celah di Sebelah Kiri khusus untuk Tombol <
+   -------------------------------------------------------------------------- */
+.showroom .catalog-carousel-with-gutter {
+    display: flex;
+    align-items: center;
+    gap: var(--catalog-gutter-gap);
+    width: 100%;
+    position: relative;
+}
+
+.showroom .catalog-gutter-nav {
+    flex: 0 0 var(--catalog-gutter-w);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    z-index: 20;
+}
+
+.showroom .catalog-gutter-prev-btn {
+    width: 52px;
+    height: 52px;
+    border-radius: 50%;
+    border: 1.5px solid rgba(0, 0, 0, 0.14);
+    background: #ffffff;
+    color: #111317;
+    display: grid;
+    place-items: center;
+    cursor: pointer;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
+    transition: all 0.28s cubic-bezier(0.22, 1, 0.36, 1);
+    padding: 0;
+}
+
+.showroom .catalog-gutter-prev-btn svg {
+    display: block;
+    transition: transform 0.25s ease;
+}
+
+.showroom .catalog-gutter-prev-btn:hover {
+    background: var(--show-red, #e10600);
+    border-color: var(--show-red, #e10600);
+    color: #ffffff;
+    transform: scale(1.1) translateX(-3px);
+    box-shadow: 0 10px 28px rgba(225, 6, 0, 0.45);
+}
+
+.showroom .catalog-gutter-prev-btn:hover svg {
+    transform: translateX(-2px);
+}
+
+/* Tooltip on hover */
+.showroom .catalog-gutter-tooltip {
+    position: absolute;
+    left: calc(100% + 14px);
+    top: 50%;
+    transform: translateY(-50%) translateX(-6px);
+    background: #111318;
+    color: #ffffff;
+    padding: 7px 14px;
+    border-radius: 999px;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.05em;
+    white-space: nowrap;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.25s ease, transform 0.25s ease;
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.25);
+    z-index: 30;
+}
+
+.showroom .catalog-gutter-prev-btn:hover .catalog-gutter-tooltip {
+    opacity: 1;
+    transform: translateY(-50%) translateX(0);
+}
+
+.showroom .catalog-carousel-with-gutter .featured-carousel {
+    flex: 1;
+    min-width: 0;
+}
+
+@media (max-width: 900px) {
+    .showroom .unified-slide--catalog {
+        --catalog-gutter-w: 44px;
+        --catalog-gutter-gap: 16px;
+    }
+
+    .showroom .catalog-carousel-with-gutter {
+        gap: var(--catalog-gutter-gap);
+    }
+
+    .showroom .catalog-gutter-nav {
+        flex: 0 0 var(--catalog-gutter-w);
+    }
+
+    .showroom .catalog-gutter-prev-btn {
+        width: 44px;
+        height: 44px;
+    }
+
+    .showroom .catalog-gutter-tooltip {
+        display: none !important;
+    }
+}
+
+@media (max-width: 600px) {
+    .showroom .unified-slide--catalog .featured-catalog .show-section-heading {
+        padding-left: 0 !important;
+    }
+
+    .showroom .catalog-carousel-with-gutter {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 12px;
+    }
+
+    .showroom .catalog-gutter-nav {
+        flex: 0 0 auto;
+        padding-left: 4px;
+    }
+}
+
+/* Floating tooltip text on edge buttons */
+.showroom .unified-edge-tooltip {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    white-space: nowrap;
+    padding: 7px 14px;
+    border-radius: 999px;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 0.25s ease, transform 0.25s ease;
+}
+
+.showroom .unified-edge-arrow--next .unified-edge-tooltip {
+    right: calc(100% + 12px);
+    background: rgba(14, 16, 22, 0.9);
+    border: 1px solid rgba(255, 255, 255, 0.16);
+    color: #ffffff;
+    transform: translateY(-50%) translateX(6px);
+}
+
+.showroom .unified-edge-arrow--prev .unified-edge-tooltip {
+    left: calc(100% + 12px);
+    background: #111318;
+    border: 1px solid rgba(0, 0, 0, 0.2);
+    color: #ffffff;
+    transform: translateY(-50%) translateX(-6px);
+}
+
+.showroom .unified-edge-arrow:hover .unified-edge-tooltip {
+    opacity: 1;
+    transform: translateY(-50%) translateX(0);
+}
+
+/* --------------------------------------------------------------------------
+   Mobile responsive adjustments for catalog header
+   -------------------------------------------------------------------------- */
+@media (max-width: 600px) {
+    .showroom .catalog-header-actions {
+        flex-direction: column-reverse;
+        align-items: stretch;
+        width: 100%;
+        margin-top: 12px;
+    }
+
+    .showroom .catalog-back-slide-btn,
+    .showroom .unified-slide--catalog .show-link {
+        justify-content: center;
+        width: 100%;
+    }
+}
+
+/* ==========================================================================
+   YZA Member Card · Interactive 3D Hover Flip Refinement
+   Enlarged Hero Membership Card with 3D Flip to reveal Benefits (Image 2)
+   ========================================================================== */
+
+.showroom .yza-member-visual {
+    width: 100% !important;
+    display: flex !important;
+    justify-content: flex-end !important;
+    align-items: center !important;
+    padding-top: 0 !important;
+}
+
+.showroom .yza-card-flipper-wrap {
+    perspective: 1600px;
+    width: min(100%, 650px);
+    aspect-ratio: 1.62;
+    min-height: 380px;
+    margin: 0 0 0 auto;
+    position: relative;
+    cursor: pointer;
+    user-select: none;
+}
+
+.showroom .yza-card-flipper-inner {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    transform-style: preserve-3d;
+    -webkit-transform-style: preserve-3d;
+    transition: transform 0.8s cubic-bezier(0.2, 0.85, 0.3, 1.05);
+    border-radius: 24px;
+}
+
+/* Hover or is-flipped trigger */
+.showroom .yza-card-flipper-wrap:hover .yza-card-flipper-inner,
+.showroom .yza-card-flipper-wrap.is-flipped .yza-card-flipper-inner {
+    transform: rotateY(180deg);
+}
+
+/* Shared Face Styles */
+.showroom .yza-card-face {
+    position: absolute !important;
+    inset: 0 !important;
+    width: 100% !important;
+    height: 100% !important;
+    border-radius: 24px !important;
+    -webkit-backface-visibility: hidden !important;
+    backface-visibility: hidden !important;
+    box-sizing: border-box !important;
+    overflow: hidden !important;
+    margin: 0 !important;
+}
+
+/* --------------------------------------------------------------------------
+   Front Face (Enlarged Card - Image 1)
+   -------------------------------------------------------------------------- */
+.showroom .yza-card-face--front.yza-member-card {
+    transform: rotateY(0deg) !important;
+    z-index: 2 !important;
+    padding: clamp(24px, 3.5vw, 36px) !important;
+    background: linear-gradient(135deg, rgba(35, 39, 46, 0.98), rgba(10, 12, 15, 0.98) 57%, rgba(37, 7, 12, 0.98)) !important;
+    border: 1px solid rgba(255, 255, 255, 0.35) !important;
+    box-shadow: 0 25px 60px rgba(0, 0, 0, 0.65), 0 0 25px rgba(255, 25, 35, 0.2) !important;
+    display: flex !important;
+    flex-direction: column !important;
+    justify-content: space-between !important;
+    min-height: 0 !important;
+    aspect-ratio: auto !important;
+    width: 100% !important;
+}
+
+.showroom .yza-card-face--front:before {
+    content: "";
+    position: absolute;
+    width: 360px;
+    height: 360px;
+    right: -100px;
+    top: -100px;
+    border: 1.5px solid rgba(255, 44, 57, 0.45);
+    border-radius: 50%;
+    box-shadow: 0 0 0 24px rgba(255, 44, 57, 0.04), 0 0 0 56px rgba(255, 44, 57, 0.025);
+    pointer-events: none;
+}
+
+.showroom .yza-card-front-top {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    width: 100%;
+}
+
+.showroom .yza-card-front-top img {
+    width: 58px;
+    height: 50px;
+    object-fit: contain;
+    filter: brightness(1.2);
+}
+
+.showroom .yza-card-front-top .yza-member-card-status {
+    position: static !important;
+    color: #ff5360;
+    font-size: 11px;
+    font-weight: 900;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+}
+
+.showroom .yza-card-face--front .yza-member-card-line {
+    display: block;
+    width: 100%;
+    height: 1px;
+    margin: 16px 0;
+    background: linear-gradient(90deg, #ff2634 0 35%, rgba(255, 255, 255, 0.2) 65%, transparent);
+}
+
+.showroom .yza-card-front-body small {
+    display: block;
+    color: #b8bec6;
+    font-size: 11px;
+    letter-spacing: 0.26em;
+    text-transform: uppercase;
+}
+
+.showroom .yza-card-front-body strong {
+    display: block;
+    margin-top: 8px;
+    color: #ffffff;
+    font-size: clamp(1.8rem, 2.6vw, 2.4rem);
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    font-weight: 800;
+}
+
+.showroom .yza-card-front-body strong em {
+    display: inline;
+    color: var(--show-red, #ff2634);
+    font-style: normal;
+}
+
+.showroom .yza-card-front-bottom {
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    width: 100%;
+    margin-top: auto;
+}
+
+.showroom .yza-card-front-numbers b {
+    display: block;
+    color: #ffffff;
+    font-family: ui-monospace, SFMono-Regular, Consolas, monospace;
+    font-size: clamp(16px, 1.4vw, 21px);
+    letter-spacing: 0.2em;
+}
+
+.showroom .yza-card-front-numbers em {
+    display: block;
+    margin-top: 8px;
+    color: #9aa1ab;
+    font-size: 10px;
+    font-style: normal;
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+}
+
+.showroom .yza-card-front-bottom .yza-member-chip {
+    position: static !important;
+    width: 44px;
+    height: 32px;
+    border: 1px solid #d2a35d;
+    border-radius: 6px;
+    background: linear-gradient(135deg, transparent 0 46%, rgba(210, 163, 93, 0.75) 47% 50%, transparent 51% 100%);
+    box-shadow: inset 0 0 6px rgba(210, 163, 93, 0.3);
+}
+
+/* --------------------------------------------------------------------------
+   Back Face (Exact Image 2)
+   -------------------------------------------------------------------------- */
+.showroom .yza-card-face--back {
+    transform: rotateY(180deg) !important;
+    z-index: 1 !important;
+    padding: clamp(20px, 3.2vw, 32px) clamp(22px, 3.5vw, 36px) !important;
+    background: linear-gradient(135deg, rgba(16, 12, 14, 0.98), rgba(7, 7, 9, 0.98)) !important;
+    border: 1.5px solid rgba(255, 42, 54, 0.85) !important;
+    box-shadow: 0 25px 65px rgba(0, 0, 0, 0.7), 0 0 35px rgba(255, 28, 40, 0.28), inset 0 1px rgba(255, 255, 255, 0.12) !important;
+    display: flex !important;
+    flex-direction: column !important;
+    justify-content: center !important;
+}
+
+.showroom .yza-card-back-grid {
+    display: grid !important;
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    gap: clamp(14px, 1.8vw, 22px) clamp(18px, 2.6vw, 32px) !important;
+    align-items: center !important;
+    width: 100% !important;
+    position: relative !important;
+}
+
+/* Vertical divider between columns */
+.showroom .yza-card-back-grid:after {
+    content: "";
+    position: absolute;
+    top: 6px;
+    bottom: 6px;
+    left: 50%;
+    width: 1px;
+    background: linear-gradient(180deg, transparent, rgba(255, 255, 255, 0.15) 15%, rgba(255, 255, 255, 0.15) 85%, transparent);
+}
+
+.showroom .yza-back-benefit-item {
+    display: grid !important;
+    grid-template-columns: 42px minmax(0, 1fr) !important;
+    gap: 14px !important;
+    align-items: center !important;
+}
+
+.showroom .yza-back-benefit-item i {
+    display: grid !important;
+    place-items: center !important;
+    width: 40px !important;
+    height: 40px !important;
+    border: 1.5px solid #ff2634 !important;
+    border-radius: 50% !important;
+    color: #ff2634 !important;
+    background: rgba(22, 10, 12, 0.85) !important;
+    box-shadow: 0 0 16px rgba(255, 38, 52, 0.45) !important;
+    font-size: 19px !important;
+    font-style: normal !important;
+}
+
+.showroom .yza-back-benefit-item .benefit-content {
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 3px !important;
+}
+
+.showroom .yza-back-benefit-item strong {
+    display: block !important;
+    color: #ffffff !important;
+    font-size: clamp(12px, 1.05vw, 13.5px) !important;
+    font-weight: 800 !important;
+    letter-spacing: 0.08em !important;
+    text-transform: uppercase !important;
+    line-height: 1.25 !important;
+}
+
+.showroom .yza-back-benefit-item small {
+    display: block !important;
+    color: #b3b8c2 !important;
+    font-size: clamp(11px, 0.9vw, 12px) !important;
+    line-height: 1.4 !important;
+}
+
+/* --------------------------------------------------------------------------
+   Responsive Adaptations for Flip Card
+   -------------------------------------------------------------------------- */
+@media (max-width: 1200px) {
+    .showroom .yza-card-flipper-wrap {
+        width: 100%;
+        max-width: 580px;
+        min-height: 350px;
+    }
+}
+
+@media (max-width: 900px) {
+    .showroom .yza-member-visual {
+        justify-content: center !important;
+    }
+
+    .showroom .yza-card-flipper-wrap {
+        margin: 0 auto;
+        max-width: 520px;
+        min-height: 330px;
+    }
+
+    .showroom .yza-back-benefit-item i {
+        width: 36px !important;
+        height: 36px !important;
+        font-size: 16px !important;
+    }
+}
+
+@media (max-width: 560px) {
+    .showroom .yza-card-flipper-wrap {
+        min-height: 380px;
+        aspect-ratio: auto;
+    }
+
+    .showroom .yza-card-back-grid {
+        grid-template-columns: 1fr !important;
+        gap: 12px !important;
+    }
+
+    .showroom .yza-card-back-grid:after {
+        display: none !important;
+    }
+
+    .showroom .yza-back-benefit-item {
+        grid-template-columns: 36px 1fr !important;
+    }
+}
+
+/* ==========================================================================
+   Service Appointment Section · Layout Swap (Form Left, Text Right)
+   ========================================================================== */
+@media (min-width: 801px) {
+    .showroom .service-layout {
+        display: grid !important;
+        grid-template-columns: minmax(0, 1.05fr) minmax(0, 1fr) !important;
+        min-height: clamp(720px, 48vw, 920px) !important;
+        background: linear-gradient(90deg, rgba(3, 5, 8, 0.44) 0%, rgba(3, 5, 8, 0.18) 52%, rgba(3, 5, 8, 0.02) 100%) !important;
+    }
+
+    .showroom .appointment-wrap {
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        padding: clamp(38px, 4vw, 64px) clamp(28px, 4vw, 56px) !important;
+    }
+
+    .showroom .service-visual {
+        display: flex !important;
+        flex-direction: column !important;
+        justify-content: center !important;
+        align-items: flex-start !important;
+        padding: clamp(48px, 5vw, 84px) clamp(36px, 5.5vw, 84px) !important;
+        background: transparent !important;
+    }
+
+    .showroom .service-visual:after {
+        display: none !important;
+    }
+
+    .showroom .service-visual-copy {
+        max-width: 540px !important;
+    }
+
+    .showroom .service-visual h2 {
+        font-size: clamp(3.2rem, 5vw, 5.6rem) !important;
+        line-height: 0.92 !important;
+        letter-spacing: -0.04em !important;
+        text-transform: uppercase !important;
+    }
+
+    .showroom .service-visual h2 em {
+        color: var(--show-red, #e10600) !important;
+        font-style: normal !important;
+    }
+
+    .showroom .service-visual p {
+        margin-top: 22px !important;
+        font-size: clamp(1rem, 1.2vw, 1.25rem) !important;
+        color: #d2d6dc !important;
+        line-height: 1.55 !important;
+        max-width: 480px !important;
+    }
+}
+
+@media (max-width: 800px) {
+    .showroom .service-layout {
+        grid-template-columns: 1fr !important;
+        min-height: 0 !important;
+    }
+
+    .showroom .service-visual {
+        order: 1 !important;
+        min-height: auto !important;
+        padding: 42px 24px 16px !important;
+        align-items: flex-start !important;
+    }
+
+    .showroom .appointment-wrap {
+        order: 2 !important;
+        min-height: auto !important;
+        padding: 20px 18px 48px !important;
+    }
+}
+
+/* ==========================================================================
+   Universal Button System · Hero Curtain Slide Hover Animation
+   Applies top-to-bottom curtain reveal (matching the Hero section) to all CTA buttons.
+   Removes static arrow icons and adds silky smooth luxury curtain animation.
+   ========================================================================== */
+
+/* 1. Base Structure & Idle State for Dark Section Buttons */
+:is(
+    .showroom .show-cta,
+    .showroom .map-button
+) {
+    position: relative !important;
+    overflow: hidden !important;
+    isolation: isolate !important;
+    z-index: 1 !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    text-decoration: none !important;
+    background: transparent !important;
+    color: #ffffff !important;
+    border: 1.5px solid rgba(255, 255, 255, 0.45) !important;
+    box-shadow: none !important;
+    cursor: pointer !important;
+    transition: color 0.3s cubic-bezier(0.2, 0.8, 0.25, 1),
+                border-color 0.3s cubic-bezier(0.2, 0.8, 0.25, 1),
+                box-shadow 0.3s cubic-bezier(0.2, 0.8, 0.25, 1),
+                transform 0.2s ease !important;
+}
+
+/* 2. Base Structure & Idle State for Light Section Buttons */
+:is(
+    .showroom .unified-slide--catalog .show-link,
+    .showroom .featured-catalog .show-link,
+    .showroom .testimonials .show-link
+) {
+    position: relative !important;
+    overflow: hidden !important;
+    isolation: isolate !important;
+    z-index: 1 !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    text-decoration: none !important;
+    background: transparent !important;
+    color: var(--show-red, #e10600) !important;
+    border: 1.5px solid var(--show-red, #e10600) !important;
+    border-radius: 999px !important;
+    box-shadow: none !important;
+    cursor: pointer !important;
+    min-height: 44px !important;
+    padding: 11px 26px !important;
+    font-size: 13px !important;
+    font-weight: 750 !important;
+    letter-spacing: 0.03em !important;
+    text-transform: uppercase !important;
+    transition: color 0.3s cubic-bezier(0.2, 0.8, 0.25, 1),
+                border-color 0.3s cubic-bezier(0.2, 0.8, 0.25, 1),
+                box-shadow 0.3s cubic-bezier(0.2, 0.8, 0.25, 1),
+                transform 0.2s ease !important;
+}
+
+/* Testimoni link specific styling */
+.showroom .testimonials .show-link {
+    border-radius: 8px !important;
+    min-height: 40px !important;
+    padding: 9px 20px !important;
+    font-size: 12.5px !important;
+}
+
+/* 3. The Slide-Down Red Curtain (Top to Bottom Pseudo-Element) */
+:is(
+    .showroom .show-cta,
+    .showroom .map-button,
+    .showroom .unified-slide--catalog .show-link,
+    .showroom .featured-catalog .show-link,
+    .showroom .testimonials .show-link
+)::before {
+    content: "" !important;
+    position: absolute !important;
+    inset: 0 !important;
+    z-index: -1 !important;
+    background: var(--show-red, #e10600) !important;
+    transform: translateY(-100%) !important; /* Start hidden above the button */
+    transition: transform 0.35s cubic-bezier(0.25, 1, 0.5, 1) !important;
+    pointer-events: none !important;
+    border-radius: inherit !important;
+}
+
+/* 4. Hover State: Drop Curtain Down & Elevate with Red Glow */
+:is(
+    .showroom .show-cta,
+    .showroom .map-button,
+    .showroom .unified-slide--catalog .show-link,
+    .showroom .featured-catalog .show-link,
+    .showroom .testimonials .show-link
+):hover::before {
+    transform: translateY(0) !important; /* Slide smoothly into view */
+}
+
+:is(
+    .showroom .show-cta,
+    .showroom .map-button,
+    .showroom .unified-slide--catalog .show-link,
+    .showroom .featured-catalog .show-link,
+    .showroom .testimonials .show-link
+):hover {
+    border-color: var(--show-red, #e10600) !important;
+    color: #ffffff !important;
+    box-shadow: 0 10px 26px rgba(225, 6, 0, 0.42) !important;
+    transform: translateY(-2px) !important;
+}
+
+/* 5. Active / Pressed State */
+:is(
+    .showroom .show-cta,
+    .showroom .map-button,
+    .showroom .unified-slide--catalog .show-link,
+    .showroom .featured-catalog .show-link,
+    .showroom .testimonials .show-link
+):active {
+    transform: translateY(0) scale(0.98) !important;
+}
+
+/* 6. Section-Specific Size & Shape Refinements */
+.showroom .yza-member-actions .show-cta {
+    border-radius: 999px !important;
+    min-height: 48px !important;
+    padding: 12px 32px !important;
+    font-size: 13.5px !important;
+    font-weight: 800 !important;
+    letter-spacing: 0.05em !important;
+    text-transform: uppercase !important;
+}
+
+.showroom .services-membership-actions .show-cta {
+    border-radius: 8px !important;
+    min-height: 46px !important;
+    padding: 11px 24px !important;
+    font-size: 13px !important;
+    font-weight: 750 !important;
+}
+
+.showroom .appointment-submit {
+    width: 100% !important;
+    min-height: 52px !important;
+    border-radius: 8px !important;
+    font-size: 14px !important;
+    font-weight: 750 !important;
+    letter-spacing: 0.03em !important;
+    text-transform: uppercase !important;
+}
+
+.showroom .experience-copy .show-cta {
+    min-height: 48px !important;
+    padding: 12px 28px !important;
+    border-radius: 8px !important;
+    font-size: 13.5px !important;
+    font-weight: 750 !important;
+}
+
+.showroom .show-nav .show-cta {
+    min-height: 40px !important;
+    padding: 9px 20px !important;
+    border-radius: 8px !important;
+    font-size: 12.5px !important;
+    font-weight: 800 !important;
+    letter-spacing: 0.04em !important;
+}
+
+
+

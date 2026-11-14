@@ -56,11 +56,11 @@ class YzaPointsStage10BTest extends TestCase
     public function test_member_center_and_history_are_customer_scoped(): void
     {
         $customer = $this->user('pelanggan');
-        $this->actingAs($customer)->get('/pelanggan/member')->assertOk()->assertSee('YZA Points');
-        $this->actingAs($customer)->get('/pelanggan/poin')->assertOk()->assertSee('Riwayat Poin');
-        $this->actingAs($this->user('admin'))->get('/pelanggan/poin')->assertForbidden();
-        $this->actingAs($this->user('petugas'))->get('/pelanggan/poin')->assertForbidden();
-        $this->assertStringNotContainsString('redeem', strtolower($this->actingAs($customer)->get('/pelanggan/poin')->getContent()));
+        $response = $this->actingAs($customer)->get('/pelanggan/member')->assertOk()->assertSee('YZA Points')->assertSee('Riwayat Poin');
+        $this->actingAs($customer)->get('/pelanggan/poin')->assertNotFound();
+        $this->actingAs($this->user('admin'))->get('/pelanggan/member')->assertForbidden();
+        $this->actingAs($this->user('petugas'))->get('/pelanggan/member')->assertForbidden();
+        $this->assertStringNotContainsString('redeem', strtolower($response->getContent()));
     }
 
     public function test_legacy_customer_without_user_is_not_a_member(): void

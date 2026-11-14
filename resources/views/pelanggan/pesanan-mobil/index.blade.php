@@ -12,7 +12,6 @@
     <section class="member-orders-hero" aria-labelledby="orders-title">
         <div class="member-orders-hero-overlay"></div>
         <div class="member-orders-hero-copy">
-            <span class="member-orders-kicker">YZA AUTOMOTIVE · PREMIUM MEMBER PORTAL</span>
             <h1 id="orders-title" aria-label="Pesanan Mobil Saya">Pesanan Mobil <em>Saya</em></h1>
             <p>Pantau verifikasi, pembayaran, PDI, dan serah terima kendaraan Anda.</p>
         </div>
@@ -53,8 +52,10 @@
                     </ol>
                 </div>
                 <aside class="member-order-aside">
-                    <span class="member-order-status tone-{{ $meta['tone'] }}">{{ $meta['label'] }}</span>
-                    <small class="member-order-date">Dipesan pada {{ $order->created_at?->format('d M Y') }}</small>
+                    <div class="member-order-aside-head">
+                        <span class="member-order-status tone-{{ $meta['tone'] }}">{{ $meta['label'] }}</span>
+                        <small class="member-order-date">Dipesan {{ $order->created_at?->format('d M Y') }}</small>
+                    </div>
                     <div class="member-order-now"><small>Saat ini:</small><strong>{{ $meta['label'] }}</strong><p>{{ $meta['description'] }}</p></div>
                     <a class="member-order-detail-button {{ $meta['tone'] === 'danger' ? 'is-dark' : '' }}" href="{{ route('pelanggan.pesanan-mobil.show', $order) }}">Lihat Detail <span>→</span></a>
                 </aside>

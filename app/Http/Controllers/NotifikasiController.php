@@ -85,6 +85,7 @@ class NotifikasiController extends Controller
             'booking_servis' => $this->bookingServiceUrl($referenceId, $customerId),
             'pesanan_mobil_member' => $this->memberVehicleOrderUrl($referenceId, $customerId),
             'pre_order_mobil' => $this->preorderUrl($referenceId, $customerId),
+            'promo' => route('pelanggan.promo.index'),
             default => route('notifications.index'),
         };
     }

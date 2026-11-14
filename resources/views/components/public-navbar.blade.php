@@ -30,9 +30,9 @@
     </nav>
     <div class="show-actions">
         @if($memberState === 'active')
-            <a class="show-login" href="{{ route('pelanggan.member') }}" aria-label="Buka Member Center"><span>MEMBER CENTER</span><b aria-hidden="true">→</b></a>
+            <a class="show-login" href="{{ route('pelanggan.member') }}" aria-label="Buka Member Center"><span>MEMBER CENTER</span></a>
         @else
-            <a class="show-login" href="{{ route('login') }}" aria-label="Masuk sebagai member"><span>MASUK MEMBER</span><b aria-hidden="true">→</b></a>
+            <a class="show-login" href="{{ route('login') }}" aria-label="Masuk sebagai member"><span>MASUK MEMBER</span></a>
             <a class="show-cta show-member-primary" href="{{ route('register', ['from' => 'membership']) }}">BUAT MEMBER</a>
         @endif
     </div>

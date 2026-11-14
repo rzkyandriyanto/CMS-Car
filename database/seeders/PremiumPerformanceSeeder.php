@@ -44,7 +44,7 @@ class PremiumPerformanceSeeder extends Seeder
                     'harga_beli' => $price * 0.9, 'harga_jual' => $price, 'kondisi' => 'baru', 'status' => 'tersedia',
                     'deskripsi' => $model.' premium performance dengan karakter eksklusif dan pengalaman berkendara YZA Automotive.',
                     'tanggal_masuk' => now()->toDateString(), 'sumber_mobil' => 'dealer', 'created_at' => now(), 'updated_at' => now(),
-                ]);
+                ], 'id_mobil');
             } else { $id = $car->id_mobil; }
 
             $existingColorIds = DB::table('mobil_warna')->where('id_mobil', $id)->pluck('id_warna');

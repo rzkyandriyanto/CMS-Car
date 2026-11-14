@@ -10,7 +10,7 @@ class PromoMemberService
     public function visible(int $limit = 0)
     {
         $query = PromoMember::visible()->orderBy('selesai_at');
-        return $limit > 0 ? $query->limit($limit)->get() : $query->paginate(12);
+        return $limit > 0 ? $query->limit($limit)->get() : $query->paginate(16);
     }
     public function normalize(array $data, int $userId): array
     {

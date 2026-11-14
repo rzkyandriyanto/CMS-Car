@@ -63,9 +63,24 @@ class OwnerAnalyticsService
         return DB::table('pesanan_mobil_member')->whereNotIn('status', ['diserahkan', 'dibatalkan', 'ditolak'])->when($from, fn ($q) => $q->where('created_at', '>=', $from))->when($to, fn ($q) => $q->where('created_at', '<=', $to))->count();
     }
 
+    private function datePeriodExpression(string $column): string
+    {
+        return match (DB::connection()->getDriverName()) {
+            'pgsql' => "TO_CHAR({$column}, 'YYYY-MM')",
+            'sqlite' => "strftime('%Y-%m', {$column})",
+            default => "DATE_FORMAT({$column}, '%Y-%m')",
+        };
+    }
+
     public function monthlySales(?Carbon $from = null, ?Carbon $to = null): array
     {
-        return $this->finalVehicleSales($from, $to)->selectRaw("DATE_FORMAT(tanggal_penjualan, '%Y-%m') AS period, COUNT(*) AS units, SUM(total_akhir) AS amount")->groupBy('period')->orderBy('period')->get()->map(fn ($row) => ['period' => $row->period, 'units' => (int) $row->units, 'amount' => (float) $row->amount])->all();
+        return $this->finalVehicleSales($from, $to)
+            ->selectRaw($this->datePeriodExpression('tanggal_penjualan') . " AS period, COUNT(*) AS units, SUM(total_akhir) AS amount")
+            ->groupBy('period')
+            ->orderBy('period')
+            ->get()
+            ->map(fn ($row) => ['period' => $row->period, 'units' => (int) $row->units, 'amount' => (float) $row->amount])
+            ->all();
     }
 
     public function brandBreakdown(?Carbon $from = null, ?Carbon $to = null, array $filters = []): array
@@ -96,9 +111,9 @@ class OwnerAnalyticsService
     {
         $bookings = DB::table('pesanan_mobil_member')->when($from, fn ($q) => $q->where('created_at', '>=', $from))
             ->when($to, fn ($q) => $q->where('created_at', '<=', $to))
-            ->whereNotIn('status', ['dibatalkan', 'ditolak'])->selectRaw("DATE_FORMAT(created_at, '%Y-%m') AS period, COUNT(*) AS bookings")
+            ->whereNotIn('status', ['dibatalkan', 'ditolak'])->selectRaw($this->datePeriodExpression('created_at') . " AS period, COUNT(*) AS bookings")
             ->groupBy('period')->pluck('bookings', 'period');
-        $sales = $this->finalVehicleSales($from, $to)->selectRaw("DATE_FORMAT(tanggal_penjualan, '%Y-%m') AS period, COUNT(*) AS sales")
+        $sales = $this->finalVehicleSales($from, $to)->selectRaw($this->datePeriodExpression('tanggal_penjualan') . " AS period, COUNT(*) AS sales")
             ->groupBy('period')->pluck('sales', 'period');
         return collect($bookings->keys()->merge($sales->keys())->unique()->sort()->values())->map(fn ($period) => [
             'period' => $period, 'bookings' => (int) ($bookings[$period] ?? 0), 'sales' => (int) ($sales[$period] ?? 0),
@@ -108,7 +123,7 @@ class OwnerAnalyticsService
     public function modelBreakdown(?Carbon $from = null, ?Carbon $to = null): array
     {
         return $this->finalVehicleSales($from, $to)->join('mobil as report_model', 'report_model.id_mobil', '=', 'penjualan_mobil.id_mobil')
-            ->selectRaw('CONCAT(report_model.merk, " ", report_model.model) AS label, COUNT(DISTINCT penjualan_mobil.id_penjualan) AS units')
+            ->selectRaw("CONCAT(report_model.merk, ' ', report_model.model) AS label, COUNT(DISTINCT penjualan_mobil.id_penjualan) AS units")
             ->groupBy('report_model.merk', 'report_model.model')->orderByDesc('units')->limit(10)->get()
             ->map(fn ($row) => ['label' => $row->label, 'units' => (int) $row->units])->all();
     }
@@ -117,13 +132,13 @@ class OwnerAnalyticsService
     {
         $booking = BookingServis::query()->when($from, fn ($q) => $q->where('tanggal', '>=', $from->toDateString()))
             ->when($to, fn ($q) => $q->where('tanggal', '<=', $to->toDateString()))
-            ->selectRaw("DATE_FORMAT(tanggal, '%Y-%m') AS period, COUNT(*) AS bookings")->groupBy('period')->pluck('bookings', 'period');
+            ->selectRaw($this->datePeriodExpression('tanggal') . " AS period, COUNT(*) AS bookings")->groupBy('period')->pluck('bookings', 'period');
         $completed = Servis::query()->whereIn('status', ['selesai', 'ditutup'])
             ->when($from, fn ($q) => $q->where('tanggal_selesai', '>=', $from))->when($to, fn ($q) => $q->where('tanggal_selesai', '<=', $to))
-            ->selectRaw("DATE_FORMAT(tanggal_selesai, '%Y-%m') AS period, COUNT(*) AS completed")->groupBy('period')->pluck('completed', 'period');
+            ->selectRaw($this->datePeriodExpression('tanggal_selesai') . " AS period, COUNT(*) AS completed")->groupBy('period')->pluck('completed', 'period');
         $revenue = Pembayaran::query()->where('arah', 'masuk')->where('status', 'terverifikasi')->whereHas('transaksi', fn ($q) => $q->where('jenis_transaksi', 'servis'))
             ->when($from, fn ($q) => $q->where('verified_at', '>=', $from))->when($to, fn ($q) => $q->where('verified_at', '<=', $to))
-            ->selectRaw("DATE_FORMAT(verified_at, '%Y-%m') AS period, SUM(jumlah) AS revenue")->groupBy('period')->pluck('revenue', 'period');
+            ->selectRaw($this->datePeriodExpression('verified_at') . " AS period, SUM(jumlah) AS revenue")->groupBy('period')->pluck('revenue', 'period');
         return collect($booking->keys()->merge($completed->keys())->merge($revenue->keys())->unique()->sort()->values())->map(fn ($period) => [
             'period' => $period, 'bookings' => (int) ($booking[$period] ?? 0), 'completed' => (int) ($completed[$period] ?? 0), 'revenue' => (float) ($revenue[$period] ?? 0),
         ])->all();

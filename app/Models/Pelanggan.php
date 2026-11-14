@@ -42,6 +42,7 @@ class Pelanggan extends Model
     public function penjualanMobil(): HasMany { return $this->hasMany(PenjualanMobil::class, 'id_pelanggan', 'id_pelanggan'); }
     public function pengajuanMobil(): HasMany { return $this->hasMany(PengajuanMobil::class, 'id_pelanggan', 'id_pelanggan'); }
     public function poinMember(): HasOne { return $this->hasOne(PoinMember::class, 'id_pelanggan', 'id_pelanggan'); }
+    public function pointAccount(): HasOne { return $this->hasOne(PoinMember::class, 'id_pelanggan', 'id_pelanggan'); }
     public function riwayatPoin(): HasMany { return $this->hasMany(RiwayatPoin::class, 'id_pelanggan', 'id_pelanggan'); }
     public function membership(): HasOne { return $this->hasOne(Membership::class, 'id_pelanggan', 'id_pelanggan'); }
 }

@@ -1,9 +1,19 @@
 /* Member homepage composition based on the approved showroom reference.
    Scope keeps the public landing and other member pages unchanged. */
-.yza-home-reference { --member-accent:#f10b20; --member-gutter:clamp(20px,2vw,42px); background:#f7f8fa!important; }
+.yza-home.yza-home-reference {
+    --member-accent: #f10b20;
+    --member-gutter: clamp(20px, 2.2vw, 48px);
+    background: #f7f8fa !important;
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 0 !important;
+    max-width: 1600px;
+    margin: 0 auto;
+    padding: 0 0 clamp(60px, 6vw, 90px) 0 !important;
+}
 .yza-home-reference svg { width:24px;height:24px;flex:0 0 auto; }
 .yza-home-reference .yza-home-hero {
-    position:relative;isolation:isolate;display:grid;grid-template-columns:minmax(0,1fr) minmax(300px,31%);
+    position:relative;isolation:isolate;display:grid;grid-template-columns:minmax(0,1.15fr) auto!important;
     align-items:center;gap:24px;min-height:clamp(410px,26vw,490px)!important;
     padding:48px var(--member-gutter) 54px!important;overflow:hidden;
     background:#08090b url('/assets/images/member/member-reference-hero.jpg') 40% 52%/85% auto no-repeat!important;
@@ -62,33 +72,253 @@
     .yza-home-reference .yza-home-hero-actions .yza-home-primary:is(:hover,:focus-visible,:active),
     .yza-home-reference .yza-home-primary:is(:hover,:focus-visible)>b { transform:none; }
 }
-.yza-home-reference .yza-home-secondary { background:#1314167a;backdrop-filter:blur(4px); }
+.yza-home-reference .yza-home-secondary {
+    background: rgba(19, 20, 22, 0.72);
+    backdrop-filter: blur(8px);
+    border: 1px solid rgba(255, 255, 255, 0.35);
+    box-shadow: 0 4px 18px rgba(0, 0, 0, 0.35);
+    transition: transform .2s ease, border-color .2s ease, background .2s ease, box-shadow .2s ease;
+}
+.yza-home-reference .yza-home-secondary:is(:hover, :focus-visible) {
+    transform: translateY(-2px);
+    background: rgba(28, 30, 35, 0.92);
+    border-color: #ff3f50;
+    box-shadow: 0 8px 24px rgba(239, 35, 60, 0.28);
+    color: #fff;
+}
+.yza-home-reference .yza-home-secondary:active {
+    transform: translateY(1px) scale(.98);
+}
+.yza-home-reference .yza-home-hero-actions a svg {
+    width: 18px;
+    height: 18px;
+    flex-shrink: 0;
+}
 .yza-home-reference .yza-home-member-meta { margin-top:18px;gap:18px;color:#f3f3f5;font-size:12px; }
 .yza-home-reference .yza-home-status { padding:8px 13px;background:linear-gradient(90deg,#06451a,#073018);color:#b5ffcc;font-size:11px;letter-spacing:.02em; }
 .yza-home-reference .yza-home-since { display:inline-flex;align-items:center;gap:9px;padding-left:16px;border-left:1px solid #ffffff70; }
 .yza-home-reference .yza-home-since svg { width:18px;height:18px; }
 .yza-home.yza-home-reference .yza-home-member-card {
-    align-self:center;justify-content:flex-start;min-height:300px!important;padding:22px 26px!important;
-    background:#090a0c url('/assets/images/member/member-reference-card.jpg') center/cover no-repeat!important;
-    border:1.5px solid #ff283f!important;border-radius:20px!important;
-    box-shadow:0 0 0 1px #f5192f40,inset 0 0 18px #e8001b20,0 5px 18px #f0002638!important;
+    position: relative !important;
+    isolation: isolate !important;
+    overflow: hidden !important;
+    align-self: center !important;
+    justify-self: end !important;
+    display: flex !important;
+    flex-direction: column !important;
+    justify-content: space-between !important;
+    aspect-ratio: 1.586 / 1 !important;
+    width: clamp(360px, 25vw, 420px) !important;
+    max-width: 430px !important;
+    height: auto !important;
+    min-height: 0 !important;
+    padding: 20px 24px !important;
+    box-sizing: border-box !important;
+    border-radius: 16px !important;
+    background: #111317 !important;
+    border: 1px solid rgba(237, 28, 46, 0.5) !important;
+    box-shadow: 0 16px 36px -8px rgba(0, 0, 0, 0.85),
+                0 0 0 1px rgba(255, 255, 255, 0.05),
+                0 0 24px rgba(237, 28, 46, 0.14) !important;
 }
-.yza-home-reference .yza-home-member-card::after { background:linear-gradient(90deg,#0304053d,transparent 70%)!important; }
-.yza-home.yza-home-reference .yza-home-member-card .yza-member-card-top { margin:0 0 12px;gap:8px!important; }
-.yza-home.yza-home-reference .yza-home-member-card .yza-member-card-top img { width:48px!important;height:44px!important; }
-.yza-home.yza-home-reference .yza-home-member-card .yza-member-card-top>span { display:inline-flex;align-items:center;gap:8px;padding:6px 10px;border:1px solid #ec344d75;border-radius:12px 5px;background:linear-gradient(135deg,#7a0515b0,#240309b0);font-size:clamp(9px,.8vw,13px)!important;font-weight:800;letter-spacing:.12em!important;color:#fff!important; }
-.yza-home-reference .yza-member-card-top svg { width:18px;height:18px; }
-.yza-home.yza-home-reference .yza-member-card-label { max-width:72%;font-size:10px!important;letter-spacing:.1em!important; }
-.yza-home.yza-home-reference .yza-member-card-label:first-of-type { margin-top:0!important;color:#ffd18b!important; }
-.yza-home.yza-home-reference .yza-member-card-code { max-width:82%;margin-top:4px;font-size:clamp(17px,1.4vw,25px)!important;line-height:1.2!important;letter-spacing:.02em!important;overflow-wrap:anywhere; }
-.yza-home.yza-home-reference .yza-member-card-rule { width:65%!important;height:1px!important;margin:14px 0!important;background:linear-gradient(90deg,#f44959,#ffffff25)!important; }
-.yza-home.yza-home-reference .yza-member-card-name { max-width:70%;margin:5px 0 12px;font-size:clamp(14px,1.2vw,20px)!important;letter-spacing:.01em!important;line-height:1.3;overflow-wrap:anywhere; }
-.yza-home.yza-home-reference .yza-member-card-meta { align-self:flex-start;gap:18px!important;margin-top:auto!important;padding:10px 14px!important;border:1px solid #ee425c80;border-radius:12px;background:#090b0dc2; }
-.yza-home.yza-home-reference .yza-member-card-meta small { font-size:8px!important;letter-spacing:.02em!important; }
-.yza-home.yza-home-reference .yza-member-card-meta small+small { padding-left:18px;border-left:1px solid #ffffff5c; }
-.yza-home.yza-home-reference .yza-member-card-meta strong { color:#fff!important;font-size:12px!important;letter-spacing:0!important; }
-.yza-home.yza-home-reference .yza-member-card-meta .is-active { color:#63f77c!important; }
-.yza-home-reference .yza-home-stats { position:relative;z-index:1;margin-top:-28px;padding:0 var(--member-gutter)!important;gap:14px!important;background:transparent!important; }
+.yza-home.yza-home-reference .yza-home-member-card::before,
+.yza-home.yza-home-reference .yza-home-member-card::after,
+.yza-home-reference .yza-member-card-glare {
+    display: none !important;
+    content: none !important;
+}
+
+/* Top Row */
+.yza-home.yza-home-reference .yza-member-card-top {
+    position: relative;
+    z-index: 2;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+    width: 100% !important;
+    margin: 0 !important;
+    gap: 12px !important;
+}
+.yza-home-reference .yza-member-card-brand {
+    display: flex;
+    align-items: center;
+    gap: 9px;
+}
+.yza-home.yza-home-reference .yza-member-card-brand img {
+    width: 28px !important;
+    height: 28px !important;
+    object-fit: contain !important;
+    filter: drop-shadow(0 2px 4px rgba(0,0,0,0.6));
+}
+.yza-home-reference .yza-brand-text {
+    color: #fff;
+    font-size: 11px;
+    font-weight: 800;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+}
+.yza-home.yza-home-reference .yza-member-card-tier {
+    display: inline-flex !important;
+    align-items: center !important;
+    gap: 5px !important;
+    padding: 4px 10px !important;
+    border-radius: 999px !important;
+    background: linear-gradient(135deg, rgba(237, 28, 46, 0.28), rgba(120, 10, 20, 0.45)) !important;
+    border: 1px solid rgba(255, 75, 95, 0.55) !important;
+    font-size: 9.5px !important;
+    font-weight: 800 !important;
+    letter-spacing: 0.12em !important;
+    color: #fff !important;
+    box-shadow: 0 2px 8px rgba(237, 28, 46, 0.3) !important;
+}
+.yza-home-reference .yza-member-card-tier svg {
+    width: 12px;
+    height: 12px;
+    color: #ffc83b;
+}
+
+/* Chip & Contactless */
+.yza-home-reference .yza-member-card-security {
+    position: relative;
+    z-index: 2;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    width: 100%;
+    margin: 4px 0 0;
+}
+.yza-home-reference .yza-card-emv-chip {
+    width: 36px;
+    height: 26px;
+    border-radius: 5px;
+    background: linear-gradient(135deg, #d4af37 0%, #fae8a4 32%, #aa8010 68%, #e8c560 100%);
+    border: 1px solid #7c5d0b;
+    position: relative;
+    box-shadow: inset 0 1px 1px rgba(255,255,255,0.7), 0 2px 4px rgba(0,0,0,0.4);
+    overflow: hidden;
+}
+.yza-home-reference .yza-card-emv-chip .chip-line:first-child {
+    position: absolute;
+    top: 50%;
+    left: 0;
+    right: 0;
+    height: 1px;
+    background: #6a4f09;
+}
+.yza-home-reference .yza-card-emv-chip .chip-line:nth-child(2) {
+    position: absolute;
+    left: 38%;
+    top: 0;
+    bottom: 0;
+    width: 1px;
+    background: #6a4f09;
+}
+.yza-home-reference .yza-card-emv-chip .chip-core {
+    position: absolute;
+    left: 38%;
+    top: 25%;
+    width: 11px;
+    height: 13px;
+    border: 1px solid #6a4f09;
+    border-radius: 2px;
+}
+.yza-home-reference .yza-card-contactless {
+    width: 18px;
+    height: 18px;
+    color: rgba(255, 255, 255, 0.45);
+    transform: rotate(90deg);
+}
+.yza-home-reference .yza-card-contactless svg {
+    width: 100%;
+    height: 100%;
+}
+
+/* Card Number */
+.yza-home-reference .yza-member-card-number {
+    position: relative;
+    z-index: 2;
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+    margin: 6px 0 2px;
+}
+.yza-home-reference .yza-card-caption {
+    font-size: 7.5px;
+    font-weight: 700;
+    letter-spacing: 0.16em;
+    color: rgba(255, 255, 255, 0.45);
+    text-transform: uppercase;
+}
+.yza-home.yza-home-reference .yza-card-digits {
+    font-family: "SF Mono", "Consolas", "Courier New", monospace !important;
+    font-size: clamp(15px, 1.15vw, 18.5px) !important;
+    font-weight: 800 !important;
+    letter-spacing: 0.18em !important;
+    color: #f1f3f7 !important;
+    text-shadow: 0 1px 1px #000, 0 -1px 0 rgba(255,255,255,0.3) !important;
+    line-height: 1 !important;
+}
+
+/* Bottom: Cardholder and Dates */
+.yza-home.yza-home-reference .yza-member-card-bottom {
+    position: relative;
+    z-index: 2;
+    display: flex !important;
+    align-items: flex-end !important;
+    justify-content: space-between !important;
+    width: 100% !important;
+    margin: 0 !important;
+    gap: 12px !important;
+}
+.yza-home-reference .yza-member-card-holder {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    max-width: 60%;
+}
+.yza-home.yza-home-reference .yza-card-val-name {
+    font-size: 11.5px !important;
+    font-weight: 700 !important;
+    letter-spacing: 0.08em !important;
+    color: #fff !important;
+    text-transform: uppercase !important;
+    white-space: nowrap !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+    text-shadow: 0 1px 2px rgba(0,0,0,0.8) !important;
+    line-height: 1.2 !important;
+}
+.yza-home-reference .yza-member-card-dates {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+}
+.yza-home-reference .yza-card-date-col {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    text-align: right;
+}
+.yza-home-reference .yza-card-val {
+    font-size: 10.5px;
+    font-weight: 700;
+    color: #fff;
+    letter-spacing: 0.05em;
+    line-height: 1.2;
+}
+.yza-home-reference .yza-card-status-active {
+    color: #4ade80 !important;
+    text-shadow: 0 0 8px rgba(74, 222, 128, 0.45);
+}
+.yza-home-reference .yza-home-stats {
+    position: relative;
+    z-index: 2;
+    margin-top: -34px !important;
+    margin-bottom: clamp(38px, 4vw, 56px) !important;
+    padding: 0 var(--member-gutter) !important;
+    gap: 16px !important;
+    background: transparent !important;
+}
 .yza-home-reference .yza-home-stats>a { display:grid;grid-template-columns:64px minmax(0,1fr) 12px;grid-template-rows:auto auto auto;column-gap:18px;row-gap:1px;align-content:center;min-height:100px;padding:16px 20px!important;border:1px solid #ecb6bf!important;border-top:3px solid #fff!important;border-radius:15px!important;background:linear-gradient(135deg,#fff,#faf9fb)!important;box-shadow:0 9px 19px #35202a20,inset 0 0 0 3px #fff!important; }
 .yza-home-reference .yza-home-stat-icon { position:static;display:grid;place-items:center;grid-column:1;grid-row:1/4;width:64px;height:64px;border:1px solid #ff7880;border-radius:13px;background:linear-gradient(145deg,#ff1825,#a60007);box-shadow:inset 0 0 12px #ff637555;color:#fff; }
 .yza-home-reference .yza-home-stat-icon svg { width:34px;height:34px; }
@@ -96,17 +326,622 @@
 .yza-home-reference .yza-home-stats strong { grid-column:2;grid-row:2;color:#0c1016!important;font-size:28px;line-height:1.05; }
 .yza-home-reference .yza-home-stats em { grid-column:2;grid-row:3;color:#3f4754!important;font-size:12px;line-height:1.3; }
 .yza-home-reference .yza-home-stat-arrow { grid-column:3;grid-row:1/4;align-self:center;color:#f00024;font-size:30px;font-weight:300; }
-.yza-home.yza-home-reference .yza-home-services-section { padding:26px var(--member-gutter) 32px!important;background:#f7f8fa!important; }
-.yza-home-reference .yza-home-services-section .yza-home-section-head { align-items:center;gap:22px;margin-bottom:22px; }
+
+.yza-home.yza-home-reference .yza-home-lower-grid {
+    margin: 0 0 clamp(44px, 4.5vw, 64px) 0 !important;
+    padding: 0 var(--member-gutter) !important;
+    gap: 20px !important;
+    background: transparent !important;
+}
+.yza-home.yza-home-reference .yza-home-lower-grid .yza-home-panel {
+    border: 1px solid #d5d9e0 !important;
+    border-radius: 16px !important;
+    box-shadow: 0 6px 20px rgba(17, 24, 39, 0.06) !important;
+    padding: 30px 28px !important;
+}
+
+.yza-home.yza-home-reference .yza-home-services-section {
+    margin: 0 0 clamp(48px, 5vw, 68px) 0 !important;
+    padding: 0 var(--member-gutter) !important;
+    background: transparent !important;
+    border: none !important;
+    border-radius: 0 !important;
+    box-shadow: none !important;
+}
+
+.yza-home.yza-home-reference .yza-home-garage-showcase {
+    margin: 0 !important;
+    padding: 0 var(--member-gutter) !important;
+    background: transparent !important;
+}
+.yza-home.yza-home-reference .yza-home-garage-showcase .show-container {
+    width: 100% !important;
+    max-width: 100% !important;
+    margin: 0 !important;
+    padding: 0 !important;
+}
+.yza-home.yza-home-reference .yza-home-garage-showcase .show-section-heading {
+    margin-bottom: 26px !important;
+}
+
+.yza-home-reference .yza-home-services-section .yza-home-section-head { align-items:center;gap:22px;margin-bottom:26px; }
 .yza-home-reference .yza-home-services-section .yza-home-kicker { font-size:11px;letter-spacing:.22em; }
 .yza-home-reference .yza-home-services-section h2 { margin:5px 0 0;font-size:clamp(26px,2.2vw,36px)!important;line-height:1.1!important;letter-spacing:-.045em; }
 .yza-home-reference .yza-home-services-section h2 em { color:#ed001c;font-style:normal; }
 .yza-home-reference .yza-home-services-section .yza-home-section-head p { max-width:none;margin:3px 0 0;color:#454f5e!important;font-size:14px!important;line-height:1.5!important; }
 .yza-home-reference .yza-home-services-section .yza-home-section-head>a { display:inline-flex;align-items:center;justify-content:center;gap:18px;min-height:44px;padding:9px 24px;border:1px solid #f20c28;border-radius:999px;background:#fff;color:#df001c;font-size:13px;white-space:nowrap; }
-.yza-home-reference .yza-home-service-grid { grid-template-columns:repeat(4,minmax(0,1fr));gap:18px; }
+.yza-home-reference .yza-home-service-grid {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 18px;
+}
+@media (max-width: 1200px) {
+    .yza-home-reference .yza-home-service-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    }
+}
+@media (max-width: 680px) {
+    .yza-home-reference .yza-home-service-grid {
+        grid-template-columns: 1fr !important;
+    }
+}
+
+/* Promo Page Header (/pelanggan/promo) - Full-width, no-rounded, trade-in showroom bg */
+.member-main-content .member-hero.yza-promo-hero {
+    position: relative;
+    width: 100% !important;
+    min-height: 220px !important;
+    margin: 0 0 32px 0 !important;
+    padding: clamp(34px, 3.5vw, 48px) 0 !important;
+    border-radius: 0 !important;
+    border: none !important;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.12) !important;
+    background: linear-gradient(90deg, rgba(7, 9, 12, 0.95) 0%, rgba(7, 9, 12, 0.84) 42%, rgba(7, 9, 12, 0.45) 75%, rgba(7, 9, 12, 0.22) 100%), 
+                var(--promo-hero-bg, url('/assets/images/member/reference-service-trade-in.jpg')) center 38%/cover no-repeat !important;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.35) !important;
+    box-sizing: border-box;
+}
+.member-main-content .member-hero.yza-promo-hero .yza-promo-hero-inner {
+    max-width: 1600px;
+    margin: 0 auto;
+    padding: 0 clamp(24px, 3.2vw, 54px);
+    width: 100%;
+    box-sizing: border-box;
+}
+.member-main-content .member-hero.yza-promo-hero .yza-eyebrow {
+    display: inline-block;
+    color: #ff2a3b;
+    font-size: 11px;
+    font-weight: 900;
+    letter-spacing: .2em;
+    text-transform: uppercase;
+    margin-bottom: 6px;
+}
+.member-main-content .member-hero.yza-promo-hero h1 {
+    margin: 4px 0 10px 0 !important;
+    color: #fff !important;
+    font-size: clamp(30px, 3.2vw, 46px) !important;
+    font-weight: 850 !important;
+    line-height: 1.15 !important;
+    letter-spacing: -0.03em !important;
+}
+.member-main-content .member-hero.yza-promo-hero p {
+    margin: 0 !important;
+    color: #cbd5e1 !important;
+    font-size: 15px !important;
+    line-height: 1.55 !important;
+    max-width: 680px;
+}
+
+/* Promo Page Body Container - Margin kiri-kanan presisi */
+.yza-promo-body-container {
+    max-width: 1600px;
+    margin: 0 auto !important;
+    padding: 0 clamp(24px, 3.2vw, 54px) 80px clamp(24px, 3.2vw, 54px) !important;
+    box-sizing: border-box;
+    width: 100%;
+}
+.yza-promo-body-container .yza-promo-page {
+    background: transparent !important;
+    padding: 0 !important;
+    max-width: 100% !important;
+    margin: 0 !important;
+}
+.yza-promo-body-container .member-access-note {
+    margin-bottom: 24px;
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    border-radius: 12px;
+    background: rgba(20, 22, 26, 0.8);
+    color: #fff;
+    padding: 20px 24px;
+}
+.yza-promo-body-container .yza-alert {
+    margin-bottom: 24px;
+}
+
+/* Catalog view on /pelanggan/promo - 4 Kolom 4 Baris (DailyUI Model) */
+.yza-promo-catalog-grid {
+    display: grid !important;
+    grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
+    gap: 22px !important;
+}
+@media (max-width: 1260px) {
+    .yza-promo-catalog-grid {
+        grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+        gap: 18px !important;
+    }
+}
+@media (max-width: 890px) {
+    .yza-promo-catalog-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+        gap: 16px !important;
+    }
+}
+@media (max-width: 560px) {
+    .yza-promo-catalog-grid {
+        grid-template-columns: 1fr !important;
+        gap: 14px !important;
+    }
+}
+
+/* DailyUI Style Coupon Cards */
+.yza-daily-coupon-card {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    background: #ffffff !important;
+    border-radius: 18px !important;
+    box-shadow: 0 10px 25px rgba(15, 23, 42, 0.07), 0 2px 6px rgba(15, 23, 42, 0.04) !important;
+    border: 1px solid rgba(226, 232, 240, 0.9) !important;
+    overflow: hidden !important;
+    transition: transform 0.22s ease, box-shadow 0.22s ease, border-color 0.22s ease !important;
+}
+.yza-daily-coupon-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 18px 36px rgba(15, 23, 42, 0.12), 0 4px 10px rgba(15, 23, 42, 0.06) !important;
+    border-color: rgba(203, 213, 225, 0.95) !important;
+}
+
+/* Top Banner with Clean Photo / PNG - No Overlay */
+.yza-daily-coupon-banner {
+    position: relative;
+    height: 142px;
+    width: 100%;
+    overflow: visible;
+    background: #0f172a;
+    border-top-left-radius: 17px;
+    border-top-right-radius: 17px;
+    box-sizing: border-box;
+}
+.yza-daily-coupon-img {
+    width: 100%;
+    height: 142px;
+    object-fit: cover;
+    object-position: center;
+    display: block;
+    border-top-left-radius: 17px;
+    border-top-right-radius: 17px;
+}
+
+/* The Signature Gold Overlap Badge (Round / Bulat Emas) */
+.yza-daily-coupon-overlap-badge {
+    position: absolute;
+    right: 16px;
+    bottom: -23px;
+    z-index: 5;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 46px;
+    height: 46px;
+    padding: 0 8px;
+    border-radius: 9999px;
+    background: linear-gradient(135deg, #f6b73c 0%, #d99110 50%, #b57100 100%) !important;
+    color: #ffffff !important;
+    font-size: 13.5px;
+    font-weight: 900;
+    letter-spacing: -0.02em;
+    line-height: 1;
+    text-shadow: 0 1px 3px rgba(0, 0, 0, 0.4);
+    border: 2.5px solid #ffffff;
+    box-shadow: 0 4px 14px rgba(181, 113, 0, 0.42);
+    box-sizing: border-box;
+}
+
+/* Card Body (Crisp White) */
+.yza-daily-coupon-body {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    padding: 26px 16px 16px 16px;
+    background: #ffffff;
+    box-sizing: border-box;
+}
+.yza-daily-coupon-title {
+    margin: 0 0 6px 0 !important;
+    font-size: 15px !important;
+    font-weight: 800 !important;
+    color: #0f172a !important;
+    letter-spacing: -0.02em !important;
+    line-height: 1.25 !important;
+}
+.yza-daily-coupon-desc {
+    margin: 0 0 16px 0 !important;
+    font-size: 12px !important;
+    color: #64748b !important;
+    line-height: 1.45 !important;
+    flex: 1;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+
+/* Card Footer */
+.yza-daily-coupon-footer {
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 8px;
+    margin-top: auto;
+    padding-top: 12px;
+    border-top: 1px dashed #e2e8f0;
+}
+.yza-daily-coupon-expire {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    color: #111827;
+}
+.yza-daily-coupon-expire .expire-lbl {
+    font-size: 10.5px;
+    font-weight: 700;
+    color: #111827;
+    letter-spacing: 0.02em;
+}
+.yza-daily-coupon-expire .expire-val {
+    font-size: 12.5px;
+    font-weight: 850;
+    color: #111827 !important;
+}
+
+/* Red Action Button for both Tukar Poin & Lihat Kode */
+.yza-daily-claim-btn {
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    padding: 8px 16px !important;
+    min-height: 36px !important;
+    border-radius: 10px !important;
+    border: 1px solid #ff4557 !important;
+    background: linear-gradient(135deg, #f2192a 0%, #cf0014 100%) !important;
+    color: #ffffff !important;
+    font-size: 12px !important;
+    font-weight: 850 !important;
+    cursor: pointer !important;
+    text-decoration: none !important;
+    white-space: nowrap !important;
+    text-align: center !important;
+    box-shadow: 0 4px 14px rgba(239, 35, 60, 0.42) !important;
+    transition: transform 0.18s ease, box-shadow 0.18s ease, filter 0.18s ease !important;
+}
+.yza-daily-claim-btn:hover {
+    transform: translateY(-2px) !important;
+    box-shadow: 0 6px 18px rgba(239, 35, 60, 0.6) !important;
+    filter: brightness(1.08) !important;
+}
+.yza-daily-claim-btn:active {
+    transform: translateY(1px) scale(0.98) !important;
+}
+.yza-daily-claim-btn.is-claimed,
+.yza-daily-claim-btn[data-view-coupon] {
+    background: linear-gradient(135deg, #059669 0%, #047857 100%) !important;
+    border-color: #34d399 !important;
+    box-shadow: 0 4px 14px rgba(5, 150, 105, 0.35) !important;
+    cursor: pointer !important;
+}
+.yza-daily-claim-btn.is-claimed:hover,
+.yza-daily-claim-btn[data-view-coupon]:hover {
+    transform: translateY(-2px) !important;
+    box-shadow: 0 6px 18px rgba(5, 150, 105, 0.55) !important;
+    filter: brightness(1.08) !important;
+}
 .yza-home.yza-home-reference .yza-home-service-card { display:flex;flex-direction:column;justify-content:space-between;min-height:clamp(190px,12vw,230px)!important;padding:16px 20px!important;gap:10px;isolation:isolate;border:1px solid #c7cbd2;border-radius:12px!important;background:#0c0e10!important;box-shadow:0 7px 11px #11182720;color:#fff; }
 .yza-home.yza-home-reference .yza-home-service-card::before { position:absolute;inset:0;z-index:-2;display:block;width:100%;height:100%!important;aspect-ratio:auto;background:var(--service-image) center/cover no-repeat;border:0;content:""; }
 .yza-home.yza-home-reference .yza-home-service-card::after { position:absolute;inset:0;z-index:-1;content:"";background:linear-gradient(90deg,#030507c9 0%,#03050775 45%,#03050705 100%); }
+.yza-home.yza-home-reference .yza-home-service-card.yza-home-coupon-card::after {
+    background: linear-gradient(180deg, rgba(3, 5, 7, 0.45) 0%, rgba(3, 5, 7, 0.78) 50%, rgba(3, 5, 7, 0.96) 100%) !important;
+}
+.yza-home-reference .yza-coupon-card-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    margin-bottom: 6px;
+    position: relative;
+    z-index: 2;
+}
+.yza-home-reference .yza-coupon-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 5px 10px;
+    border-radius: 7px;
+    font-size: 11px;
+    font-weight: 900;
+    letter-spacing: .08em;
+    text-transform: uppercase;
+    color: #fff;
+    background: linear-gradient(135deg, #ff2338, #b80012);
+    box-shadow: 0 2px 10px rgba(239, 35, 60, 0.45);
+}
+.yza-home-reference .yza-coupon-badge svg {
+    width: 14px;
+    height: 14px;
+}
+.yza-home-reference .yza-coupon-badge--blue {
+    background: linear-gradient(135deg, #0284c7, #0369a1);
+    box-shadow: 0 2px 10px rgba(239, 35, 60, 0.4);
+}
+.yza-home-reference .yza-coupon-badge--gold {
+    background: linear-gradient(135deg, #d97706, #b45309);
+    box-shadow: 0 2px 10px rgba(217, 119, 6, 0.4);
+}
+.yza-home-reference .yza-coupon-badge--green {
+    background: linear-gradient(135deg, #059669, #047857);
+    box-shadow: 0 2px 10px rgba(5, 150, 105, 0.4);
+}
+.yza-home-reference .yza-coupon-points-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 4px 10px;
+    border-radius: 999px;
+    background: rgba(15, 18, 23, 0.88);
+    border: 1px solid rgba(255, 215, 0, 0.45);
+    color: #ffd700;
+    font-size: 11px;
+    font-weight: 800;
+    backdrop-filter: blur(6px);
+}
+.yza-home-reference .yza-coupon-points-pill svg {
+    width: 13px;
+    height: 13px;
+    color: #ffd700;
+}
+.yza-home.yza-home-reference .yza-home-service-card.yza-home-coupon-card h3 {
+    margin: 4px 0 5px;
+    font-size: clamp(17px, 1.35vw, 21px) !important;
+    font-weight: 850 !important;
+    color: #fff !important;
+    line-height: 1.2 !important;
+    letter-spacing: -0.02em !important;
+}
+.yza-home.yza-home-reference .yza-home-service-card.yza-home-coupon-card p {
+    max-width: none !important;
+    color: #e2e8f0 !important;
+    font-size: 12.5px !important;
+    line-height: 1.4 !important;
+    text-shadow: 0 1px 3px #000;
+}
+.yza-home-reference .yza-coupon-card-footer {
+    margin-top: 10px;
+    position: relative;
+    z-index: 2;
+}
+.yza-home-reference .yza-coupon-claim-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    min-height: 36px;
+    padding: 8px 16px;
+    border: 1px solid #ff596b;
+    border-radius: 12px 6px;
+    background: linear-gradient(135deg, #ff2031, #c80013);
+    color: #fff !important;
+    font-size: 12px;
+    font-weight: 800;
+    cursor: pointer;
+    box-shadow: 0 4px 14px rgba(239, 35, 60, 0.35);
+    transition: transform .2s ease, box-shadow .2s ease, filter .2s ease;
+}
+.yza-home-reference .yza-coupon-claim-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(239, 35, 60, 0.55);
+    filter: brightness(1.1);
+}
+.yza-home-reference .yza-coupon-claim-btn:active {
+    transform: translateY(1px) scale(.98);
+}
+.yza-home-reference .yza-coupon-claim-btn.is-claimed {
+    background: linear-gradient(135deg, #059669, #047857);
+    border-color: #34d399;
+    box-shadow: 0 4px 14px rgba(5, 150, 105, 0.35);
+}
+
+/* Coupon Claim Modal */
+.yza-claim-modal-backdrop {
+    position: fixed;
+    inset: 0;
+    z-index: 99999;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+    background: rgba(7, 8, 11, 0.85);
+    backdrop-filter: blur(8px);
+}
+.yza-claim-modal-backdrop[hidden] {
+    display: none !important;
+}
+.yza-claim-modal-dialog {
+    position: relative;
+    width: 100%;
+    max-width: 460px;
+    padding: 32px 28px;
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    border-radius: 20px;
+    background: linear-gradient(145deg, #181b22, #0d0f14);
+    box-shadow: 0 24px 60px rgba(0, 0, 0, 0.8), 0 0 30px rgba(239, 35, 60, 0.2);
+    color: #fff;
+    text-align: center;
+    animation: yzaModalIn .25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+@keyframes yzaModalIn {
+    from { opacity: 0; transform: scale(.92) translateY(12px); }
+    to { opacity: 1; transform: scale(1) translateY(0); }
+}
+.yza-claim-modal-close {
+    position: absolute;
+    top: 16px;
+    right: 18px;
+    width: 32px;
+    height: 32px;
+    display: grid;
+    place-items: center;
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.05);
+    color: #a0aec0;
+    font-size: 18px;
+    cursor: pointer;
+    transition: all .2s;
+}
+.yza-claim-modal-close:hover {
+    color: #fff;
+    border-color: #ff384c;
+    background: #ff384c;
+}
+.yza-claim-modal-icon {
+    display: grid;
+    place-items: center;
+    width: 68px;
+    height: 68px;
+    margin: 0 auto 16px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #ffe7ea, #ffd1d7);
+    color: #ef233c;
+    font-size: 32px;
+    box-shadow: 0 8px 24px rgba(239, 35, 60, 0.35);
+}
+.yza-claim-modal-dialog h3 {
+    margin: 0 0 8px;
+    font-size: 22px;
+    font-weight: 800;
+    color: #fff;
+    letter-spacing: -.02em;
+}
+.yza-claim-modal-dialog p {
+    margin: 0 0 20px;
+    color: #94a3b8;
+    font-size: 13.5px;
+    line-height: 1.5;
+}
+.yza-claim-modal-box {
+    padding: 16px 18px;
+    margin-bottom: 22px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 14px;
+    background: rgba(255, 255, 255, 0.03);
+    text-align: left;
+}
+.yza-claim-modal-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 6px 0;
+    font-size: 13px;
+}
+.yza-claim-modal-row span {
+    color: #94a3b8;
+}
+.yza-claim-modal-row strong {
+    color: #fff;
+    font-size: 14px;
+}
+.yza-claim-modal-row .highlight-cost {
+    color: #f87171;
+    font-weight: 800;
+}
+.yza-claim-modal-row .highlight-balance {
+    color: #4ade80;
+    font-weight: 800;
+}
+.yza-claim-modal-code-box {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    padding: 14px 18px;
+    margin: 18px 0;
+    border: 2px dashed #ff384c;
+    border-radius: 12px;
+    background: rgba(239, 35, 60, 0.08);
+}
+.yza-claim-modal-code-box strong {
+    font-size: 20px;
+    font-family: monospace;
+    letter-spacing: .08em;
+    color: #ff6874;
+}
+.yza-claim-copy-btn {
+    padding: 7px 14px;
+    border: 1px solid #ff384c;
+    border-radius: 8px;
+    background: #ff384c;
+    color: #fff;
+    font-size: 12px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all .2s;
+}
+.yza-claim-copy-btn:hover {
+    background: #e01b33;
+}
+.yza-claim-modal-actions {
+    display: flex;
+    gap: 12px;
+}
+.yza-claim-modal-actions button, .yza-claim-modal-actions a {
+    flex: 1;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 44px;
+    padding: 10px 18px;
+    border-radius: 10px;
+    font-size: 13.5px;
+    font-weight: 800;
+    cursor: pointer;
+    text-decoration: none;
+    transition: all .2s;
+}
+.yza-claim-modal-actions .btn-cancel {
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    background: transparent;
+    color: #cbd5e1;
+}
+.yza-claim-modal-actions .btn-cancel:hover {
+    background: rgba(255, 255, 255, 0.08);
+    color: #fff;
+}
+.yza-claim-modal-actions .btn-confirm {
+    border: 1px solid #ff384c;
+    background: linear-gradient(135deg, #ff2031, #c80013);
+    color: #fff;
+    box-shadow: 0 4px 18px rgba(239, 35, 60, 0.4);
+}
+.yza-claim-modal-actions .btn-confirm:hover {
+    filter: brightness(1.1);
+    transform: translateY(-1px);
+}
+.yza-claim-modal-actions .btn-confirm:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    filter: grayscale(1);
+    transform: none;
+}
 .yza-home.yza-home-reference .yza-home-service-card>div { padding:0; }
 .yza-home-reference .yza-home-service-icon { display:block;height:28px;color:#fff!important; }
 .yza-home-reference .yza-home-service-icon svg { width:28px;height:28px; }
@@ -151,9 +986,9 @@
     .yza-home-reference .yza-home-hero p { max-width:450px;font-size:13px!important; }
     .yza-home-reference .yza-home-member-meta { font-size:11px;gap:10px; }
     .yza-home-reference .yza-home-since { padding-left:10px; }
-    .yza-home.yza-home-reference .yza-home-member-card { width:100%;max-width:500px;justify-self:center;min-height:285px!important;padding:22px!important; }
-    .yza-home.yza-home-reference .yza-member-card-code { font-size:22px!important; }
-    .yza-home.yza-home-reference .yza-member-card-name { font-size:17px!important; }
+    .yza-home.yza-home-reference .yza-home-member-card { width:100%;max-width:380px;justify-self:center;min-height:215px!important;padding:16px 20px!important; }
+    .yza-home.yza-home-reference .yza-member-card-code { font-size:18px!important; }
+    .yza-home.yza-home-reference .yza-member-card-name { font-size:14px!important; }
     .yza-home-reference .yza-home-services-section .yza-home-section-head { display:flex;flex-direction:column;gap:14px; }
     .yza-home-reference .yza-home-services-section .yza-home-section-head>a { align-self:flex-start; }
     .yza-home-reference .yza-home-service-grid { gap:14px; }
@@ -245,4 +1080,259 @@
     .yza-home-reference .yza-home-services-section a > b { animation: none !important; transition: none !important; }
     .yza-home-reference .yza-home-services-section a:is(:hover,:focus-visible,:active),
     .yza-home-reference .yza-home-services-section a:is(:hover,:focus-visible) > b { transform: none !important; }
+}
+
+/* ==========================================================================
+   YZA Promo Filter Bar (Below Header)
+   ========================================================================== */
+/* ============================================================
+   PROMO FILTER WRAPPER (MODERN PILL CHIPS & CLEAN SEARCH)
+   ============================================================ */
+.yza-promo-filter-wrapper {
+    margin-bottom: 28px;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    padding: 18px 20px;
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 18px;
+    box-shadow: 0 4px 20px rgba(15, 23, 42, 0.05);
+}
+
+/* ---- Row 1: Search Box (Full Width) ---- */
+.yza-promo-search-row {
+    width: 100%;
+    display: flex;
+}
+
+.yza-promo-search-box {
+    position: relative;
+    width: 100%;
+    display: flex;
+    align-items: center;
+}
+
+.yza-promo-search-box .search-icon {
+    position: absolute !important;
+    left: 16px !important;
+    top: 50% !important;
+    transform: translateY(-50%) !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    color: #94a3b8 !important;
+    pointer-events: none !important;
+    z-index: 5 !important;
+    width: 18px !important;
+    height: 18px !important;
+}
+
+.member-main-content input.yza-promo-search-input,
+.yza-promo-search-box input.yza-promo-search-input,
+input#yza-promo-custom-search {
+    width: 100% !important;
+    min-height: 44px !important;
+    height: 44px !important;
+    padding-top: 10px !important;
+    padding-bottom: 10px !important;
+    padding-left: 48px !important; /* CRITICAL: 48px left padding completely separates text from 18px icon */
+    padding-right: 44px !important;
+    font-size: 13.5px !important;
+    font-weight: 500 !important;
+    color: #0f172a !important;
+    background: #f8fafc !important;
+    border: 1.5px solid #e2e8f0 !important;
+    border-radius: 12px !important;
+    outline: none !important;
+    box-sizing: border-box !important;
+    line-height: normal !important;
+    transition: all 0.2s ease !important;
+}
+
+.member-main-content input.yza-promo-search-input::placeholder,
+.yza-promo-search-box input.yza-promo-search-input::placeholder,
+input#yza-promo-custom-search::placeholder {
+    color: #94a3b8 !important;
+    font-weight: 400 !important;
+    opacity: 1 !important;
+}
+
+.member-main-content input.yza-promo-search-input:focus,
+.yza-promo-search-box input.yza-promo-search-input:focus,
+input#yza-promo-custom-search:focus {
+    background: #ffffff !important;
+    border-color: #ef233c !important;
+    box-shadow: 0 0 0 3.5px rgba(239, 35, 60, 0.12) !important;
+}
+
+.search-clear-btn {
+    position: absolute;
+    right: 14px;
+    top: 50%;
+    transform: translateY(-50%);
+    background: #e2e8f0;
+    border: none;
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    font-size: 11px;
+    font-weight: 800;
+    color: #475569;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+    line-height: 1;
+    transition: all 0.18s ease;
+    z-index: 5;
+}
+
+.search-clear-btn:hover {
+    background: #cbd5e1;
+    color: #0f172a;
+}
+
+/* ---- Row 2: Category Filter Buttons (Pill Chips) + Dropdown ---- */
+.yza-promo-filter-row-bottom {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    flex-wrap: wrap;
+    padding-top: 12px;
+    border-top: 1px solid #f1f5f9;
+}
+
+/* Group tombol filter berbentuk pill chips modern */
+.yza-promo-tab-group {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+    flex: 1 1 auto;
+}
+
+.yza-promo-tab {
+    display: inline-flex !important;
+    align-items: center !important;
+    gap: 7px !important;
+    padding: 8px 16px !important;
+    min-height: 38px !important;
+    height: 38px !important;
+    font-size: 12.5px !important;
+    font-weight: 700 !important;
+    color: #475569 !important;
+    background: #f8fafc !important;
+    border: 1.5px solid #e2e8f0 !important;
+    border-radius: 999px !important;
+    cursor: pointer !important;
+    transition: all 0.2s ease !important;
+    white-space: nowrap !important;
+    flex-shrink: 0 !important;
+    box-shadow: 0 1px 3px rgba(15, 23, 42, 0.04) !important;
+}
+
+.yza-promo-tab:hover {
+    color: #0f172a !important;
+    background: #ffffff !important;
+    border-color: #cbd5e1 !important;
+    transform: translateY(-1px) !important;
+    box-shadow: 0 4px 10px rgba(15, 23, 42, 0.06) !important;
+}
+
+/* Tombol filter yang sedang aktif (merah YZA Racing) */
+.yza-promo-tab.is-active {
+    color: #ffffff !important;
+    background: linear-gradient(135deg, #ef233c 0%, #cf0014 100%) !important;
+    border: 1.5px solid #ff4557 !important;
+    box-shadow: 0 4px 14px rgba(239, 35, 60, 0.35) !important;
+    transform: translateY(-1px) !important;
+}
+
+/* Badge jumlah di dalam tombol filter */
+.yza-promo-tab .tab-count {
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    min-width: 20px !important;
+    height: 20px !important;
+    padding: 0 6px !important;
+    font-size: 11px !important;
+    font-weight: 800 !important;
+    border-radius: 999px !important;
+    background: #e2e8f0 !important;
+    color: #475569 !important;
+    transition: all 0.2s ease !important;
+}
+
+.yza-promo-tab.is-active .tab-count {
+    background: rgba(255, 255, 255, 0.25) !important;
+    color: #ffffff !important;
+}
+
+/* Dropdown Filter Cepat sejajar di samping tombol filter */
+.yza-promo-dropdown-box {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    flex-shrink: 0;
+}
+
+.yza-promo-dropdown-select {
+    appearance: none !important;
+    -webkit-appearance: none !important;
+    -moz-appearance: none !important;
+    height: 38px !important;
+    min-height: 38px !important;
+    padding: 0 34px 0 16px !important;
+    font-size: 12.5px !important;
+    font-weight: 700 !important;
+    color: #334155 !important;
+    background: #f8fafc url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%23475569' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E") no-repeat calc(100% - 12px) center !important;
+    border: 1.5px solid #e2e8f0 !important;
+    border-radius: 999px !important;
+    cursor: pointer !important;
+    outline: none !important;
+    transition: all 0.2s ease !important;
+    white-space: nowrap !important;
+    box-shadow: 0 1px 3px rgba(15, 23, 42, 0.04) !important;
+}
+
+.yza-promo-dropdown-select:hover {
+    background-color: #ffffff !important;
+    border-color: #cbd5e1 !important;
+    color: #0f172a !important;
+}
+
+.yza-promo-dropdown-select:focus {
+    border-color: #ef233c !important;
+    box-shadow: 0 0 0 3.5px rgba(239, 35, 60, 0.12) !important;
+}
+
+.yza-promo-dropdown-select.is-active {
+    background-color: #0f172a !important;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%23ffffff' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E") !important;
+    color: #ffffff !important;
+    border-color: #0f172a !important;
+    box-shadow: 0 4px 14px rgba(15, 23, 42, 0.2) !important;
+}
+
+.yza-filter-reset-btn-pill {
+    padding: 8px 18px;
+    font-size: 13px;
+    font-weight: 750;
+    color: #ffffff;
+    background: linear-gradient(135deg, #f2192a 0%, #cf0014 100%);
+    border: 1px solid #ff4557;
+    border-radius: 999px;
+    cursor: pointer;
+    box-shadow: 0 3px 10px rgba(239, 35, 60, 0.3);
+    transition: all 0.18s ease;
+}
+
+.yza-filter-reset-btn-pill:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 16px rgba(239, 35, 60, 0.45);
 }

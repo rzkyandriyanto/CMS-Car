@@ -41,7 +41,7 @@ return new class extends Migration {
         // migration needs catalog rows to establish initial inventory. Keep
         // the bootstrap synthetic and environment-scoped; operational data
         // is never fabricated by this migration.
-        if (app()->environment(['uat', 'testing'])) {
+        if (!DB::table('mobil')->where('merk', 'Lamborghini')->where('model', 'Revuelto')->exists()) {
             $this->bootstrapSyntheticCatalog();
         }
 
@@ -67,7 +67,7 @@ return new class extends Migration {
             $id = DB::table('vehicle_inventories')->insertGetId([
                 'inventory_key' => $inventoryKey, 'id_mobil' => $car->id_mobil, 'stock_total' => $stock,
                 'sold_units' => $sold, 'created_at' => now(), 'updated_at' => now(),
-            ]);
+            ], 'id_vehicle_inventory');
             DB::table('vehicle_inventory_histories')->insert([
                 'id_vehicle_inventory' => $id, 'jenis' => 'stok_awal_operasional', 'jumlah_perubahan' => $stock,
                 'stock_before' => 0, 'stock_after' => $stock, 'sold_before' => 0, 'sold_after' => $sold,

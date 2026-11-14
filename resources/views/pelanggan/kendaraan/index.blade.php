@@ -55,7 +55,6 @@
             <article class="garage-vehicle-card">
                 <div class="garage-vehicle-media"><img src="{{ $item->presentation_image }}" alt="{{ $item->merk }} {{ $item->model }}" loading="lazy"></div>
                 <div class="garage-vehicle-content">
-                    <div class="garage-vehicle-badges"><span class="garage-status-badge"><i></i>{{ strtoupper($item->status) }}</span>@if($item->is_verified_ownership)<span class="garage-ownership-badge"><b aria-hidden="true">✓</b> Verified Ownership</span>@endif</div>
                     <h2>{{ $item->merk }} {{ $item->model }}</h2>
                     <p class="garage-vehicle-subline">{{ $item->nomor_polisi ?: 'Nomor polisi belum diisi' }} <span aria-hidden="true">•</span> {{ $item->tahun ?: 'Tahun belum diisi' }}</p>
                     <div class="garage-stats" aria-label="Spesifikasi kendaraan"><div><span class="garage-stat-icon" aria-hidden="true"><x-garage-icon name="distance" /></span><strong>{{ number_format((int)$item->kilometer, 0, ',', '.') }} km</strong><small>Total Jarak</small></div><div><span class="garage-stat-icon garage-stat-color" style="--vehicle-color: {{ $vehicleColorSwatch }}" aria-hidden="true"></span><strong>{{ $item->warna ?: 'Belum diisi' }}</strong><small>Warna</small></div><div><span class="garage-stat-icon" aria-hidden="true"><x-garage-icon name="calendar" /></span><strong>{{ $item->tahun ?: '—' }}</strong><small>Tahun</small></div></div>

@@ -14,7 +14,7 @@ class FinalSystemAuditTest extends TestCase
     public function test_role_isolation_for_final_member_features(): void
     {
         $this->actingAs($this->user('admin'))->get('/pelanggan/member')->assertForbidden();
-        $this->actingAs($this->user('petugas'))->get('/pelanggan/poin')->assertForbidden();
+        $this->actingAs($this->user('petugas'))->get('/pelanggan/promo')->assertForbidden();
         $this->actingAs($this->user('pelanggan'))->get('/admin/promo-member')->assertForbidden();
     }
     public function test_member_center_empty_and_feature_routes_boot(): void

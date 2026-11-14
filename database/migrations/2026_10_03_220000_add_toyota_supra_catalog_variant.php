@@ -32,7 +32,7 @@ return new class extends Migration {
                     'sumber_mobil' => 'dealer',
                     'created_at' => now(),
                     'updated_at' => now(),
-                ]);
+                ], 'id_mobil');
             } else {
                 $id = $existing->id_mobil;
             }

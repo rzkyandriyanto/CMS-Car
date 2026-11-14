@@ -5,7 +5,7 @@
 .yza-menu-unread[hidden]{display:inline-block!important;visibility:hidden}
 .admin-nav-label-text:has(.yza-menu-unread){position:relative;padding-right:12px}
 .admin-nav-label-text .yza-menu-unread{top:.55em}
-.admin-nav-badge[hidden]{display:none!important}
+.admin-nav-badge[hidden],.member-nav-counter-badge[hidden]{display:none!important}
 [data-notification-unread-badge][hidden],.notification-mark-all-form[hidden]{display:none!important}
 [data-member-notification-count][hidden],[data-admin-notification-count][hidden],[data-mc-notification-count][hidden]{display:none!important}
 .admin-shell [data-admin-notification-link] svg{color:#52617b;stroke:currentColor}

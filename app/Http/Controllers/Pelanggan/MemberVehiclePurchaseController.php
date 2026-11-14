@@ -96,7 +96,7 @@ class MemberVehiclePurchaseController extends Controller
 
     private function timeline(PesananMobilMember $order, int $stage, $payment): array
     {
-        $time = fn ($value) => $value?->format('d M Y H:i');
+        $time = fn ($value) => $value?->format('d M Y, H:i');
         $paymentTime = $payment?->status === 'terverifikasi' ? ($payment->verified_at ?: $payment->tanggal) : null;
         $steps = [
             ['label' => 'Checkout', 'date' => $time($order->created_at)],

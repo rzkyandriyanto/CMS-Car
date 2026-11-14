@@ -332,6 +332,9 @@ class MemberVehiclePurchaseService
             $order->forceFill(['status' => 'diserahkan', 'status_pengambilan' => 'diserahkan', 'diserahkan_at' => now()])->save();
             $vehicle = app(VerifiedCarOwnershipService::class)->syncVehicleFromCompletedSale($order->penjualan->fresh(['mobil', 'transaksi', 'memberOrder']), $handover);
             $this->notify($order, 'Serah terima selesai', 'Serah terima kendaraan telah selesai. Kendaraan Anda sekarang tersedia di My Garage.');
+            if ($order->transaksi) {
+                app(YzaPointService::class)->awardIfEligible($order->transaksi);
+            }
             $this->audit('handover_completed', $order, $petugasId);
             return $handover;
         });

@@ -1,0 +1,960 @@
+/* YZA Automotive - Hero Luxury Showcase Slider (Hyundai USA Reference Match) */
+
+.showroom.landing .show-hero.hero-slider-container {
+    position: relative;
+    min-height: 100svh !important;
+    background: #06070a !important;
+    background-image: none !important;
+    overflow: hidden;
+    isolation: isolate;
+}
+
+/* Clear any legacy backgrounds or pseudo-element backdrops */
+.showroom.landing .show-hero.hero-slider-container::before,
+.showroom.landing .show-hero.hero-slider-container::after {
+    display: none !important;
+    content: none !important;
+}
+
+/* ==========================================================
+   BACKGROUND SLIDES VIEWPORT
+   ========================================================== */
+.hero-slides-viewport {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 1;
+    overflow: hidden;
+    pointer-events: none;
+}
+
+.hero-slide {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.9s cubic-bezier(0.4, 0, 0.2, 1), visibility 0.9s;
+    pointer-events: none;
+}
+
+.hero-slide.is-active {
+    opacity: 1;
+    visibility: visible;
+    z-index: 2;
+}
+
+.hero-slide-bg {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+    image-rendering: -webkit-optimize-contrast;
+    image-rendering: high-quality;
+    transform: scale(1.02);
+    transition: transform 6.5s cubic-bezier(0.25, 1, 0.5, 1);
+    will-change: transform;
+}
+
+.hero-slide.is-active .hero-slide-bg {
+    transform: scale(1);
+}
+
+/* Tailored focal positions for each rotated vehicle photo */
+.hero-slide[data-slide-index="0"] .hero-slide-bg {
+    background-position: center center; /* Alfa Romeo 33 Stradale */
+}
+
+.hero-slide[data-slide-index="1"] .hero-slide-bg {
+    background-position: center 48%; /* Lamborghini Huracán */
+}
+
+.hero-slide[data-slide-index="2"] .hero-slide-bg {
+    background-position: center center; /* McLaren P1 Track */
+}
+
+/* Remove dark vignette, heavy gradient overlays, and highlight effects on hero photos */
+.hero-slide-overlay {
+    display: none !important;
+}
+
+.showroom.landing .hero-showroom-mark {
+    display: none !important;
+}
+
+/* ==========================================================
+   FOREGROUND CONTENT LAYOUT
+   ========================================================== */
+.showroom.landing .show-hero.hero-slider-container .show-hero-inner {
+    position: relative;
+    z-index: 5;
+    min-height: 100svh !important;
+    display: grid !important;
+    grid-template-columns: minmax(0, 1.15fr) minmax(15rem, 18rem) !important;
+    gap: clamp(1.5rem, 3.5vw, 4.5rem) !important;
+    align-items: center;
+    padding-top: clamp(6.5rem, 13vh, 8.5rem) !important; /* Proper clearance under the fixed navbar */
+    padding-bottom: clamp(1.25rem, 3.5vh, 2.75rem) !important; /* Positioned down to bottom bar level */
+}
+
+.showroom.landing .hero-copy-premium {
+    position: relative;
+    z-index: 6;
+    max-width: min(50vw, 42rem);
+    align-self: start !important;
+    margin-top: clamp(0.75rem, 2.5vh, 2rem) !important;
+}
+
+/* Text pane transitions */
+.hero-slide-text-pane {
+    display: none !important;
+}
+
+.hero-slide-text-pane.is-active {
+    display: block !important;
+    animation: heroTextSlideIn 0.5s cubic-bezier(0.2, 0.8, 0.3, 1) forwards;
+}
+
+@keyframes heroTextSlideIn {
+    from {
+        opacity: 0;
+        transform: translateY(14px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.hero-slide-text-pane h1 {
+    margin: 0 0 1.25rem !important;
+    font-size: clamp(2.35rem, min(3.8vw, 6.8svh), 4.15rem) !important;
+    line-height: 1.05 !important;
+    letter-spacing: -.035em;
+    font-weight: 950;
+    text-transform: uppercase;
+    color: #fff;
+    text-shadow: 0 2px 14px rgba(0, 0, 0, 0.95), 0 1px 3px rgba(0, 0, 0, 0.9);
+}
+
+.hero-slide-text-pane .hero-buttons {
+    margin-top: 1.25rem !important;
+}
+
+/* ==========================================================
+   HERO BUTTONS (Idle: Transparent Outline, Hover: Top-to-Bottom Curtain Slide)
+   - Left button (.show-cta): Red curtain from top to bottom
+   - Right button (.show-ghost): White curtain from top to bottom
+   ========================================================== */
+.showroom.landing .show-hero .hero-buttons {
+    display: flex !important;
+    gap: 14px !important;
+    margin-top: 1.35rem !important;
+}
+
+.showroom.landing .show-hero .hero-buttons :is(.show-cta, .show-ghost) {
+    position: relative !important;
+    overflow: hidden !important;
+    background: transparent !important;
+    box-shadow: none !important;
+    color: #ffffff !important;
+    border: 1px solid rgba(255, 255, 255, 0.45) !important;
+    border-radius: 8px !important;
+    min-height: 48px !important;
+    padding: 12px 24px !important;
+    font-size: 13.5px !important;
+    font-weight: 750 !important;
+    letter-spacing: 0.02em !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    text-decoration: none !important;
+    isolation: isolate !important;
+    z-index: 1 !important;
+    cursor: pointer !important;
+    transition: color 0.3s cubic-bezier(0.2, 0.8, 0.25, 1),
+                border-color 0.3s cubic-bezier(0.2, 0.8, 0.25, 1),
+                box-shadow 0.3s cubic-bezier(0.2, 0.8, 0.25, 1),
+                transform 0.2s ease !important;
+}
+
+/* Slide-down background pseudo-element */
+.showroom.landing .show-hero .hero-buttons :is(.show-cta, .show-ghost)::before {
+    content: "" !important;
+    position: absolute !important;
+    inset: 0 !important;
+    z-index: -1 !important;
+    transform: translateY(-100%) !important; /* Start above the button */
+    transition: transform 0.35s cubic-bezier(0.25, 1, 0.5, 1) !important;
+    pointer-events: none !important;
+    border-radius: inherit !important;
+}
+
+/* Hover: Top-to-bottom animation trigger */
+.showroom.landing .show-hero .hero-buttons :is(.show-cta, .show-ghost):hover::before {
+    transform: translateY(0) !important; /* Slide down into view */
+}
+
+/* Tombol Kiri (.show-cta): Merah (#ed1c24) */
+.showroom.landing .show-hero .hero-buttons .show-cta::before {
+    background: #ed1c24 !important;
+}
+
+.showroom.landing .show-hero .hero-buttons .show-cta:hover {
+    border-color: #ed1c24 !important;
+    color: #ffffff !important;
+    box-shadow: 0 10px 24px rgba(237, 28, 36, 0.42) !important;
+    transform: translateY(-2px) !important;
+}
+
+/* Tombol Kanan (.show-ghost): Putih (#ffffff) dengan teks gelap (#0b0d11) */
+.showroom.landing .show-hero .hero-buttons .show-ghost::before {
+    background: #ffffff !important;
+}
+
+.showroom.landing .show-hero .hero-buttons .show-ghost:hover {
+    border-color: #ffffff !important;
+    color: #0b0d11 !important;
+    box-shadow: 0 10px 24px rgba(255, 255, 255, 0.28) !important;
+    transform: translateY(-2px) !important;
+}
+
+/* Active / Pressed state */
+.showroom.landing .show-hero .hero-buttons :is(.show-cta, .show-ghost):active {
+    transform: translateY(0) scale(0.98) !important;
+}
+
+.hero-slide-text-pane .hero-proof-line {
+    margin-top: 1.15rem !important;
+}
+
+.hero-slide-text-pane h1 em {
+    color: #ed1c24;
+    font-style: normal;
+}
+
+.hero-slide-text-pane p {
+    max-width: 44ch;
+    margin: 0;
+    font-size: clamp(.9375rem, 1.05vw, 1.0625rem);
+    line-height: 1.6;
+    color: rgba(255, 255, 255, 0.92);
+    text-shadow: 0 1px 8px rgba(0, 0, 0, 0.95);
+}
+
+.hero-slide-text-pane .show-kicker {
+    display: inline-block;
+    color: #ed1c24;
+    font-size: 11px;
+    font-weight: 900;
+    letter-spacing: .22em;
+    text-transform: uppercase;
+    text-shadow: 0 1px 4px rgba(0, 0, 0, 0.9);
+}
+
+/* ==========================================================
+   RIGHT STAGE & FLOATING CARD (Positioned Lower, Minimalist Luxury)
+   ========================================================== */
+.showroom.landing .hero-car-stage {
+    position: relative;
+    z-index: 6;
+    min-height: 0 !important;
+    display: flex !important;
+    align-items: flex-end !important;
+    justify-content: flex-end !important;
+    align-self: end !important;
+    margin-bottom: clamp(0.25rem, 0.8vh, 0.65rem) !important;
+}
+
+.showroom.landing .hero-car-stage::before,
+.showroom.landing .hero-car-stage::after {
+    display: none !important;
+}
+
+.hero-vehicle-slider-info {
+    display: none !important;
+}
+
+.hero-vehicle-slider-info.is-active {
+    position: relative !important;
+    top: auto !important;
+    right: auto !important;
+    bottom: auto !important;
+    left: auto !important;
+    display: block !important;
+    width: 100% !important;
+    max-width: 15.5rem !important;
+    padding: 0.85rem 1.05rem !important;
+    border-radius: 0.875rem !important;
+    background: rgba(10, 12, 16, 0.72) !important;
+    backdrop-filter: blur(20px) saturate(160%) !important;
+    -webkit-backdrop-filter: blur(20px) saturate(160%) !important;
+    border: 1px solid rgba(255, 255, 255, 0.12) !important;
+    box-shadow: 0 16px 36px rgba(0, 0, 0, 0.45) !important;
+    animation: heroCardSlideIn 0.35s cubic-bezier(0.2, 0.8, 0.3, 1) forwards;
+}
+
+@keyframes heroCardSlideIn {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.hero-vehicle-slider-info small {
+    display: block;
+    padding-right: 0 !important;
+    font-size: 0.65rem !important;
+    font-weight: 600 !important;
+    letter-spacing: 0.18em !important;
+    text-transform: uppercase !important;
+    color: rgba(255, 255, 255, 0.5) !important;
+    line-height: 1.2;
+}
+
+.hero-vehicle-slider-info h2 {
+    margin: 0.3rem 0 0.15rem !important;
+    padding-right: 0 !important;
+    font-size: 1.15rem !important;
+    font-weight: 700 !important;
+    line-height: 1.25 !important;
+    letter-spacing: -0.01em !important;
+    color: #ffffff !important;
+    text-shadow: 0 1px 3px rgba(0, 0, 0, 0.6);
+}
+
+.hero-vehicle-slider-info .hero-favorite {
+    display: none !important;
+}
+
+.hero-vehicle-slider-info p {
+    margin: 0 0 0.75rem !important;
+    font-size: 0.72rem !important;
+    font-weight: 400 !important;
+    line-height: 1.35 !important;
+    color: rgba(255, 255, 255, 0.55) !important;
+    letter-spacing: 0.03em !important;
+}
+
+.hero-vehicle-slider-info strong {
+    display: block !important;
+    margin: 0 0 0.75rem !important;
+    padding: 0 !important;
+    border-top: none !important;
+    font-size: 1.0625rem !important;
+    font-weight: 700 !important;
+    line-height: 1.2 !important;
+    letter-spacing: -0.01em !important;
+    color: var(--show-red, #ff2634) !important;
+    text-shadow: 0 0 16px rgba(255, 38, 52, 0.35), 0 1px 3px rgba(0, 0, 0, 0.6) !important;
+}
+
+.hero-vehicle-slider-info a {
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    gap: 0.4rem !important;
+    width: 100% !important;
+    min-height: 2.25rem !important;
+    padding: 0.45rem 1rem !important;
+    border-radius: 999px !important;
+    background: rgba(255, 255, 255, 0.08) !important;
+    border: 1px solid rgba(255, 255, 255, 0.16) !important;
+    color: #ffffff !important;
+    font-size: 0.75rem !important;
+    font-weight: 600 !important;
+    letter-spacing: 0.04em !important;
+    text-decoration: none !important;
+    box-shadow: none !important;
+    backdrop-filter: blur(8px) !important;
+    -webkit-backdrop-filter: blur(8px) !important;
+    transition: background 0.2s ease, border-color 0.2s ease, color 0.2s ease, transform 0.2s ease !important;
+}
+
+.hero-vehicle-slider-info a:hover {
+    background: #ed1c24 !important;
+    border-color: #ed1c24 !important;
+    color: #ffffff !important;
+    transform: translateY(-1px) !important;
+    box-shadow: 0 8px 18px rgba(237, 28, 36, 0.35) !important;
+}
+
+.hero-vehicle-slider-info a::after {
+    display: none !important;
+    content: none !important;
+}
+
+.hero-vehicle-slider-info .hero-favorite {
+    position: absolute !important;
+    top: 0.85rem !important;
+    right: 0.85rem !important;
+    width: 1.85rem !important;
+    height: 1.85rem !important;
+    border-radius: 50% !important;
+    border: 1px solid rgba(255, 255, 255, 0.14) !important;
+    background: rgba(255, 255, 255, 0.05) !important;
+    color: rgba(255, 255, 255, 0.75) !important;
+    display: grid !important;
+    place-items: center !important;
+    cursor: pointer !important;
+    font-size: 0.95rem !important;
+    line-height: 1 !important;
+    transition: all 0.2s ease !important;
+}
+
+.hero-vehicle-slider-info .hero-favorite:hover,
+.hero-vehicle-slider-info .hero-favorite[aria-pressed="true"] {
+    background: rgba(237, 28, 36, 0.2) !important;
+    border-color: #ed1c24 !important;
+    color: #ed1c24 !important;
+}
+
+/* ==========================================================
+   HYUNDAI-STYLE HERO SLIDER CONTROL BAR (Image 2 Reference)
+   Frameless / Boxless floating controls matching hyundaiusa.com
+   ========================================================== */
+.hero-slider-bar {
+    position: absolute;
+    bottom: clamp(1.25rem, 3.5svh, 2.75rem);
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 10;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: min(94vw, 54rem);
+    padding: 0 !important;
+    border-radius: 0 !important;
+    background: transparent !important;
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+    border: none !important;
+    box-shadow: none !important;
+    user-select: none;
+    pointer-events: auto;
+}
+
+/* Controls row: Action buttons on left, Segmented Bars with Labels on right */
+.hero-slider-controls {
+    display: flex;
+    align-items: flex-end;
+    justify-content: center;
+    gap: clamp(0.75rem, 1.6vw, 1.25rem);
+    width: 100%;
+}
+
+/* Action button cluster (Pause, Prev, Next) */
+.hero-ctrl-actions {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    flex-shrink: 0;
+    margin-bottom: 1px;
+}
+
+/* Frameless action buttons matching Hyundai reference */
+.hero-ctrl-btn {
+    all: unset;
+    box-sizing: border-box;
+    width: 2rem;
+    height: 2rem;
+    border-radius: 50%;
+    background: transparent !important;
+    border: 1px solid transparent !important;
+    color: #ffffff;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    font-size: 0.8125rem;
+    line-height: 1;
+    filter: drop-shadow(0 1px 3px rgba(0, 0, 0, 0.9));
+    transition: transform 0.15s ease, color 0.15s ease, background 0.15s ease, border-color 0.15s ease;
+    flex-shrink: 0;
+}
+
+.hero-ctrl-btn:hover {
+    color: #ffffff;
+    background: rgba(255, 255, 255, 0.14) !important;
+    border-color: rgba(255, 255, 255, 0.35) !important;
+    transform: scale(1.08);
+}
+
+.hero-ctrl-btn:active {
+    transform: scale(0.95);
+}
+
+.hero-ctrl-btn:focus-visible {
+    outline: 2px solid #ffffff;
+    outline-offset: 2px;
+}
+
+.hero-pause-btn .icon-pause {
+    font-size: 0.75rem;
+    letter-spacing: -0.04em;
+    font-weight: 900;
+}
+
+.hero-pause-btn .icon-play {
+    font-size: 0.75rem;
+    margin-left: 1px;
+}
+
+/* Segmented bars container */
+.hero-segmented-bars {
+    display: flex;
+    align-items: flex-end;
+    gap: clamp(0.65rem, 1.5vw, 1.15rem);
+    flex: 1;
+    min-width: 12rem;
+}
+
+/* Each item: label positioned directly on top of its respective bar */
+.hero-segment-item {
+    all: unset;
+    box-sizing: border-box;
+    display: flex;
+    flex-direction: column;
+    gap: 0.45rem;
+    flex: 1;
+    min-width: 0;
+    cursor: pointer;
+    text-align: left;
+    transition: opacity 0.25s ease;
+}
+
+/* Title label directly above each specific bar - only appears for the currently active slide */
+.hero-segment-label {
+    display: block;
+    color: #ffffff;
+    font-size: clamp(0.75rem, 0.95vw, 0.875rem);
+    font-weight: 700;
+    letter-spacing: -0.01em;
+    text-shadow: 0 1px 4px rgba(0, 0, 0, 0.9);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+    transform: translateY(2px);
+    transition: opacity 0.3s cubic-bezier(0.4, 0, 0.2, 1),
+                visibility 0.3s cubic-bezier(0.4, 0, 0.2, 1),
+                transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.hero-segment-item.is-active .hero-segment-label {
+    opacity: 1;
+    visibility: visible;
+    transform: translateY(0);
+}
+
+/* Segment bar track */
+.hero-segment-bar {
+    display: block;
+    box-sizing: border-box;
+    width: 100%;
+    height: 0.3125rem;
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.35);
+    position: relative;
+    overflow: hidden;
+    filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.6));
+    transition: background 0.25s, height 0.2s;
+}
+
+.hero-segment-item:hover .hero-segment-bar {
+    background: rgba(255, 255, 255, 0.55);
+}
+
+.hero-segment-fill {
+    position: absolute;
+    top: 0;
+    left: 0;
+    height: 100%;
+    width: 0%;
+    border-radius: 999px;
+    background: #ffffff;
+    pointer-events: none;
+    transition: width 0.05s linear;
+}
+
+.hero-segment-item.is-active .hero-segment-fill {
+    background: #ffffff;
+}
+
+.hero-segment-item.is-passed .hero-segment-fill {
+    width: 100% !important;
+    background: #ffffff;
+}
+
+/* ==========================================================
+   RESPONSIVE DESIGN (TABLET & MOBILE)
+   ========================================================== */
+@media (max-width: 1024px) {
+    .showroom.landing .show-hero.hero-slider-container .show-hero-inner {
+        grid-template-columns: minmax(0, 1fr) minmax(13rem, 15.5rem) !important;
+        gap: 1.5rem !important;
+    }
+
+    .hero-vehicle-slider-info.is-active {
+        max-width: 15.5rem !important;
+    }
+}
+
+@media (max-width: 800px) {
+    .showroom.landing .show-hero.hero-slider-container {
+        min-height: 100svh !important;
+        height: 100svh !important;
+    }
+
+    .showroom.landing .show-hero.hero-slider-container .show-hero-inner {
+        display: flex !important;
+        flex-direction: column !important;
+        justify-content: space-between !important;
+        align-items: stretch !important;
+        min-height: 100svh !important;
+        height: 100% !important;
+        padding-top: clamp(4.25rem, 8vh, 5.25rem) !important;
+        padding-bottom: clamp(4.25rem, 8vh, 5.25rem) !important;
+        gap: 1rem !important;
+    }
+
+    .showroom.landing .hero-copy-premium {
+        max-width: 100% !important;
+        margin-top: 0 !important;
+        flex-shrink: 0 !important;
+    }
+
+    .hero-slide-text-pane h1 {
+        font-size: clamp(2rem, 7.5vw, 2.85rem) !important;
+    }
+
+    .showroom.landing .hero-car-stage {
+        margin-top: auto !important;
+        margin-bottom: 0 !important;
+        align-self: stretch !important;
+        align-items: stretch !important;
+        justify-content: flex-end !important;
+        width: 100% !important;
+        max-width: 100% !important;
+        z-index: 10 !important;
+    }
+
+    .hero-vehicle-slider-info.is-active {
+        margin-top: auto !important;
+        margin-bottom: 0 !important;
+    }
+
+    @media (min-width: 601px) {
+        .hero-vehicle-slider-info.is-active {
+            max-width: 17rem !important;
+            align-self: flex-end !important;
+        }
+    }
+
+    @media (max-width: 600px) {
+        .hero-vehicle-slider-info.is-active {
+            display: grid !important;
+            grid-template-columns: 1fr auto !important;
+            align-items: center !important;
+            gap: 0.2rem 1rem !important;
+            max-width: 100% !important;
+            width: 100% !important;
+            padding: 0.75rem 1.1rem !important;
+            border-radius: 0.875rem !important;
+            background: rgba(10, 12, 16, 0.78) !important;
+            backdrop-filter: blur(20px) saturate(160%) !important;
+            -webkit-backdrop-filter: blur(20px) saturate(160%) !important;
+            border: 1px solid rgba(255, 255, 255, 0.14) !important;
+            box-shadow: 0 12px 32px rgba(0, 0, 0, 0.5) !important;
+        }
+
+        .hero-vehicle-slider-info.is-active small {
+            grid-column: 1 !important;
+            margin: 0 !important;
+            font-size: 0.625rem !important;
+            letter-spacing: 0.16em !important;
+        }
+
+        .hero-vehicle-slider-info.is-active h2 {
+            grid-column: 1 !important;
+            margin: 0.1rem 0 !important;
+            font-size: 1.05rem !important;
+            line-height: 1.2 !important;
+        }
+
+        .hero-vehicle-slider-info.is-active p {
+            grid-column: 1 !important;
+            margin: 0 !important;
+            font-size: 0.6875rem !important;
+            line-height: 1.25 !important;
+            color: rgba(255, 255, 255, 0.55) !important;
+        }
+
+        .hero-vehicle-slider-info.is-active strong {
+            grid-column: 1 !important;
+            margin: 0.2rem 0 0 !important;
+            font-size: 0.95rem !important;
+            font-weight: 700 !important;
+            line-height: 1.2 !important;
+            color: var(--show-red, #ff2634) !important;
+            text-shadow: 0 0 14px rgba(255, 38, 52, 0.35) !important;
+        }
+
+        .hero-vehicle-slider-info.is-active a {
+            grid-column: 2 !important;
+            grid-row: 1 / span 4 !important;
+            align-self: center !important;
+            width: auto !important;
+            min-width: 6.5rem !important;
+            min-height: 2.35rem !important;
+            padding: 0.5rem 1.15rem !important;
+            font-size: 0.8125rem !important;
+            font-weight: 750 !important;
+            letter-spacing: 0.04em !important;
+            white-space: nowrap !important;
+            margin: 0 !important;
+        }
+    }
+
+    .hero-slider-bar {
+        width: calc(100% - 24px);
+        bottom: 1.15rem;
+    }
+
+    .hero-slider-controls {
+        gap: 0.5rem;
+    }
+
+    .hero-ctrl-actions {
+        gap: 0.2rem;
+    }
+
+    .hero-ctrl-btn {
+        width: 1.625rem;
+        height: 1.625rem;
+        font-size: 0.6875rem;
+    }
+
+    .hero-segmented-bars {
+        min-width: 6rem;
+        gap: 0.45rem;
+    }
+
+    .hero-segment-item {
+        gap: 0.35rem;
+    }
+
+    .hero-segment-label {
+        font-size: 0.6875rem;
+    }
+
+    .hero-segment-bar {
+        height: 0.25rem;
+    }
+}
+
+/* Reduced Motion preference */
+@media (prefers-reduced-motion: reduce) {
+    .hero-slide,
+    .hero-slide-bg,
+    .hero-slide-text-pane,
+    .hero-vehicle-slider-info,
+    .hero-segment-fill {
+        transition: none !important;
+        animation: none !important;
+        transform: none !important;
+    }
+}
+
+/* ==========================================================
+   TRANSPARENT-TO-SOLID NAVBAR (Scroll-driven)
+   ========================================================== */
+.showroom.landing .show-nav.public-navbar {
+    position: fixed !important;
+    top: 0;
+    left: 0;
+    right: 0;
+    width: 100%;
+    z-index: 100 !important;
+    background: transparent !important;
+    background-image: none !important;
+    border: none !important;
+    border-top: none !important;
+    border-bottom: none !important;
+    border-bottom-width: 0 !important;
+    border-bottom-style: none !important;
+    border-bottom-color: transparent !important;
+    outline: none !important;
+    box-shadow: none !important;
+    transition: background 0.35s cubic-bezier(0.4, 0, 0.2, 1),
+                border-color 0.35s cubic-bezier(0.4, 0, 0.2, 1),
+                backdrop-filter 0.35s cubic-bezier(0.4, 0, 0.2, 1),
+                box-shadow 0.35s cubic-bezier(0.4, 0, 0.2, 1) !important;
+}
+
+/* Ensure 100% transparent state without any border or gradient seam when at hero top */
+.showroom.landing .show-nav.public-navbar:not(.is-scrolled) {
+    background: transparent !important;
+    background-image: none !important;
+    border: none !important;
+    border-top: none !important;
+    border-bottom: none !important;
+    border-bottom-width: 0 !important;
+    border-bottom-style: none !important;
+    border-bottom-color: transparent !important;
+    outline: none !important;
+    box-shadow: none !important;
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+}
+
+/* Vertical divider line | before .show-actions */
+.showroom.landing .show-nav.public-navbar .show-actions:before {
+    content: "" !important;
+    display: block !important;
+    width: 1px !important;
+    height: 34px !important;
+    margin-right: 9px !important;
+    background: rgba(255, 255, 255, 0.22) !important;
+    border: none !important;
+}
+
+/* Preserve border outline on MASUK MEMBER button */
+.showroom.landing .show-nav.public-navbar .show-login {
+    display: inline-flex !important;
+    align-items: center !important;
+    gap: 8px !important;
+    min-height: 42px !important;
+    padding: 10px 15px !important;
+    border: 1px solid rgba(255, 255, 255, 0.28) !important;
+    border-radius: 8px !important;
+    color: #fff !important;
+    background: transparent !important;
+    transition: border-color 0.2s ease, background 0.2s ease, transform 0.2s ease !important;
+}
+
+.showroom.landing .show-nav.public-navbar .show-login:hover {
+    border-color: #ed1c24 !important;
+    background: rgba(237, 28, 36, 0.12) !important;
+    transform: translateY(-2px) !important;
+}
+
+.showroom.landing .show-nav.public-navbar .show-member-nav {
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    min-height: 42px !important;
+    padding: 10px 15px !important;
+    border: 1px solid rgba(255, 255, 255, 0.38) !important;
+    border-radius: 8px !important;
+    color: #fff !important;
+    transition: border-color 0.2s ease, background 0.2s ease !important;
+}
+
+.showroom.landing .show-nav.public-navbar .show-member-nav:hover {
+    border-color: #ed1c24 !important;
+    background: rgba(237, 28, 36, 0.12) !important;
+}
+
+/* Remove active indicator line under nav links on landing hero */
+.showroom.landing .show-nav.public-navbar .show-nav-links a:after {
+    display: none !important;
+}
+
+.showroom.landing .show-nav.public-navbar .show-nav-links a {
+    text-shadow: 0 1px 4px rgba(0, 0, 0, 0.7);
+}
+
+.showroom.landing .show-nav.public-navbar .show-brand {
+    filter: drop-shadow(0 1px 3px rgba(0, 0, 0, 0.6));
+}
+
+/* Scrolled state (when passing section hero / reaching section mobil pilihan): solid black */
+.showroom.landing .show-nav.public-navbar.is-scrolled {
+    background: rgba(6, 8, 12, 0.96) !important;
+    border: none !important;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08) !important;
+    backdrop-filter: blur(20px) saturate(160%) !important;
+    -webkit-backdrop-filter: blur(20px) saturate(160%) !important;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.6) !important;
+}
+
+/* Mobile drawer open state */
+@media (max-width: 800px) {
+    .showroom.landing .show-nav.public-navbar.menu-open,
+    .showroom.landing .show-nav.public-navbar:has(.show-nav-links.open) {
+        background: rgba(6, 8, 12, 0.98) !important;
+        backdrop-filter: blur(20px) !important;
+        -webkit-backdrop-filter: blur(20px) !important;
+    }
+
+    .showroom.landing .show-nav.public-navbar .show-nav-links.open {
+        background: rgba(9, 11, 16, 0.98) !important;
+        border-radius: 14px;
+        padding: 14px 18px !important;
+        border: 1px solid rgba(255, 255, 255, 0.12);
+        box-shadow: 0 12px 30px rgba(0, 0, 0, 0.6);
+    }
+}
+
+/* ==========================================================================
+   Trade Banner Centered Minimalist Refinement
+   ========================================================================== */
+.showroom .trade-banner.trade-banner--centered {
+    background-image: linear-gradient(rgba(3, 4, 6, 0.82), rgba(3, 4, 6, 0.86)), url('../../images/middle/trade-in-neon.png') !important;
+    background-position: center !important;
+    background-size: cover !important;
+    padding: clamp(60px, 9vh, 96px) 1.5rem !important;
+}
+
+.showroom .trade-layout.trade-layout--centered {
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: center !important;
+    justify-content: center !important;
+    text-align: center !important;
+    margin: 0 auto !important;
+    max-width: 900px !important;
+}
+
+.showroom .trade-copy.trade-copy--centered {
+    max-width: 780px !important;
+    margin: 0 auto !important;
+    text-align: center !important;
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: center !important;
+}
+
+.showroom .trade-copy.trade-copy--centered .section-kicker {
+    margin: 0 auto 0.65rem !important;
+    text-align: center !important;
+    display: inline-block !important;
+}
+
+.showroom .trade-copy.trade-copy--centered h2 {
+    margin: 0 0 1rem !important;
+    text-align: center !important;
+    font-size: clamp(2.3rem, 4.4vw, 3.8rem) !important;
+    line-height: 1.15 !important;
+}
+
+.showroom .trade-copy.trade-copy--centered p {
+    max-width: 540px !important;
+    margin: 0 auto !important;
+    text-align: center !important;
+    color: #c9cdd4 !important;
+    font-size: clamp(0.95rem, 1.2vw, 1.1rem) !important;
+    line-height: 1.6 !important;
+}

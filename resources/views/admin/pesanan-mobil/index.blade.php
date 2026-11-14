@@ -826,7 +826,7 @@
                                     <div class="workflow-success-note">PDI LULUS. Jadwal pengambilan dapat dibuat.</div>
                                     <form method="post" action="{{ route('admin.pesanan-mobil.schedule', $order) }}" class="workflow-form workflow-inline-form">
                                         @csrf
-                                        <label>Jadwal Pengambilan<input type="datetime-local" name="jadwal_pengambilan" required></label>
+                                        <label>Jadwal Pengambilan<input type="datetime-local" name="jadwal_pengambilan" value="{{ $order->jadwal_pengambilan?->format('Y-m-d\TH:i') ?: now()->addDays(2)->setTime(10, 0)->format('Y-m-d\TH:i') }}" required></label>
                                         <label>Lokasi<input type="text" name="lokasi_pengambilan" value="YZA Automotive Showroom" required></label>
                                         <label>Catatan<input type="text" name="catatan_pengambilan" placeholder="Catatan pickup UAT"></label>
                                         <button type="submit" class="btn-modal-approve">Simpan Jadwal &amp; Siap Diambil</button>
@@ -1651,6 +1651,23 @@ document.addEventListener('DOMContentLoaded', function () {
             } else {
                 closeAllDetailModals();
             }
+        }
+    });
+
+    // Safeguard jadwal_pengambilan so missing time/empty datetime does not trigger browser validation error
+    document.querySelectorAll('form[action*="schedule"]').forEach(function (form) {
+        var dtInput = form.querySelector('input[name="jadwal_pengambilan"]');
+        var submitBtn = form.querySelector('button[type="submit"]');
+        if (dtInput && submitBtn) {
+            submitBtn.addEventListener('click', function () {
+                if (!dtInput.value) {
+                    var d = new Date();
+                    d.setDate(d.getDate() + 2);
+                    d.setHours(10, 0, 0, 0);
+                    var pad = function (n) { return String(n).padStart(2, '0'); };
+                    dtInput.value = d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate()) + 'T10:00';
+                }
+            });
         }
     });
 });

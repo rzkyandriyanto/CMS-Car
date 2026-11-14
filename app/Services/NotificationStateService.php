@@ -79,21 +79,35 @@ class NotificationStateService
             $menu = $this->menu($user, $group->referensi_tipe, $group->tipe, $group->judul);
             if ($menu) $menus[$menu] = ($menus[$menu] ?? 0) + $count;
         }
-        $pending = $user->roleKey() === 'pelanggan' || $user->roleKey() === 'owner'
-            ? [] : app(AdminNotificationBadgeService::class)->for((int) $user->id_user);
+        if ($user->roleKey() === 'pelanggan') {
+            $pelangganId = $user->pelanggan?->id_pelanggan;
+            $pending = [
+                'orders' => $pelangganId
+                    ? \App\Models\PesananMobilMember::where('id_pelanggan', $pelangganId)
+                        ->whereNotIn('status', ['diserahkan', 'selesai', 'dibatalkan', 'ditolak'])
+                        ->count()
+                    : 0,
+            ];
+        } elseif ($user->roleKey() === 'owner') {
+            $pending = [];
+        } else {
+            $pending = app(AdminNotificationBadgeService::class)->for((int) $user->id_user);
+        }
         unset($pending['notifications']);
         $pendingActions = [];
-        foreach ([
-            'orders' => ['Pesanan menunggu verifikasi', $user->roleKey() === 'sales' ? 'sales.orders.index' : 'admin.pesanan-mobil.index'],
-            'preorders' => ['Pre-order aktif', 'admin.preorder-mobil.index'],
-            'payments' => ['Pembayaran perlu ditinjau', 'admin.payments.index'],
-            'bookings' => ['Booking menunggu', 'admin.booking.index'],
-            'testDrives' => ['Test drive menunggu', $user->roleKey() === 'sales' ? 'sales.test-drives.index' : 'admin.test-drive.index'],
-            'tradeIns' => ['Trade-in perlu diproses', 'admin.trade-in.index'],
-            'stock' => ['Sparepart mencapai stok minimum', 'admin.sparepart.index'],
-        ] as $key => [$label, $route]) {
-            if (($pending[$key] ?? 0) > 0 && \Illuminate\Support\Facades\Route::has($route)) {
-                $pendingActions[] = ['key' => $key, 'label' => $label, 'count' => (int) $pending[$key], 'url' => route($route)];
+        if ($user->roleKey() !== 'pelanggan' && $user->roleKey() !== 'owner') {
+            foreach ([
+                'orders' => ['Pesanan menunggu verifikasi', $user->roleKey() === 'sales' ? 'sales.orders.index' : 'admin.pesanan-mobil.index'],
+                'preorders' => ['Pre-order aktif', 'admin.preorder-mobil.index'],
+                'payments' => ['Pembayaran perlu ditinjau', 'admin.payments.index'],
+                'bookings' => ['Booking menunggu', 'admin.booking.index'],
+                'testDrives' => ['Test drive menunggu', $user->roleKey() === 'sales' ? 'sales.test-drives.index' : 'admin.test-drive.index'],
+                'tradeIns' => ['Trade-in perlu diproses', 'admin.trade-in.index'],
+                'stock' => ['Sparepart mencapai stok minimum', 'admin.sparepart.index'],
+            ] as $key => [$label, $route]) {
+                if (($pending[$key] ?? 0) > 0 && \Illuminate\Support\Facades\Route::has($route)) {
+                    $pendingActions[] = ['key' => $key, 'label' => $label, 'count' => (int) $pending[$key], 'url' => route($route)];
+                }
             }
         }
         return ['account_id' => (int) $user->id_user, 'snapshot_started_at' => $snapshotStarted,

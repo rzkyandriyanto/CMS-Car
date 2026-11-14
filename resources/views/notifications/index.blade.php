@@ -7,6 +7,8 @@
         'booking' => ['label' => 'Booking', 'icon' => '◷'],
         'pembayaran' => ['label' => 'Pembayaran', 'icon' => '✓'],
         'stok' => ['label' => 'Koleksi', 'icon' => '◆'],
+        'sukses' => ['label' => 'Reward', 'icon' => '★'],
+        'promo' => ['label' => 'Promo', 'icon' => '★'],
     ];
 @endphp
 <div class="notification-page">
@@ -46,7 +48,7 @@
         @forelse($notifications as $notification)
             @php($meta = $typeMeta[$notification->tipe] ?? ['label' => 'Update', 'icon' => '•'])
             @php($notificationTitle = strtolower($notification->judul))
-            @php($iconMeta = match (true) { str_contains($notificationTitle, 'pembayaran') || str_contains($notificationTitle, 'ditolak') => ['class' => 'is-alert', 'icon' => '!'], str_contains($notificationTitle, 'diterima') || str_contains($notificationTitle, 'terverifikasi') => ['class' => 'is-success', 'icon' => '✓'], str_contains($notificationTitle, 'diperlukan') => ['class' => 'is-tools', 'icon' => '⚒'], str_contains($notificationTitle, 'dikerjakan') || str_contains($notificationTitle, 'pemeriksaan') => ['class' => 'is-progress', 'icon' => '⚙'], default => ['class' => 'is-neutral', 'icon' => $meta['icon']] })
+            @php($iconMeta = match (true) { str_contains($notificationTitle, 'pembayaran') || str_contains($notificationTitle, 'ditolak') => ['class' => 'is-alert', 'icon' => '!'], str_contains($notificationTitle, 'diterima') || str_contains($notificationTitle, 'terverifikasi') || str_contains($notificationTitle, 'selamat') || str_contains($notificationTitle, 'poin') => ['class' => 'is-success', 'icon' => '★'], str_contains($notificationTitle, 'diperlukan') => ['class' => 'is-tools', 'icon' => '⚒'], str_contains($notificationTitle, 'dikerjakan') || str_contains($notificationTitle, 'pemeriksaan') => ['class' => 'is-progress', 'icon' => '⚙'], default => ['class' => 'is-neutral', 'icon' => $meta['icon']] })
             <article data-notification-id="{{ $notification->id_notifikasi }}" class="notification-item {{ $notification->is_read ? 'is-read' : 'is-unread' }}">
                 <a class="notification-item-content" href="{{ route('notifications.open', $notification) }}">
                     <span class="notification-item-icon {{ $iconMeta['class'] }}" aria-hidden="true">{{ $iconMeta['icon'] }}</span>

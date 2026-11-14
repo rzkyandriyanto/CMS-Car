@@ -1,6 +1,13 @@
 @props(['name'])
 <svg class="member-reference-icon" viewBox="0 0 80 64" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" focusable="false">
     @switch($name)
+        @case('crown')
+            <path class="member-icon-accent" d="m14 18 10 12 16-16 16 16 10-12-5 34H19L14 18Z"/>
+            <path d="m14 18 10 12 16-16 16 16 10-12-5 34H19L14 18Zm0 0h52M24 30l16 22 16-22"/>
+            <circle cx="14" cy="18" r="2" fill="#ff263b"/>
+            <circle cx="40" cy="14" r="2.5" fill="#ff263b"/>
+            <circle cx="66" cy="18" r="2" fill="#ff263b"/>
+            @break
         @case('car')
             <path d="m15 25 7-14a5 5 0 0 1 4-2h28a5 5 0 0 1 4 2l7 14M14 27l-6 6v18h9v-6h46v6h9V33l-6-6H14Z"/>
             <path d="m18 26 6-12h32l6 12H18Zm-7 9 13 4m45-4-13 4M26 40h28M14 45h52"/>

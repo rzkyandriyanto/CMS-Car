@@ -25,7 +25,7 @@
 .garage-page--compact .garage-status-badge { background: #e5f2e6; color: #105d18; }
 .garage-page--compact .garage-ownership-badge { background: #e5f2e6; color: #105d18; }
 .garage-page--compact .garage-ownership-badge b { width: auto; height: auto; background: transparent; color: inherit; font-size: 17px; line-height: 1; }
-.garage-page--compact .garage-vehicle-content h2 { margin: 10px 0 6px; font-size: clamp(24px,2.1vw,32px); line-height: 1.15; letter-spacing: -.025em; }
+.garage-page--compact .garage-vehicle-content h2 { margin: 0 0 6px; font-size: clamp(24px,2.1vw,32px); line-height: 1.15; letter-spacing: -.025em; }
 .garage-page--compact .garage-vehicle-subline { font-size: 13px; color: #667080; }
 .garage-page--compact .garage-stats { margin: 22px 0 20px; }
 .garage-page--compact .garage-stats > div { grid-template-columns: 26px minmax(0,1fr); gap: 4px 12px; padding-inline: 18px; }
