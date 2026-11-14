@@ -11,9 +11,27 @@ class RoleMiddleware
     public function handle(Request $request, Closure $next, string ...$roles): Response
     {
         $user = $request->user();
-        $allowed = collect($roles)->flatMap(fn (string $role) => explode(',', $role))->map(fn (string $role) => strtolower(trim($role)));
-        abort_unless($user && $allowed->contains(fn (string $role) => in_array($role, [$user->roleName(), $user->roleKey()], true)), 403);
+        if (!$user) {
+            abort(403);
+        }
 
-        return $next($request);
+        $allowed = collect($roles)->flatMap(fn (string $role) => explode(',', $role))->map(fn (string $role) => strtolower(trim($role)))->values()->all();
+
+        $userRole = $user->roleName();
+        $userKey = $user->roleKey();
+
+        if (in_array($userRole, $allowed, true) || in_array($userKey, $allowed, true)) {
+            return $next($request);
+        }
+
+        if (in_array('admin', $allowed, true) && $user->isAdmin()) {
+            return $next($request);
+        }
+
+        if (in_array('petugas', $allowed, true) && $user->isStaff()) {
+            return $next($request);
+        }
+
+        abort(403);
     }
 }

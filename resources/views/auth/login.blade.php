@@ -82,6 +82,7 @@
             </div>
 
             <p class="login-register">Belum menjadi YZA Member? <a href="{{ route('register') }}">Buat Member</a></p>
+            <p class="login-register" style="margin-top:10px;font-size:12px;opacity:0.85;">Petugas atau Admin bengkel? <a href="{{ route('petugas.login') }}" style="font-weight:700;">Masuk Portal Petugas</a></p>
         </form>
     </section>
 </main>

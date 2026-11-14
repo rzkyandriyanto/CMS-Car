@@ -1,790 +1,697 @@
 @extends('layouts.app')
 
-@section('title', 'Booking Servis · Operasional YZA Automotive')
-@section('admin-page-title', 'Booking Servis')
+@section('title', 'Antrean Booking Servis · Service Advisor · YZA Automotive')
 
 @section('content')
-<div class="admin-booking-page">
+<div class="advisor-booking-page">
     <style>
-        .admin-booking-page {
-            display: flex;
-            flex-direction: column;
-            gap: 24px;
+        .advisor-booking-page {
+            max-width: 1520px;
+            margin: 0 auto;
+            padding: 8px 16px 56px;
+            font-family: inherit;
+            color: #0f172a;
         }
 
-        /* Header */
-        .booking-header {
+        /* Hero Section */
+        .adv-hero {
+            background: linear-gradient(135deg, #090a0f 0%, #151821 55%, #1e2330 100%);
+            color: #ffffff;
+            border-radius: 20px;
+            padding: 28px 32px;
             display: flex;
-            align-items: center;
             justify-content: space-between;
-            gap: 20px;
+            align-items: center;
             flex-wrap: wrap;
+            gap: 20px;
+            box-shadow: 0 10px 30px rgba(15, 23, 42, 0.16);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            margin-bottom: 24px;
+            position: relative;
+            overflow: hidden;
         }
-        .booking-header-left {
-            flex: 1 1 380px;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
+        .adv-hero::before {
+            content: '';
+            position: absolute;
+            top: -60px;
+            right: -60px;
+            width: 220px;
+            height: 220px;
+            background: radial-gradient(circle, rgba(239, 27, 45, 0.2) 0%, rgba(239, 27, 45, 0) 70%);
+            border-radius: 50%;
+            pointer-events: none;
         }
-        .booking-breadcrumb {
-            display: flex;
+        .adv-hero-eyebrow {
+            color: #ef1b2d;
+            font-size: 11px;
+            font-weight: 800;
+            text-transform: uppercase;
+            letter-spacing: 0.14em;
+            margin-bottom: 6px;
+            display: inline-flex;
             align-items: center;
             gap: 8px;
-            font-size: 13px;
-            color: #64748B;
-            margin-bottom: 12px;
         }
-        .breadcrumb-back-arrow {
-            font-size: 16px;
-            font-weight: 700;
-            color: #94A3B8;
+        .adv-hero-eyebrow::before {
+            content: '';
+            width: 6px;
+            height: 6px;
+            background: #ef1b2d;
+            border-radius: 50%;
         }
-        .breadcrumb-item {
-            color: #64748B;
-            font-weight: 500;
+        .adv-hero h1 {
+            font-size: clamp(24px, 3.2vw, 34px);
+            font-weight: 800;
+            letter-spacing: -0.03em;
+            margin: 0 0 6px;
+            color: #ffffff;
+            line-height: 1.2;
         }
-        .breadcrumb-separator {
-            color: #CBD5E1;
-            font-size: 11px;
-        }
-        .breadcrumb-current {
-            color: #0F172A;
-            font-weight: 700;
-        }
-        .booking-title-group {
-            display: flex;
-            align-items: center;
-            gap: 16px;
-        }
-        .booking-title-icon {
-            width: 48px;
-            height: 48px;
-            border-radius: 12px;
-            background: #ED172B;
-            color: #FFFFFF;
-            display: grid;
-            place-items: center;
-            box-shadow: 0 6px 16px rgba(237, 23, 43, 0.28);
-            flex-shrink: 0;
-        }
-        .booking-heading {
+        .adv-hero p {
+            color: #94a3b8;
+            font-size: 14px;
             margin: 0;
-            font-size: 30px;
-            font-weight: 800;
-            color: #0F172A;
-            letter-spacing: -0.02em;
-            line-height: 1.2;
-        }
-        .booking-subheading {
-            margin: 6px 0 0;
-            font-size: 13.5px;
-            color: #64748B;
+            max-width: 640px;
             line-height: 1.5;
-            max-width: 620px;
         }
 
-        /* Header Banner */
-        .booking-header-right {
-            flex: 0 0 380px;
-            min-width: 320px;
+        /* KPI Callout Grid */
+        .adv-kpi-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 16px;
+            margin-bottom: 24px;
         }
-        @media (max-width: 900px) {
-            .booking-header-right { flex: 1 1 100%; }
-        }
-        .booking-banner {
-            position: relative;
-            height: 108px;
+        .adv-kpi-card {
+            background: #ffffff;
+            border: 1px solid rgba(226, 232, 240, 0.85);
             border-radius: 16px;
-            overflow: hidden;
-            background: #0B1018;
-            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
+            padding: 18px 20px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.02);
             display: flex;
+            justify-content: space-between;
             align-items: center;
+            transition: all 0.2s ease;
         }
-        .booking-banner-img {
-            position: absolute;
-            right: 0;
-            top: 0;
-            height: 100%;
-            width: 65%;
-            object-fit: cover;
-            object-position: right center;
-            opacity: 0.88;
+        .adv-kpi-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(15, 23, 42, 0.06);
+            border-color: #cbd5e1;
         }
-        .booking-banner-overlay {
-            position: absolute;
-            inset: 0;
-            background: linear-gradient(90deg, #0B1018 35%, rgba(11, 16, 24, 0.7) 65%, transparent 100%);
-        }
-        .booking-banner-content {
-            position: relative;
-            z-index: 2;
-            padding-left: 22px;
-            display: flex;
-            flex-direction: column;
-        }
-        .banner-tagline-top {
-            font-size: 12px;
-            font-weight: 800;
-            letter-spacing: 0.12em;
-            color: #FFFFFF;
-        }
-        .banner-tagline-bottom {
+        .adv-kpi-label {
             font-size: 11px;
             font-weight: 700;
-            letter-spacing: 0.08em;
-            color: #CBD5E1;
-            margin-top: 2px;
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+            color: #64748b;
+            margin-bottom: 6px;
         }
-        .banner-accent-line {
-            width: 36px;
-            height: 3px;
-            background: #ED172B;
-            border-radius: 2px;
-            margin-top: 6px;
-        }
-
-        /* Alerts */
-        .admin-alert {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            padding: 12px 18px;
-            border-radius: 12px;
-            font-size: 13.5px;
-            font-weight: 600;
-        }
-        .admin-alert.is-success {
-            background: #ECFDF5;
-            border: 1px solid #A7F3D0;
-            color: #065F46;
-        }
-
-        /* 6 KPI Cards */
-        .booking-kpi-grid {
-            display: grid;
-            grid-template-columns: repeat(6, minmax(0, 1fr));
-            gap: 14px;
-        }
-        @media (max-width: 1400px) { .booking-kpi-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
-        @media (max-width: 768px) { .booking-kpi-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
-        @media (max-width: 480px) { .booking-kpi-grid { grid-template-columns: 1fr; } }
-
-        .booking-kpi-card {
-            border-radius: 16px;
-            padding: 16px 16px 14px;
-            display: flex;
-            flex-direction: column;
-            justify-content: space-between;
-            transition: transform 0.2s ease, box-shadow 0.2s ease;
-            border: 1px solid transparent;
-            text-decoration: none;
-            min-height: 122px;
-            box-sizing: border-box;
-        }
-        .booking-kpi-card:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.05);
-        }
-        .booking-kpi-card.is-red { background: #FFF1F2; border-color: #FFE4E6; }
-        .booking-kpi-card.is-red .kpi-icon-box { background: #FEE2E2; color: #E11D48; }
-        .booking-kpi-card.is-amber { background: #FFFBEB; border-color: #FEF3C7; }
-        .booking-kpi-card.is-amber .kpi-icon-box { background: #FEF3C7; color: #D97706; }
-        .booking-kpi-card.is-blue { background: #EFF6FF; border-color: #DBEAFE; }
-        .booking-kpi-card.is-blue .kpi-icon-box { background: #DBEAFE; color: #2563EB; }
-        .booking-kpi-card.is-purple { background: #FAF5FF; border-color: #F3E8FF; }
-        .booking-kpi-card.is-purple .kpi-icon-box { background: #F3E8FF; color: #9333EA; }
-        .booking-kpi-card.is-green { background: #ECFDF5; border-color: #D1FAE5; }
-        .booking-kpi-card.is-green .kpi-icon-box { background: #D1FAE5; color: #059669; }
-
-        .kpi-icon-box {
-            width: 38px;
-            height: 38px;
-            border-radius: 10px;
-            display: grid;
-            place-items: center;
-            margin-bottom: 12px;
-        }
-        .kpi-content {
-            display: flex;
-            flex-direction: column;
-        }
-        .kpi-label {
-            font-size: 12px;
-            font-weight: 600;
-            color: #64748B;
-            margin-bottom: 4px;
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-        }
-        .kpi-value {
-            font-size: 22px;
+        .adv-kpi-value {
+            font-size: 28px;
             font-weight: 800;
-            color: #0F172A;
-            letter-spacing: -0.02em;
-            line-height: 1.2;
+            letter-spacing: -0.03em;
+            color: #0f172a;
+            line-height: 1;
         }
-        .kpi-subtext {
-            display: flex;
-            align-items: center;
-            gap: 4px;
-            font-size: 11px;
-            font-weight: 600;
-            color: #64748B;
-            margin-top: 6px;
-        }
-
-        /* Container Card */
-        .booking-main-card {
-            background: #FFFFFF;
-            border-radius: 20px;
-            border: 1px solid #E2E8F0;
-            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.03);
-            padding: 24px;
-            display: flex;
-            flex-direction: column;
-            gap: 20px;
-        }
-        .booking-card-header {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            gap: 16px;
-            flex-wrap: wrap;
-        }
-        .card-header-left {
-            display: flex;
-            align-items: center;
-            gap: 14px;
-        }
-        .card-header-icon {
+        .adv-kpi-icon {
             width: 44px;
             height: 44px;
             border-radius: 12px;
-            background: #ED172B;
-            color: #FFFFFF;
-            display: grid;
-            place-items: center;
-            box-shadow: 0 4px 12px rgba(237, 23, 43, 0.25);
-            flex-shrink: 0;
-        }
-        .card-header-title {
-            margin: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
             font-size: 20px;
-            font-weight: 800;
-            color: #0F172A;
         }
-        .card-header-subtitle {
-            margin: 3px 0 0;
-            font-size: 13.5px;
-            color: #64748B;
+
+        /* Workspace Card */
+        .adv-card {
+            background: #ffffff;
+            border: 1px solid rgba(226, 232, 240, 0.85);
+            border-radius: 18px;
+            padding: 24px;
+            margin-bottom: 24px;
+            box-shadow: 0 2px 8px rgba(15, 23, 42, 0.03);
         }
-        .header-action-group {
+
+        /* Toolbar */
+        .adv-toolbar {
             display: flex;
-            gap: 8px;
+            justify-content: space-between;
+            align-items: center;
             flex-wrap: wrap;
+            gap: 16px;
+            margin-bottom: 22px;
+            padding-bottom: 18px;
+            border-bottom: 1px solid #f1f5f9;
         }
-        .btn-action-primary {
-            display: inline-flex;
-            align-items: center;
-            gap: 6px;
-            height: 40px;
-            padding: 0 16px;
-            border-radius: 10px;
-            background: #ED172B;
-            color: #FFFFFF;
-            font-size: 13px;
-            font-weight: 700;
-            text-decoration: none;
-            box-shadow: 0 4px 12px rgba(237, 23, 43, 0.25);
-            transition: all 0.15s ease;
-            border: none;
-            cursor: pointer;
-        }
-        .btn-action-primary:hover {
-            background: #D91325;
-            color: #FFFFFF;
-            transform: translateY(-1px);
-        }
-        .btn-action-secondary {
-            display: inline-flex;
-            align-items: center;
-            gap: 6px;
-            height: 40px;
-            padding: 0 15px;
-            border-radius: 10px;
-            background: #F1F5F9;
-            color: #1E293B;
-            font-size: 13px;
-            font-weight: 700;
-            text-decoration: none;
-            border: 1px solid #E2E8F0;
-            transition: all 0.15s ease;
-        }
-        .btn-action-secondary:hover {
-            background: #E2E8F0;
-            color: #0F172A;
-        }
-
-        /* Filter Toolbar */
-        .booking-filter-toolbar {
+        .adv-filter-form {
             display: flex;
-            align-items: center;
             gap: 10px;
-            flex-wrap: nowrap;
-            width: 100%;
-        }
-        @media (max-width: 1024px) {
-            .booking-filter-toolbar { flex-wrap: wrap; }
-        }
-        .filter-wrap {
-            position: relative;
-            display: flex;
+            flex-wrap: wrap;
             align-items: center;
+            flex: 1;
         }
-        .filter-wrap.search-box {
-            flex: 2 1 200px;
-            min-width: 180px;
-        }
-        .filter-wrap.search-box svg {
-            position: absolute;
-            left: 12px;
-            color: #94A3B8;
-            pointer-events: none;
-        }
-        .filter-wrap.search-box .filter-input {
-            padding-left: 36px;
-        }
-        .filter-wrap.select-box {
-            flex: 1.2 1 130px;
-            min-width: 120px;
-        }
-        .select-chevron {
-            position: absolute;
-            right: 10px;
-            color: #94A3B8;
-            pointer-events: none;
-        }
-        .filter-input, .filter-select {
-            width: 100%;
-            height: 40px;
-            padding: 0 12px;
-            border: 1px solid #E2E8F0;
-            border-radius: 9px;
-            background: #FFFFFF;
-            color: #0F172A;
+        .adv-input, .adv-select {
+            padding: 10px 14px;
+            border: 1px solid #cbd5e1;
+            border-radius: 10px;
             font-size: 13px;
-            box-sizing: border-box;
-            appearance: none;
-        }
-        .filter-input:focus, .filter-select:focus {
             outline: none;
-            border-color: #ED172B;
-            box-shadow: 0 0 0 3px rgba(237, 23, 43, 0.12);
+            color: #0f172a;
+            background: #ffffff;
+            transition: all 0.15s ease;
         }
-        .btn-filter-submit {
-            height: 40px;
-            padding: 0 18px;
-            border-radius: 9px;
-            background: #0F172A;
-            color: #FFFFFF;
-            font-size: 13px;
-            font-weight: 700;
+        .adv-input:focus, .adv-select:focus {
+            border-color: #ef1b2d;
+            box-shadow: 0 0 0 3px rgba(239, 27, 45, 0.12);
+        }
+        .adv-input {
+            min-width: 280px;
+            flex: 1;
+        }
+
+        /* View Toggle Buttons */
+        .adv-view-switcher {
+            display: inline-flex;
+            background: #f1f5f9;
+            padding: 4px;
+            border-radius: 10px;
+            gap: 4px;
+        }
+        .adv-view-btn {
             border: none;
+            background: transparent;
+            padding: 6px 12px;
+            border-radius: 8px;
+            font-size: 12px;
+            font-weight: 700;
+            color: #64748b;
             cursor: pointer;
-            flex-shrink: 0;
-            transition: background 0.15s ease;
-        }
-        .btn-filter-submit:hover { background: #1E293B; }
-        .btn-filter-reset {
-            height: 40px;
-            padding: 0 14px;
-            border-radius: 9px;
-            background: #F1F5F9;
-            color: #475569;
-            font-size: 13px;
-            font-weight: 600;
-            border: 1px solid #E2E8F0;
-            text-decoration: none;
+            transition: all 0.15s ease;
             display: inline-flex;
             align-items: center;
-            flex-shrink: 0;
+            gap: 6px;
         }
-        .btn-filter-reset:hover { background: #E2E8F0; color: #0F172A; }
+        .adv-view-btn.is-active {
+            background: #ffffff;
+            color: #0f172a;
+            box-shadow: 0 2px 6px rgba(15, 23, 42, 0.08);
+        }
 
-        /* Table Wrapper */
-        .booking-table-wrapper {
+        /* Minimalist Table */
+        .adv-table-wrap {
             overflow-x: auto;
-            border: 1px solid #F1F5F9;
+            border: 1px solid rgba(226, 232, 240, 0.85);
             border-radius: 14px;
+            background: #ffffff;
         }
-        .booking-table {
+        .adv-table {
             width: 100%;
-            border-collapse: separate;
-            border-spacing: 0;
+            border-collapse: collapse;
             font-size: 13px;
             text-align: left;
+            min-width: 920px;
         }
-        .booking-table thead tr th {
-            background: #F8FAFC;
+        .adv-table th {
+            background: #f8fafc;
             color: #475569;
+            padding: 13px 16px;
+            font-size: 11px;
             font-weight: 700;
-            font-size: 11.5px;
             text-transform: uppercase;
-            letter-spacing: 0.05em;
-            padding: 13px 14px;
-            border-bottom: 1px solid #E2E8F0;
+            letter-spacing: 0.06em;
+            border-bottom: 1px solid #e2e8f0;
             white-space: nowrap;
         }
-        .booking-table tbody tr {
+        .adv-table td {
+            padding: 14px 16px;
+            border-bottom: 1px solid #f1f5f9;
+            vertical-align: middle;
+        }
+        .adv-table tbody tr {
             transition: background 0.15s ease;
         }
-        .booking-table tbody tr:hover {
-            background: #F8FAFC;
+        .adv-table tbody tr:hover {
+            background: #f8fafc;
         }
-        .booking-table tbody tr td {
-            padding: 14px;
-            border-bottom: 1px solid #F1F5F9;
-            vertical-align: middle;
-            color: #1E293B;
-        }
-        .booking-table tbody tr:last-child td {
+        .adv-table tbody tr:last-child td {
             border-bottom: none;
         }
 
-        /* Badges */
-        .badge-code {
-            font-family: monospace;
-            font-size: 12.5px;
+        /* Monospace Identifiers */
+        .adv-mono-code {
+            font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+            font-size: 12px;
             font-weight: 700;
-            color: #0F172A;
-            background: #F1F5F9;
+            color: #0f172a;
+            letter-spacing: -0.01em;
+        }
+        .adv-plat-pill {
+            font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+            display: inline-block;
+            background: #0f172a;
+            color: #ffffff;
+            font-size: 11.5px;
+            font-weight: 700;
             padding: 3px 8px;
             border-radius: 6px;
-            display: inline-block;
+            letter-spacing: 0.05em;
         }
-        .badge-booking-status {
-            font-size: 11.5px;
+
+        /* Semi-transparent Status Badges */
+        .adv-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 11px;
             font-weight: 700;
             padding: 4px 10px;
             border-radius: 999px;
-            display: inline-block;
-            text-transform: capitalize;
+            white-space: nowrap;
         }
-        .badge-booking-status.is-menunggu { background: #FEF3C7; color: #B45309; }
-        .badge-booking-status.is-diterima { background: #EFF6FF; color: #1D4ED8; }
-        .badge-booking-status.is-diproses { background: #F3E8FF; color: #7E22CE; }
-        .badge-booking-status.is-selesai { background: #ECFDF5; color: #047857; }
-        .badge-booking-status.is-ditolak { background: #FEF2F2; color: #B91C1C; }
-        .badge-booking-status.is-dibatalkan { background: #F1F5F9; color: #64748B; }
+        .adv-badge-dot {
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+        }
+        .badge-pending {
+            background: rgba(245, 158, 11, 0.1);
+            color: #d97706;
+            border: 1px solid rgba(245, 158, 11, 0.25);
+        }
+        .badge-pending .adv-badge-dot { background: #f59e0b; }
+        
+        .badge-confirmed {
+            background: rgba(59, 130, 246, 0.1);
+            color: #2563eb;
+            border: 1px solid rgba(59, 130, 246, 0.25);
+        }
+        .badge-confirmed .adv-badge-dot { background: #3b82f6; }
 
-        /* Action Buttons */
-        .table-actions {
-            display: flex;
-            align-items: center;
-            gap: 6px;
+        .badge-processing {
+            background: rgba(139, 92, 246, 0.1);
+            color: #7c3aed;
+            border: 1px solid rgba(139, 92, 246, 0.25);
         }
-        .btn-table-action {
-            padding: 6px 12px;
-            border-radius: 8px;
+        .badge-processing .adv-badge-dot { background: #8b5cf6; }
+
+        .badge-completed {
+            background: rgba(16, 185, 129, 0.1);
+            color: #059669;
+            border: 1px solid rgba(16, 185, 129, 0.25);
+        }
+        .badge-completed .adv-badge-dot { background: #10b981; }
+
+        .badge-cancelled {
+            background: rgba(239, 68, 68, 0.1);
+            color: #dc2626;
+            border: 1px solid rgba(239, 68, 68, 0.25);
+        }
+        .badge-cancelled .adv-badge-dot { background: #ef4444; }
+
+        /* Interactive Queue Cards View */
+        .adv-queue-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(360px, 1fr));
+            gap: 18px;
+        }
+        .adv-queue-card {
+            background: #ffffff;
+            border: 1px solid rgba(226, 232, 240, 0.9);
+            border-radius: 16px;
+            padding: 20px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.02);
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            transition: all 0.2s ease;
+        }
+        .adv-queue-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 24px rgba(15, 23, 42, 0.07);
+            border-color: #cbd5e1;
+        }
+        .adv-queue-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 14px;
+            padding-bottom: 12px;
+            border-bottom: 1px solid #f1f5f9;
+        }
+        .adv-queue-body {
+            margin-bottom: 16px;
+        }
+        .adv-queue-info-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
             font-size: 12.5px;
-            font-weight: 700;
-            text-decoration: none;
+            padding: 4px 0;
+        }
+        .adv-queue-complaint {
+            background: #f8fafc;
+            border-left: 3px solid #ef1b2d;
+            border-radius: 0 8px 8px 0;
+            padding: 10px 12px;
+            font-size: 12px;
+            color: #334155;
+            margin-top: 10px;
+            line-height: 1.4;
+        }
+        .adv-queue-footer {
+            display: flex;
+            gap: 8px;
+            justify-content: flex-end;
+            padding-top: 12px;
+            border-top: 1px solid #f1f5f9;
+        }
+
+        /* Buttons */
+        .adv-btn {
             display: inline-flex;
             align-items: center;
-            gap: 4px;
-            border: 1px solid #E2E8F0;
-            background: #FFFFFF;
-            color: #0F172A;
-            transition: all 0.15s ease;
+            justify-content: center;
+            gap: 6px;
+            padding: 8px 14px;
+            border-radius: 10px;
+            font-size: 12px;
+            font-weight: 700;
+            border: 1px solid transparent;
             cursor: pointer;
+            text-decoration: none;
+            transition: all 0.15s ease;
+            white-space: nowrap;
         }
-        .btn-table-action:hover {
-            background: #0F172A;
-            color: #FFFFFF;
-            border-color: #0F172A;
+        .adv-btn-primary { background: #ef1b2d; color: #fff; }
+        .adv-btn-primary:hover { background: #dc1829; box-shadow: 0 2px 8px rgba(239, 27, 45, 0.3); }
+        .adv-btn-dark { background: #0f172a; color: #fff; }
+        .adv-btn-dark:hover { background: #1e293b; }
+        .adv-btn-outline { background: #fff; color: #0f172a; border-color: #cbd5e1; }
+        .adv-btn-outline:hover { background: #f8fafc; border-color: #94a3b8; }
+        .adv-btn-success { background: #059669; color: #fff; }
+        .adv-btn-success:hover { background: #047857; }
+        .adv-btn-danger-outline { background: #fff; color: #ef1b2d; border-color: #fecaca; }
+        .adv-btn-danger-outline:hover { background: #fef2f2; }
+
+        @media (max-width: 1024px) {
+            .adv-kpi-grid { grid-template-columns: repeat(2, 1fr); }
+        }
+        @media (max-width: 640px) {
+            .adv-kpi-grid { grid-template-columns: 1fr; }
+            .adv-hero { padding: 22px; }
+            .adv-queue-grid { grid-template-columns: 1fr; }
         }
     </style>
 
-    <nav class="service-operations-nav" aria-label="Navigasi Service Operations">
-        <a class="is-active" href="{{ route($role==='admin'?'admin.booking-servis.index':'petugas.booking-servis.index', ['status' => 'menunggu']) }}"><span>01</span><strong>Booking Menunggu</strong><small>Review dan konfirmasi</small></a>
-        <a href="{{ route($role==='admin'?'admin.servis.index':'petugas.servis.index') }}"><span>02</span><strong>Work Order</strong><small>Pekerjaan bengkel aktif</small></a>
-        @if($role==='admin')<a href="{{ route('admin.servis.schedule') }}"><span>03</span><strong>Jadwal Bengkel</strong><small>Kalender dan kapasitas bengkel</small></a>@else<span class="is-disabled"><span>03</span><strong>Jadwal Bengkel</strong><small>Khusus admin</small></span>@endif
-    </nav>
-    <style>.service-operations-nav{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;margin-bottom:4px}.service-operations-nav a,.service-operations-nav>span{display:grid;grid-template-columns:34px 1fr;column-gap:10px;align-items:center;padding:14px 16px;border:1px solid #e2e8f0;border-radius:14px;background:#fff;color:#334155;text-decoration:none}.service-operations-nav a:hover{border-color:#ed172b}.service-operations-nav a.is-active{border-color:#fecdd3;background:#fff5f6}.service-operations-nav span{grid-row:1/3;display:grid;place-items:center;width:30px;height:30px;border-radius:9px;background:#f1f5f9;color:#64748b;font-size:11px;font-weight:900}.service-operations-nav .is-active>span{background:#ed172b;color:#fff}.service-operations-nav strong{font-size:13px}.service-operations-nav small{color:#94a3b8;font-size:11px}.service-operations-nav .is-disabled{opacity:.7;cursor:not-allowed}@media(max-width:700px){.service-operations-nav{grid-template-columns:1fr}}
-</style>
-
-    {{-- Header --}}
-    <header class="booking-header">
-        <div class="booking-header-left">
-            <nav class="booking-breadcrumb" aria-label="Breadcrumb">
-                <span class="breadcrumb-back-arrow" aria-hidden="true">&lsaquo;</span>
-                <span class="breadcrumb-item">Layanan & Operasional</span>
-                <span class="breadcrumb-separator">&gt;</span>
-                <span class="breadcrumb-current">Booking Servis</span>
-            </nav>
-
-            <div class="booking-title-group">
-                <div class="booking-title-icon" aria-hidden="true">
-                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                        <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
-                        <line x1="16" y1="2" x2="16" y2="6"></line>
-                        <line x1="8" y1="2" x2="8" y2="6"></line>
-                        <line x1="3" y1="10" x2="21" y2="10"></line>
-                    </svg>
-                </div>
-                <div>
-                    <h1 class="booking-heading">Antrian Booking Servis Member</h1>
-                    <p class="booking-subheading">Kelola permohonan booking servis kendaraan pelanggan, verifikasi kepemilikan unit, dan mulai Work Order bengkel.</p>
-                </div>
-            </div>
+    <!-- Header Section -->
+    <header class="adv-hero">
+        <div>
+            <div class="adv-hero-eyebrow">Service Advisor Command Hub</div>
+            <h1>Antrean Booking Servis</h1>
+            <p>Kelola seluruh agenda reservasi servis berkala & perbaikan, konfirmasi slot kedatangan customer, serta lakukan check-in fisik kendaraan.</p>
         </div>
-
-        <div class="booking-header-right">
-            <div class="booking-banner">
-                <img src="{{ asset('assets/images/hero/yza-admin-sales-banner.jpg') }}" alt="YZA Workshop Booking" class="booking-banner-img" loading="eager">
-                <div class="booking-banner-overlay"></div>
-                <div class="booking-banner-content">
-                    <span class="banner-tagline-top">LAYANAN PRIORITAS</span>
-                    <span class="banner-tagline-bottom">BOOKING SERVIS BENGKEL</span>
-                    <div class="banner-accent-line"></div>
-                </div>
-            </div>
+        <div style="display:flex; gap:10px; align-items:center;">
+            <a href="{{ route('petugas.dashboard') }}?tab=advisor" class="adv-btn adv-btn-outline" style="border-color:rgba(255,255,255,0.25); color:#fff; background:rgba(255,255,255,0.06);">
+                ← Kembali ke Command Center
+            </a>
         </div>
     </header>
 
     @if(session('success'))
-        <div class="admin-alert is-success" role="alert">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"></polyline></svg>
-            <span>{{ session('success') }}</span>
+        <div style="background:#ecfdf5; border:1px solid #a7f3d0; color:#065f46; border-radius:14px; padding:14px 18px; margin-bottom:20px; font-weight:600; font-size:13.5px; display:flex; align-items:center; gap:8px;">
+            <span>✓</span> {{ session('success') }}
         </div>
     @endif
 
-    {{-- 6 KPI Cards --}}
-    <section class="booking-kpi-grid" aria-label="Statistik Antrian Booking Servis">
-        {{-- Card 1: Total Pengajuan --}}
-        <a class="booking-kpi-card is-red" href="{{ route($role==='admin'?'admin.booking-servis.index':'petugas.booking-servis.index') }}">
-            <div class="kpi-icon-box">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                    <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
-                    <line x1="16" y1="2" x2="16" y2="6"></line>
-                    <line x1="8" y1="2" x2="8" y2="6"></line>
-                    <line x1="3" y1="10" x2="21" y2="10"></line>
-                </svg>
+    <!-- KPI Metric Cards Grid -->
+    @php
+        $totalAll = $rows->total();
+        $pendingCount = \App\Models\BookingServis::where('status', 'menunggu')->count();
+        $confirmedCount = \App\Models\BookingServis::where('status', 'diterima')->count();
+        $activeWoCount = \App\Models\BookingServis::where('status', 'diproses')->count();
+    @endphp
+    <div class="adv-kpi-grid">
+        <div class="adv-kpi-card">
+            <div>
+                <div class="adv-kpi-label">Total Booking Masuk</div>
+                <div class="adv-kpi-value">{{ number_format($totalAll) }}</div>
             </div>
-            <div class="kpi-content">
-                <span class="kpi-label">Total Booking</span>
-                <strong class="kpi-value">{{ number_format($stats['total'] ?? 0) }}</strong>
-                <div class="kpi-subtext">
-                    <span>Semua permohonan</span>
-                </div>
-            </div>
-        </a>
-
-        {{-- Card 2: Menunggu Konfirmasi --}}
-        <a class="booking-kpi-card is-amber" href="{{ route($role==='admin'?'admin.booking-servis.index':'petugas.booking-servis.index', ['status' => 'menunggu']) }}">
-            <div class="kpi-icon-box">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                    <circle cx="12" cy="12" r="10"></circle>
-                    <polyline points="12 6 12 12 16 14"></polyline>
-                </svg>
-            </div>
-            <div class="kpi-content">
-                <span class="kpi-label">Menunggu Review</span>
-                <strong class="kpi-value">{{ number_format($stats['menunggu'] ?? 0) }}</strong>
-                <div class="kpi-subtext" style="color: #D97706;">
-                    <span>Perlu dikonfirmasi</span>
-                </div>
-            </div>
-        </a>
-
-        {{-- Card 3: Diterima / Siap Masuk --}}
-        <a class="booking-kpi-card is-blue" href="{{ route($role==='admin'?'admin.booking-servis.index':'petugas.booking-servis.index', ['status' => 'diterima']) }}">
-            <div class="kpi-icon-box">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                    <polyline points="20 6 9 17 4 12"></polyline>
-                </svg>
-            </div>
-            <div class="kpi-content">
-                <span class="kpi-label">Diterima Bengkel</span>
-                <strong class="kpi-value">{{ number_format($stats['diterima'] ?? 0) }}</strong>
-                <div class="kpi-subtext" style="color: #2563EB;">
-                    <span>Siap mulai WO</span>
-                </div>
-            </div>
-        </a>
-
-        {{-- Card 4: Diproses (Work Order Aktif) --}}
-        <a class="booking-kpi-card is-purple" href="{{ route($role==='admin'?'admin.booking-servis.index':'petugas.booking-servis.index', ['status' => 'diproses']) }}">
-            <div class="kpi-icon-box">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                    <path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"></path>
-                </svg>
-            </div>
-            <div class="kpi-content">
-                <span class="kpi-label">Sedang Diproses</span>
-                <strong class="kpi-value">{{ number_format($stats['diproses'] ?? 0) }}</strong>
-                <div class="kpi-subtext" style="color: #7E22CE;">
-                    <span>Dalam pengerjaan</span>
-                </div>
-            </div>
-        </a>
-
-        {{-- Card 5: Selesai --}}
-        <a class="booking-kpi-card is-green" href="{{ route($role==='admin'?'admin.booking-servis.index':'petugas.booking-servis.index', ['status' => 'selesai']) }}">
-            <div class="kpi-icon-box">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-                    <polyline points="20 6 9 17 4 12"></polyline>
-                </svg>
-            </div>
-            <div class="kpi-content">
-                <span class="kpi-label">Servis Selesai</span>
-                <strong class="kpi-value">{{ number_format($stats['selesai'] ?? 0) }}</strong>
-                <div class="kpi-subtext" style="color: #059669;">
-                    <span>Pekerjaan tuntas</span>
-                </div>
-            </div>
-        </a>
-
-        {{-- Card 6: Ditolak --}}
-        <div class="booking-kpi-card is-red">
-            <div class="kpi-icon-box">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                    <circle cx="12" cy="12" r="10"></circle>
-                    <line x1="15" y1="9" x2="9" y2="15"></line>
-                    <line x1="9" y1="9" x2="15" y2="15"></line>
-                </svg>
-            </div>
-            <div class="kpi-content">
-                <span class="kpi-label">Ditolak</span>
-                <strong class="kpi-value">{{ number_format($stats['ditolak'] ?? 0) }}</strong>
-                <div class="kpi-subtext">
-                    <span>Pengajuan ditolak</span>
-                </div>
-            </div>
+            <div class="adv-kpi-icon" style="background:#f1f5f9; color:#0f172a;">📋</div>
         </div>
-    </section>
-
-    {{-- Main Container Card --}}
-    <main class="booking-main-card">
-        {{-- Card Header --}}
-        <div class="booking-card-header">
-            <div class="card-header-left">
-                <div class="card-header-icon" aria-hidden="true">
-                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                        <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
-                        <line x1="16" y1="2" x2="16" y2="6"></line>
-                        <line x1="8" y1="2" x2="8" y2="6"></line>
-                        <line x1="3" y1="10" x2="21" y2="10"></line>
-                    </svg>
-                </div>
-                <div>
-                    <h2 class="card-header-title">Daftar Antrian Booking Servis</h2>
-                    <p class="card-header-subtitle">Permohonan servis terjadwal dari member pemilik kendaraan YZA</p>
-                </div>
+        <div class="adv-kpi-card">
+            <div>
+                <div class="adv-kpi-label">Menunggu Konfirmasi</div>
+                <div class="adv-kpi-value" style="color:#d97706;">{{ number_format($pendingCount) }}</div>
             </div>
-
-            <div class="header-action-group">
-                <a class="btn-action-primary" href="{{ route(request()->is('admin/*')?'admin.servis.index':'petugas.servis.index') }}">
-                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line></svg>
-                    <span>Daftar Work Order</span>
-                </a>
-                <a class="btn-action-secondary" href="{{ route('admin.sparepart.index') }}">
-                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 2 7 12 12 22 7 12 2"></polygon><polyline points="2 17 12 22 22 17"></polyline><polyline points="2 12 12 17 22 12"></polyline></svg>
-                    <span>Stok Sparepart</span>
-                </a>
-            </div>
+            <div class="adv-kpi-icon" style="background:rgba(245, 158, 11, 0.1); color:#d97706;">⏳</div>
         </div>
-
-        {{-- Filter Toolbar --}}
-        <form class="booking-filter-toolbar" method="get" action="{{ route($role==='admin'?'admin.booking-servis.index':'petugas.booking-servis.index') }}">
-            <div class="filter-wrap search-box">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
-                <input type="text" name="q" value="{{ request('q') }}" class="filter-input" placeholder="Cari kode booking, nama pelanggan, nopol, atau tipe kendaraan...">
+        <div class="adv-kpi-card">
+            <div>
+                <div class="adv-kpi-label">Siap Check-in / Diterima</div>
+                <div class="adv-kpi-value" style="color:#2563eb;">{{ number_format($confirmedCount) }}</div>
             </div>
+            <div class="adv-kpi-icon" style="background:rgba(59, 130, 246, 0.1); color:#2563eb;">🚗</div>
+        </div>
+        <div class="adv-kpi-card">
+            <div>
+                <div class="adv-kpi-label">Work Order Aktif</div>
+                <div class="adv-kpi-value" style="color:#7c3aed;">{{ number_format($activeWoCount) }}</div>
+            </div>
+            <div class="adv-kpi-icon" style="background:rgba(139, 92, 246, 0.1); color:#7c3aed;">🔧</div>
+        </div>
+    </div>
 
-            <div class="filter-wrap select-box">
-                <select name="status" class="filter-select">
-                    <option value="">Semua Status Booking</option>
-                    @foreach(['menunggu','diterima','ditolak','dibatalkan','diproses','selesai'] as $s)
-                        <option value="{{ $s }}" @selected(request('status') === $s)>{{ match($s) { 'menunggu' => 'Menunggu Konfirmasi', 'diterima' => 'Booking Diterima', 'ditolak' => 'Booking Ditolak', 'dibatalkan' => 'Dibatalkan Pelanggan', 'diproses' => 'Work Order Aktif', 'selesai' => 'Selesai', default => ucfirst($s) } }}</option>
+    <!-- Main Workspace -->
+    <div class="adv-card">
+        <!-- Toolbar: Search, Filters & View Toggle -->
+        <div class="adv-toolbar">
+            <form class="adv-filter-form" method="GET">
+                <input class="adv-input" name="q" value="{{ request('q') }}" placeholder="Cari kode booking, nama customer, no. polisi, atau model...">
+                <select class="adv-select" name="status">
+                    <option value="">Semua Status Reservasi</option>
+                    @foreach(['menunggu' => 'Pending (Menunggu)', 'diterima' => 'Dikonfirmasi (Siap Check-in)', 'diproses' => 'Diproses (Work Order)', 'selesai' => 'Selesai', 'ditolak' => 'Ditolak', 'dibatalkan' => 'Dibatalkan'] as $val => $lbl)
+                        <option value="{{ $val }}" @selected(request('status') === $val)>{{ $lbl }}</option>
                     @endforeach
                 </select>
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="select-chevron"><polyline points="6 9 12 15 18 9"></polyline></svg>
+                <button type="submit" class="adv-btn adv-btn-dark">Filter</button>
+                @if(request('q') || request('status'))
+                    <a href="{{ route('petugas.booking-servis.index') }}" class="adv-btn adv-btn-outline">Reset</a>
+                @endif
+            </form>
+
+            <div class="adv-view-switcher" role="tablist">
+                <button type="button" class="adv-view-btn is-active" id="btn-view-table" onclick="setViewMode('table')">
+                    ☰ Tabel Interaktif
+                </button>
+                <button type="button" class="adv-view-btn" id="btn-view-cards" onclick="setViewMode('cards')">
+                    ▦ Kartu Antrean
+                </button>
             </div>
-
-            <button type="submit" class="btn-filter-submit">Filter</button>
-            @if(request()->hasAny(['q', 'status']))
-                <a href="{{ route($role==='admin'?'admin.booking-servis.index':'petugas.booking-servis.index') }}" class="btn-filter-reset">Reset</a>
-            @endif
-        </form>
-
-        {{-- Table --}}
-        <div class="booking-table-wrapper">
-            <table class="booking-table">
-                <thead>
-                    <tr>
-                        <th>Kode Booking</th>
-                        <th>Pelanggan</th>
-                        <th>Kendaraan & Nopol</th>
-                        <th>Jenis Layanan Servis</th>
-                        <th>Jadwal Servis</th>
-                        <th>Status</th>
-                        <th style="text-align: right; width: 140px;">Aksi</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    @forelse($rows as $b)
-                        <tr>
-                            <td>
-                                <span class="badge-code">{{ $b->kode_booking }}</span>
-                            </td>
-                            <td>
-                                <strong style="color: #0F172A; font-size: 13.5px; display: block;">{{ $b->pelanggan?->nama_lengkap ?: '—' }}</strong>
-                                <span style="color: #64748B; font-size: 12px;">{{ $b->pelanggan?->no_hp ?: '—' }}</span>
-                            </td>
-                            <td>
-                                <div>
-                                    <strong style="color: #0F172A; font-size: 13px;">{{ $b->kendaraan?->merk }} {{ $b->kendaraan?->model }}</strong>
-                                    <span style="color: #475569; font-size: 12px; display: block;">{{ $b->kendaraan?->nomor_polisi ?: 'Tanpa nomor plat' }}</span>
-                                </div>
-                            </td>
-                            <td>
-                                <span style="font-weight: 600; color: #1E293B;">{{ $b->jenisServis?->nama_servis ?: 'Pemeriksaan Umum' }}</span>
-                            </td>
-                            <td>
-                                <span style="color: #334155; font-weight: 500;">
-                                    {{ $b->tanggal ? \Carbon\Carbon::parse($b->tanggal)->format('d M Y') : '—' }} · {{ substr((string)$b->jam, 0, 5) }}
-                                </span>
-                            </td>
-                            <td>
-                                <span class="badge-booking-status is-{{ $b->status }}">
-                                    {{ match($b->status) { 'menunggu' => 'Menunggu Konfirmasi', 'diterima' => 'Booking Diterima', 'ditolak' => 'Booking Ditolak', 'dibatalkan' => 'Dibatalkan Pelanggan', 'diproses' => 'Work Order Aktif', 'selesai' => 'Selesai', default => ucfirst($b->status) } }}
-                                </span>
-                            </td>
-                            <td style="text-align: right;">
-                                <a class="btn-table-action" href="{{ route($role==='admin'?'admin.booking-servis.show':'petugas.booking-servis.show', $b) }}">
-                                    Kelola &rarr;
-                                </a>
-                            </td>
-                        </tr>
-                    @empty
-                        <tr>
-                            <td colspan="7" style="text-align: center; padding: 40px 20px; color: #64748B;">
-                                <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="#94A3B8" stroke-width="1.5" style="margin-bottom: 8px;"><circle cx="12" cy="12" r="10"></circle><line x1="8" y1="12" x2="16" y2="12"></line></svg>
-                                <p style="margin: 0; font-weight: 600;">Belum ada booking servis pada antrian ini.</p>
-                            </td>
-                        </tr>
-                    @endforelse
-                </tbody>
-            </table>
         </div>
 
-        {{-- Pagination --}}
-        <div>
+        <!-- 1. Table View -->
+        <div id="view-table-container">
+            <div class="adv-table-wrap">
+                <table class="adv-table">
+                    <thead>
+                        <tr>
+                            <th style="width:40px;">No</th>
+                            <th>Kode Booking</th>
+                            <th>Customer & Kontak</th>
+                            <th>Kendaraan Unit</th>
+                            <th>Layanan & Catatan Keluhan</th>
+                            <th>Jadwal Kedatangan</th>
+                            <th>Status Reservasi</th>
+                            <th style="text-align:right;">Aksi</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @forelse($rows as $b)
+                            @php
+                                $badge = match($b->status) {
+                                    'menunggu' => ['cls' => 'badge-pending', 'lbl' => 'Pending'],
+                                    'diterima' => ['cls' => 'badge-confirmed', 'lbl' => 'Dikonfirmasi'],
+                                    'diproses' => ['cls' => 'badge-processing', 'lbl' => 'WO Aktif'],
+                                    'selesai' => ['cls' => 'badge-completed', 'lbl' => 'Selesai'],
+                                    'ditolak' => ['cls' => 'badge-cancelled', 'lbl' => 'Ditolak'],
+                                    'dibatalkan' => ['cls' => 'badge-cancelled', 'lbl' => 'Dibatalkan'],
+                                    default => ['cls' => 'badge-pending', 'lbl' => ucfirst($b->status)],
+                                };
+                                $detailRoute = $role === 'admin' ? route('admin.booking-servis.show', $b) : route('petugas.booking-servis.show', $b);
+                            @endphp
+                            <tr>
+                                <td style="color:#64748b; font-size:12px;">{{ $loop->iteration + ($rows->currentPage() - 1) * $rows->perPage() }}</td>
+                                <td>
+                                    <div class="adv-mono-code">{{ $b->kode_booking }}</div>
+                                    <small style="color:#64748b; font-size:11px;">Dibuat: {{ $b->created_at?->format('d/m/Y H:i') }}</small>
+                                </td>
+                                <td>
+                                    <strong style="color:#0f172a; display:block;">{{ $b->pelanggan?->nama_lengkap ?: 'Customer Umum' }}</strong>
+                                    <small style="color:#64748b; font-size:11px;">📞 {{ $b->pelanggan?->no_telepon ?: '—' }}</small>
+                                </td>
+                                <td>
+                                    <span class="adv-plat-pill">{{ $b->kendaraan?->nomor_polisi ?: 'Plat —' }}</span>
+                                    <div style="font-size:12px; color:#475569; margin-top:3px;">
+                                        {{ $b->kendaraan?->merk }} {{ $b->kendaraan?->model }}
+                                        <span style="color:#94a3b8;">· {{ number_format((int)($b->kendaraan?->kilometer ?? 0)) }} km</span>
+                                    </div>
+                                </td>
+                                <td>
+                                    <strong style="color:#0f172a; font-size:12.5px;">{{ $b->jenisServis?->nama_servis ?: 'General Service' }}</strong>
+                                    <div style="color:#64748b; font-size:11.5px; max-width:260px; line-height:1.3; margin-top:2px;" title="{{ $b->keluhan }}">
+                                        {{ Str::limit($b->keluhan ?: 'Tidak ada keluhan khusus', 36) }}
+                                    </div>
+                                </td>
+                                <td>
+                                    <strong style="color:#0f172a;">{{ \Carbon\Carbon::parse($b->tanggal)->translatedFormat('d M Y') }}</strong>
+                                    <div style="color:#64748b; font-size:11.5px;">⏰ {{ substr((string)$b->jam, 0, 5) }} WIB</div>
+                                </td>
+                                <td>
+                                    <span class="adv-badge {{ $badge['cls'] }}">
+                                        <span class="adv-badge-dot"></span>
+                                        {{ $badge['lbl'] }}
+                                    </span>
+                                </td>
+                                <td style="text-align:right;">
+                                    <div style="display:inline-flex; gap:6px; justify-content:flex-end; align-items:center;">
+                                        @if($b->status === 'menunggu')
+                                            <form method="POST" action="{{ route($role==='admin'?'admin.booking-servis.action':'petugas.booking-servis.action', [$b, 'confirm']) }}" onsubmit="return confirm('Konfirmasi booking {{ $b->kode_booking }}?')">
+                                                @csrf
+                                                <button type="submit" class="adv-btn adv-btn-success" title="Terima Reservasi">✓ Terima</button>
+                                            </form>
+                                        @elseif($b->status === 'diterima' && !$b->servis)
+                                            <a class="adv-btn adv-btn-primary" href="{{ $detailRoute }}" title="Mobil Tiba - Check-in Sekarang">Check-in 🚗</a>
+                                        @endif
+                                        <a class="adv-btn adv-btn-outline" href="{{ $detailRoute }}">Detail →</a>
+                                    </div>
+                                </td>
+                            </tr>
+                        @empty
+                            <tr>
+                                <td colspan="8" style="text-align:center; padding:44px 20px; color:#64748b;">
+                                    <div style="font-size:32px; margin-bottom:8px;">🚗</div>
+                                    <strong style="display:block; font-size:15px; color:#0f172a; margin-bottom:4px;">Tidak Ada Antrean Booking</strong>
+                                    <p style="font-size:13px; margin:0;">Tidak ditemukan jadwal reservasi servis dengan kriteria filter saat ini.</p>
+                                </td>
+                            </tr>
+                        @endforelse
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- 2. Queue Cards View (Kanban / Cards) -->
+        <div id="view-cards-container" style="display:none;">
+            <div class="adv-queue-grid">
+                @forelse($rows as $b)
+                    @php
+                        $badge = match($b->status) {
+                            'menunggu' => ['cls' => 'badge-pending', 'lbl' => 'Pending'],
+                            'diterima' => ['cls' => 'badge-confirmed', 'lbl' => 'Siap Check-in'],
+                            'diproses' => ['cls' => 'badge-processing', 'lbl' => 'WO Aktif'],
+                            'selesai' => ['cls' => 'badge-completed', 'lbl' => 'Selesai'],
+                            'ditolak' => ['cls' => 'badge-cancelled', 'lbl' => 'Ditolak'],
+                            'dibatalkan' => ['cls' => 'badge-cancelled', 'lbl' => 'Dibatalkan'],
+                            default => ['cls' => 'badge-pending', 'lbl' => ucfirst($b->status)],
+                        };
+                        $detailRoute = $role === 'admin' ? route('admin.booking-servis.show', $b) : route('petugas.booking-servis.show', $b);
+                    @endphp
+                    <div class="adv-queue-card">
+                        <div>
+                            <div class="adv-queue-header">
+                                <div>
+                                    <span class="adv-mono-code">{{ $b->kode_booking }}</span>
+                                    <div style="font-size:11px; color:#64748b; margin-top:2px;">{{ \Carbon\Carbon::parse($b->tanggal)->translatedFormat('d M Y') }} · {{ substr((string)$b->jam, 0, 5) }} WIB</div>
+                                </div>
+                                <span class="adv-badge {{ $badge['cls'] }}">
+                                    <span class="adv-badge-dot"></span>
+                                    {{ $badge['lbl'] }}
+                                </span>
+                            </div>
+
+                            <div class="adv-queue-body">
+                                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+                                    <span class="adv-plat-pill">{{ $b->kendaraan?->nomor_polisi ?: 'Plat —' }}</span>
+                                    <span style="font-size:12px; font-weight:700; color:#0f172a;">{{ $b->kendaraan?->merk }} {{ $b->kendaraan?->model }}</span>
+                                </div>
+
+                                <div class="adv-queue-info-row">
+                                    <span style="color:#64748b;">Customer:</span>
+                                    <strong>{{ $b->pelanggan?->nama_lengkap ?: 'Customer Umum' }}</strong>
+                                </div>
+                                <div class="adv-queue-info-row">
+                                    <span style="color:#64748b;">Layanan:</span>
+                                    <span style="color:#0f172a; font-weight:600;">{{ $b->jenisServis?->nama_servis ?: 'General Service' }}</span>
+                                </div>
+                                <div class="adv-queue-info-row">
+                                    <span style="color:#64748b;">Odometer:</span>
+                                    <span>{{ number_format((int)($b->kendaraan?->kilometer ?? 0)) }} km</span>
+                                </div>
+
+                                @if($b->keluhan)
+                                    <div class="adv-queue-complaint">
+                                        <strong>Keluhan:</strong> "{{ Str::limit($b->keluhan, 70) }}"
+                                    </div>
+                                @endif
+                            </div>
+                        </div>
+
+                        <div class="adv-queue-footer">
+                            @if($b->status === 'menunggu')
+                                <form method="POST" action="{{ route($role==='admin'?'admin.booking-servis.action':'petugas.booking-servis.action', [$b, 'confirm']) }}">
+                                    @csrf
+                                    <button type="submit" class="adv-btn adv-btn-success">✓ Terima</button>
+                                </form>
+                            @elseif($b->status === 'diterima' && !$b->servis)
+                                <a href="{{ $detailRoute }}" class="adv-btn adv-btn-primary">Check-in Fisik 🚗</a>
+                            @endif
+                            <a href="{{ $detailRoute }}" class="adv-btn adv-btn-outline">Detail →</a>
+                        </div>
+                    </div>
+                @empty
+                    <div style="grid-column: 1 / -1; text-align:center; padding:44px 20px; color:#64748b;">
+                        <strong style="display:block; font-size:15px; color:#0f172a; margin-bottom:4px;">Tidak Ada Antrean Booking</strong>
+                        <p style="font-size:13px; margin:0;">Tidak ditemukan jadwal reservasi servis dengan kriteria filter saat ini.</p>
+                    </div>
+                @endforelse
+            </div>
+        </div>
+
+        <div style="margin-top:24px; padding-top:16px; border-top:1px solid #f1f5f9;">
             {{ $rows->links() }}
         </div>
-    </main>
+    </div>
 </div>
+
+<script>
+    function setViewMode(mode) {
+        const table = document.getElementById('view-table-container');
+        const cards = document.getElementById('view-cards-container');
+        const btnTable = document.getElementById('btn-view-table');
+        const btnCards = document.getElementById('btn-view-cards');
+
+        if (mode === 'cards') {
+            table.style.display = 'none';
+            cards.style.display = 'block';
+            btnCards.classList.add('is-active');
+            btnTable.classList.remove('is-active');
+            localStorage.setItem('yza_adv_booking_view', 'cards');
+        } else {
+            table.style.display = 'block';
+            cards.style.display = 'none';
+            btnTable.classList.add('is-active');
+            btnCards.classList.remove('is-active');
+            localStorage.setItem('yza_adv_booking_view', 'table');
+        }
+    }
+
+    // Persist user view preference
+    document.addEventListener('DOMContentLoaded', () => {
+        const pref = localStorage.getItem('yza_adv_booking_view');
+        if (pref === 'cards') {
+            setViewMode('cards');
+        }
+    });
+</script>
 @endsection

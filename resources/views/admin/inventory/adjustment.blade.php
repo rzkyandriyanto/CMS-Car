@@ -1,232 +1,411 @@
 @extends('layouts.app')
 
-@section('title', 'Penyesuaian Stok Fisik · Admin YZA Automotive')
-@section('admin-page-title', 'Penyesuaian Stok')
+@section('title', 'Penyesuaian Stok (Stock Opname) · Inventory Gudang · YZA Automotive')
 
 @section('content')
-<div class="admin-inventory-adjustment">
+<div class="warehouse-adj-page">
     <style>
-        .admin-inventory-adjustment {
-            display: flex;
-            flex-direction: column;
-            gap: 24px;
-            max-width: 920px;
+        .warehouse-adj-page {
+            max-width: 1440px;
             margin: 0 auto;
+            padding: 8px 16px 56px;
+            font-family: inherit;
+            color: #0f172a;
         }
-        .adj-header {
+
+        /* Hero Header */
+        .wh-hero {
+            background: linear-gradient(135deg, #090a0f 0%, #151821 55%, #1e2330 100%);
+            color: #ffffff;
+            border-radius: 20px;
+            padding: 28px 32px;
             display: flex;
-            align-items: center;
             justify-content: space-between;
-            gap: 16px;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 20px;
+            box-shadow: 0 10px 30px rgba(15, 23, 42, 0.16);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            margin-bottom: 24px;
+            position: relative;
+            overflow: hidden;
         }
-        .adj-breadcrumb {
+        .wh-hero::before {
+            content: '';
+            position: absolute;
+            top: -60px;
+            right: -60px;
+            width: 220px;
+            height: 220px;
+            background: radial-gradient(circle, rgba(239, 27, 45, 0.2) 0%, rgba(239, 27, 45, 0) 70%);
+            border-radius: 50%;
+            pointer-events: none;
+        }
+        .wh-hero-eyebrow {
+            color: #ef1b2d;
+            font-size: 11px;
+            font-weight: 800;
+            text-transform: uppercase;
+            letter-spacing: 0.14em;
+            margin-bottom: 6px;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .wh-hero-eyebrow::before {
+            content: '';
+            width: 6px;
+            height: 6px;
+            background: #ef1b2d;
+            border-radius: 50%;
+        }
+        .wh-hero h1 {
+            font-size: clamp(24px, 3.2vw, 32px);
+            font-weight: 800;
+            letter-spacing: -0.03em;
+            margin: 0 0 6px;
+            color: #ffffff;
+            line-height: 1.2;
+        }
+        .wh-hero p {
+            color: #94a3b8;
+            font-size: 13.5px;
+            margin: 0;
+            line-height: 1.5;
+        }
+
+        /* 2-Column Dynamic Grid */
+        .wh-adj-grid {
+            display: grid;
+            grid-template-columns: minmax(0, 1.4fr) minmax(360px, 1fr);
+            gap: 24px;
+            align-items: flex-start;
+        }
+
+        /* Cards */
+        .wh-card {
+            background: #ffffff;
+            border: 1px solid rgba(226, 232, 240, 0.85);
+            border-radius: 18px;
+            padding: 24px 28px;
+            margin-bottom: 24px;
+            box-shadow: 0 2px 8px rgba(15, 23, 42, 0.03);
+        }
+        .wh-card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 14px;
+            border-bottom: 1px solid #f1f5f9;
+        }
+        .wh-card-title {
+            font-size: 16px;
+            font-weight: 800;
+            letter-spacing: -0.02em;
+            color: #0f172a;
+            margin: 0;
             display: flex;
             align-items: center;
             gap: 8px;
-            font-size: 13px;
-            color: #64748B;
-            margin-bottom: 8px;
         }
-        .adj-breadcrumb a { color: #64748B; text-decoration: none; font-weight: 500; }
-        .adj-breadcrumb span.current { color: #0F172A; font-weight: 700; }
-        .adj-title h1 {
+
+        /* Form Inputs */
+        .wh-form-group {
+            margin-bottom: 18px;
+        }
+        .wh-form-group label {
+            display: block;
+            font-size: 12.5px;
+            font-weight: 700;
+            color: #0f172a;
+            margin-bottom: 6px;
+        }
+        .wh-form-control {
+            width: 100%;
+            padding: 11px 14px;
+            border: 1px solid #cbd5e1;
+            border-radius: 10px;
+            font-size: 13.5px;
+            outline: none;
+            box-sizing: border-box;
+            background: #ffffff;
+            transition: all 0.15s ease;
+        }
+        .wh-form-control:focus {
+            border-color: #ef1b2d;
+            box-shadow: 0 0 0 3px rgba(239, 27, 45, 0.12);
+        }
+
+        /* Live Delta Calculation Gauge */
+        .wh-delta-box {
+            background: #f8fafc;
+            border: 1px solid #e2e8f0;
+            border-radius: 14px;
+            padding: 18px 20px;
+            margin-bottom: 20px;
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 12px;
+            text-align: center;
+        }
+        .wh-delta-item small {
+            display: block;
+            color: #64748b;
+            font-size: 11px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            margin-bottom: 4px;
+        }
+        .wh-delta-item strong {
+            font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
             font-size: 24px;
             font-weight: 800;
-            color: #0F172A;
-            margin: 0;
-            letter-spacing: -0.02em;
+            color: #0f172a;
         }
-        .adj-title p {
+
+        /* Part Profile Card Details */
+        .wh-part-profile-box {
+            background: #f8fafc;
+            border: 1px solid #e2e8f0;
+            border-radius: 14px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+        .wh-part-stat-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 8px 0;
+            border-bottom: 1px solid #e2e8f0;
             font-size: 13px;
-            color: #64748B;
-            margin: 4px 0 0 0;
         }
-        .btn-premium {
+        .wh-part-stat-row:last-child {
+            border-bottom: none;
+        }
+        .wh-part-stat-row span {
+            color: #64748b;
+        }
+        .wh-part-stat-row strong {
+            color: #0f172a;
+        }
+
+        .wh-btn {
             display: inline-flex;
             align-items: center;
+            justify-content: center;
             gap: 8px;
             padding: 10px 20px;
             border-radius: 10px;
             font-size: 13px;
-            font-weight: 600;
-            text-decoration: none;
-            cursor: pointer;
-            border: none;
-            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-        }
-        .btn-premium-secondary {
-            background: #FFFFFF;
-            color: #334155 !important;
-            border: 1px solid #E2E8F0;
-        }
-        .btn-premium-secondary:hover { background: #F8FAFC; }
-        .btn-premium-primary {
-            background: #E11D48;
-            color: #FFFFFF !important;
-            box-shadow: 0 4px 12px rgba(225, 29, 72, 0.25);
-        }
-        .btn-premium-primary:hover {
-            background: #BE123C;
-            transform: translateY(-1px);
-        }
-        .form-card {
-            background: #FFFFFF;
-            border: 1px solid #E2E8F0;
-            border-radius: 16px;
-            padding: 32px;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.03);
-        }
-        .form-section-title {
-            font-size: 15px;
             font-weight: 700;
-            color: #0F172A;
-            margin-bottom: 20px;
-            padding-bottom: 12px;
-            border-bottom: 1px solid #F1F5F9;
-            display: flex;
-            align-items: center;
-            gap: 10px;
+            border: 1px solid transparent;
+            cursor: pointer;
+            text-decoration: none;
+            transition: all 0.15s ease;
         }
-        .form-section-title i { color: #E11D48; }
-        .form-grid {
-            display: grid;
-            grid-template-columns: repeat(2, 1fr);
-            gap: 20px;
-            margin-bottom: 24px;
-        }
-        .form-group-full { grid-column: 1 / -1; }
-        .form-group label {
-            display: block;
-            font-size: 13px;
-            font-weight: 600;
-            color: #334155;
-            margin-bottom: 8px;
-        }
-        .form-group label span.required { color: #E11D48; }
-        .form-control-custom {
-            width: 100%;
-            padding: 12px 14px;
-            border: 1px solid #CBD5E1;
-            border-radius: 10px;
-            font-size: 14px;
-            color: #0F172A;
-            background: #FFFFFF;
-            outline: none;
-            box-sizing: border-box;
-        }
-        .form-control-custom:focus {
-            border-color: #E11D48;
-            box-shadow: 0 0 0 3px rgba(225, 29, 72, 0.1);
-        }
-        .info-box {
-            background: #FFFBEB;
-            border: 1px solid #FDE68A;
-            border-radius: 12px;
-            padding: 16px;
-            margin-bottom: 24px;
-            display: flex;
-            align-items: flex-start;
-            gap: 12px;
-            font-size: 13px;
-            color: #92400E;
-            line-height: 1.5;
-        }
-        .info-box i {
-            color: #D97706;
-            font-size: 18px;
-            margin-top: 2px;
-        }
-        .form-actions {
-            display: flex;
-            align-items: center;
-            justify-content: flex-end;
-            gap: 12px;
-            padding-top: 20px;
-            border-top: 1px solid #F1F5F9;
+        .wh-btn-primary { background: #ef1b2d; color: #fff; }
+        .wh-btn-primary:hover { background: #dc1829; box-shadow: 0 4px 14px rgba(239, 27, 45, 0.3); }
+        .wh-btn-outline { background: #fff; color: #0f172a; border-color: #cbd5e1; }
+        .wh-btn-outline:hover { background: #f8fafc; border-color: #94a3b8; }
+
+        @media (max-width: 1024px) {
+            .wh-adj-grid { grid-template-columns: 1fr; }
         }
     </style>
 
-    <div class="adj-header">
+    <!-- Header Section -->
+    <header class="wh-hero">
         <div>
-            <div class="adj-breadcrumb">
-                <a href="{{ route('admin.sparepart.index') }}">Inventori</a>
-                <span>›</span>
-                <span class="current">Penyesuaian Stok (Stock Opname)</span>
-            </div>
-            <div class="adj-title">
-                <h1>Penyesuaian Stok Fisik</h1>
-                <p>Koreksi resmi saldo inventori sparepart dengan audit trail terenkripsi</p>
-            </div>
+            <div class="wh-hero-eyebrow">Inventory Control & Audit</div>
+            <h1>Penyesuaian Stok (Stock Opname)</h1>
+            <p>Formulir resmi audit fisik persediaan bengkel, sinkronisasi selisih buku dengan stok aktual di rak gudang, dan berita acara koreksi.</p>
         </div>
-        <div>
-            <a href="{{ route('admin.inventory.history') }}" class="btn-premium btn-premium-secondary">
-                <i class="fas fa-history"></i> Lihat Riwayat Perubahan
-            </a>
-        </div>
-    </div>
+        <a href="{{ route('admin.inventory.stock') }}" class="wh-btn wh-btn-outline" style="border-color:rgba(255,255,255,0.25); color:#fff; background:rgba(255,255,255,0.06);">
+            ← Katalog Stok Gudang
+        </a>
+    </header>
 
     @if(session('success'))
-        <div style="background: #D1FAE5; border: 1px solid #6EE7B7; color: #065F46; padding: 14px 18px; border-radius: 12px; font-size: 13px; font-weight: 600;">
-            <i class="fas fa-check-circle" style="margin-right: 6px;"></i> {{ session('success') }}
+        <div style="background:#ecfdf5; border:1px solid #a7f3d0; color:#065f46; border-radius:14px; padding:14px 18px; margin-bottom:20px; font-weight:600; font-size:13.5px; display:flex; align-items:center; gap:8px;">
+            <span>✓</span> {{ session('success') }}
         </div>
     @endif
-    @if($errors->any())
-        <div style="background: #FEE2E2; border: 1px solid #FCA5A5; color: #991B1B; padding: 14px 18px; border-radius: 12px; font-size: 13px; font-weight: 500;">
-            <i class="fas fa-exclamation-triangle" style="margin-right: 6px;"></i> {{ $errors->first() }}
+    @if(isset($errors) && $errors->any())
+        <div style="background:#fef2f2; border:1px solid #fecaca; color:#991b1b; border-radius:14px; padding:14px 18px; margin-bottom:20px; font-weight:600; font-size:13.5px; display:flex; align-items:center; gap:8px;">
+            <span>⚠</span> {{ $errors->first() }}
         </div>
     @endif
 
-    <div class="form-card">
-        <form method="post" action="{{ route('admin.inventory.adjust') }}">
-            @csrf
-
-            <div class="form-section-title">
-                <i class="fas fa-sliders-h"></i> Parameter Penyesuaian Saldo Fisik
+    <!-- 2-Column Dynamic Layout -->
+    <div class="wh-adj-grid">
+        <!-- Main Form (Left Column) -->
+        <div class="wh-card">
+            <div class="wh-card-header">
+                <h2 class="wh-card-title">⚖️ Formulir Berita Acara Opname Fisik</h2>
+                <span style="font-size:12px; color:#64748b;">ID Petugas: {{ auth()->user()->displayName() }}</span>
             </div>
 
-            <div class="form-grid">
-                <div class="form-group form-group-full">
-                    <label>Pilih Sparepart yang Dikoreksi <span class="required">*</span></label>
-                    <select class="form-control-custom" name="id_sparepart" required id="select_adj_part">
-                        <option value="">-- Pilih Sparepart --</option>
-                        @foreach($parts as $p)
-                            <option value="{{ $p->id_sparepart }}" data-current="{{ $p->stok }}" data-unit="{{ $p->satuan }}" @selected(old('id_sparepart', $selected?->id_sparepart) == $p->id_sparepart)>
-                                {{ $p->kode_sparepart }} · {{ $p->nama_sparepart }} (Saldo Sistem Saat Ini: {{ $p->stok }} {{ $p->satuan }})
+            <form method="POST" action="{{ route('admin.inventory.adjust') }}">
+                @csrf
+                
+                <div class="wh-form-group">
+                    <label for="id_sparepart">Pilih Suku Cadang yang Disesuaikan <span style="color:#ef1b2d;">*</span></label>
+                    <select name="id_sparepart" id="id_sparepart" class="wh-form-control" required onchange="handlePartSelect(this)">
+                        <option value="">-- Cari atau Pilih Suku Cadang --</option>
+                        @foreach($parts as $part)
+                            <option value="{{ $part->id_sparepart }}"
+                                @selected(old('id_sparepart', $selected?->id_sparepart) == $part->id_sparepart)
+                                data-code="{{ $part->kode_sparepart }}"
+                                data-name="{{ $part->nama_sparepart }}"
+                                data-stock="{{ (int)$part->stok }}"
+                                data-unit="{{ $part->satuan }}"
+                                data-shelf="{{ $part->lokasi_rak ?: 'Utama' }}"
+                                data-cat="{{ $part->kategori?->nama_kategori ?: 'General' }}"
+                                data-price="{{ (float)$part->harga_jual }}"
+                                data-buy="{{ (float)$part->harga_beli }}">
+                                [{{ $part->kode_sparepart }}] {{ $part->nama_sparepart }} (Stok Saat Ini: {{ $part->stok }} {{ $part->satuan }})
                             </option>
                         @endforeach
                     </select>
                 </div>
 
-                <div class="form-group">
-                    <label>Stok Baru Aktual (Hasil Fisik Opname) <span class="required">*</span></label>
-                    <input class="form-control-custom" type="number" min="0" name="stok_baru" value="{{ old('stok_baru') }}" required placeholder="Contoh: 15" id="input_stok_baru">
+                <!-- Live Delta Calculation Gauge -->
+                <div class="wh-delta-box">
+                    <div class="wh-delta-item">
+                        <small>Stok Sistem Saat Ini</small>
+                        <strong id="display-system-stock">{{ (int)($selected?->stok ?? 0) }}</strong>
+                    </div>
+                    <div class="wh-delta-item">
+                        <small>Hasil Fisik Opname</small>
+                        <strong id="display-new-stock" style="color:#2563eb;">{{ (int)old('stok_baru', $selected?->stok ?? 0) }}</strong>
+                    </div>
+                    <div class="wh-delta-item">
+                        <small>Selisih Penyesuaian</small>
+                        <strong id="display-delta-stock" style="color:#64748b;">0</strong>
+                    </div>
                 </div>
 
-                <div class="form-group">
-                    <label>Alasan Penyesuaian <span class="required">*</span></label>
-                    <input class="form-control-custom" name="alasan" value="{{ old('alasan') }}" required placeholder="Contoh: Stock Opname Bulanan, Barang Rusak / Kadaluarsa, Selisih Hitung">
+                <div class="wh-form-group">
+                    <label for="stok_baru">Stok Fisik Aktual Hasil Hitung Opname <span style="color:#ef1b2d;">*</span></label>
+                    <input type="number" min="0" name="stok_baru" id="stok_baru" class="wh-form-control" value="{{ old('stok_baru', $selected?->stok ?? 0) }}" required placeholder="Masukkan angka stok fisik yang ada di rak gudang" oninput="calculateDelta()">
+                    <small style="color:#64748b; font-size:11.5px; margin-top:4px; display:block;">
+                        Pastikan telah melakukan perhitungan fisik ganda bersama kepala gudang.
+                    </small>
                 </div>
 
-                <div class="form-group form-group-full">
-                    <label>Catatan Lengkap & Nomor Berita Acara <span class="required">*</span></label>
-                    <textarea class="form-control-custom" name="catatan" required rows="3" placeholder="Jelaskan kronologi atau verifikasi fisik oleh kepala bengkel / supervisor gudang...">{{ old('catatan') }}</textarea>
+                <div class="wh-form-group">
+                    <label for="alasan">Klasifikasi Alasan Penyesuaian <span style="color:#ef1b2d;">*</span></label>
+                    <select name="alasan" id="alasan" class="wh-form-control" required>
+                        <option value="opname" @selected(old('alasan') === 'opname')>Stock Opname Rutin (Selisih Fisik)</option>
+                        <option value="rusak" @selected(old('alasan') === 'rusak')>Barang Rusak / Kadaluwarsa / Cacat Pabrik</option>
+                        <option value="hilang" @selected(old('alasan') === 'hilang')>Penyusutan / Selisih Tak Ditemukan</option>
+                        <option value="koreksi" @selected(old('alasan') === 'koreksi')>Koreksi Kesalahan Input Data Sebelumnya</option>
+                    </select>
+                </div>
+
+                <div class="wh-form-group">
+                    <label for="catatan">Catatan Detail Berita Acara Opname</label>
+                    <textarea name="catatan" id="catatan" class="wh-form-control" rows="3" placeholder="Tuliskan nomor berita acara atau keterangan penyebab selisih persediaan...">{{ old('catatan') }}</textarea>
+                </div>
+
+                <div style="display:flex; justify-content:flex-end; gap:12px; margin-top:24px; padding-top:18px; border-top:1px solid #f1f5f9;">
+                    <a href="{{ route('admin.inventory.stock') }}" class="wh-btn wh-btn-outline">Batal</a>
+                    <button type="submit" class="wh-btn wh-btn-primary">✓ Simpan Penyesuaian Stok</button>
+                </div>
+            </form>
+        </div>
+
+        <!-- Sidebar Part Summary (Right Column) -->
+        <div>
+            <div class="wh-card">
+                <div class="wh-card-header">
+                    <h2 class="wh-card-title">📦 Info Spesifikasi Part</h2>
+                    <span id="profile-code" style="font-family:ui-monospace, monospace; font-size:12px; font-weight:800; color:#ef1b2d;">
+                        {{ $selected?->kode_sparepart ?: 'PRT-...' }}
+                    </span>
+                </div>
+
+                <div class="wh-part-profile-box">
+                    <strong id="profile-name" style="font-size:16px; color:#0f172a; display:block; margin-bottom:12px;">
+                        {{ $selected?->nama_sparepart ?: 'Belum ada part yang dipilih' }}
+                    </strong>
+
+                    <div class="wh-part-stat-row">
+                        <span>Kategori Spare Part:</span>
+                        <strong id="profile-cat">{{ $selected?->kategori?->nama_kategori ?: '—' }}</strong>
+                    </div>
+                    <div class="wh-part-stat-row">
+                        <span>Lokasi Rak Penyimpanan:</span>
+                        <strong id="profile-shelf">{{ $selected?->lokasi_rak ?: 'Utama' }}</strong>
+                    </div>
+                    <div class="wh-part-stat-row">
+                        <span>Satuan Satuan:</span>
+                        <strong id="profile-unit">{{ $selected?->satuan ?: 'Pcs' }}</strong>
+                    </div>
+                    <div class="wh-part-stat-row">
+                        <span>Harga Beli (Modal):</span>
+                        <strong id="profile-buy">Rp {{ number_format((float)($selected?->harga_beli ?? 0), 0, ',', '.') }}</strong>
+                    </div>
+                    <div class="wh-part-stat-row">
+                        <span>Harga Jual Retail:</span>
+                        <strong id="profile-price">Rp {{ number_format((float)($selected?->harga_jual ?? 0), 0, ',', '.') }}</strong>
+                    </div>
+                </div>
+
+                <div style="background:#eff6ff; border:1px solid #bfdbfe; border-radius:12px; padding:14px; font-size:12.5px; color:#1e40af; line-height:1.5;">
+                    💡 <strong>Prosedur Standar Gudang YZA:</strong> Setiap koreksi selisih stok di atas 5 unit wajib dikonfirmasi bersama Kepala Bagian Operasional Bengkel.
                 </div>
             </div>
-
-            <div class="info-box">
-                <i class="fas fa-exclamation-triangle"></i>
-                <div>
-                    <strong>Peringatan Audit Resmi:</strong> Selisih antara saldo sistem dan saldo baru akan otomatis dicatat sebagai transaksi jenis <em>"penyesuaian"</em> pada tabel Riwayat Stok dengan timestamp, user pelaksana, dan alasan resmi.
-                </div>
-            </div>
-
-            <div class="form-actions">
-                <a href="{{ route('admin.sparepart.index') }}" class="btn-premium btn-premium-secondary">Batal</a>
-                <button type="submit" class="btn-premium btn-premium-primary">
-                    <i class="fas fa-save"></i> Simpan Penyesuaian Saldo Fisik
-                </button>
-            </div>
-        </form>
+        </div>
     </div>
 </div>
+
+<script>
+    let currentSystemStock = {{ (int)($selected?->stok ?? 0) }};
+
+    function handlePartSelect(select) {
+        const option = select.selectedOptions[0];
+        if (!option || !option.value) return;
+
+        currentSystemStock = parseInt(option.dataset.stock || 0);
+        document.getElementById('display-system-stock').textContent = currentSystemStock;
+        document.getElementById('stok_baru').value = currentSystemStock;
+        
+        document.getElementById('profile-code').textContent = option.dataset.code;
+        document.getElementById('profile-name').textContent = option.dataset.name;
+        document.getElementById('profile-cat').textContent = option.dataset.cat;
+        document.getElementById('profile-shelf').textContent = option.dataset.shelf;
+        document.getElementById('profile-unit').textContent = option.dataset.unit;
+        document.getElementById('profile-buy').textContent = 'Rp ' + Number(option.dataset.buy || 0).toLocaleString('id-ID');
+        document.getElementById('profile-price').textContent = 'Rp ' + Number(option.dataset.price || 0).toLocaleString('id-ID');
+
+        calculateDelta();
+    }
+
+    function calculateDelta() {
+        const newStockVal = document.getElementById('stok_baru').value;
+        const newStock = newStockVal === '' ? 0 : parseInt(newStockVal);
+        document.getElementById('display-new-stock').textContent = newStock;
+
+        const delta = newStock - currentSystemStock;
+        const deltaEl = document.getElementById('display-delta-stock');
+
+        if (delta > 0) {
+            deltaEl.textContent = '+' + delta;
+            deltaEl.style.color = '#059669';
+        } else if (delta < 0) {
+            deltaEl.textContent = delta;
+            deltaEl.style.color = '#dc2626';
+        } else {
+            deltaEl.textContent = '0';
+            deltaEl.style.color = '#64748b';
+        }
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+        calculateDelta();
+    });
+</script>
 @endsection
