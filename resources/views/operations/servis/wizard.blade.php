@@ -1,339 +1,2181 @@
 @extends('layouts.app')
+
 @section('title', 'Work Order '.$servis->kode_servis.' · '.ucwords(str_replace('-', ' ', $stage)))
+
 @section('content')
 @php
     $vehicleName = trim(($servis->kendaraan?->merk ?: '').' '.($servis->kendaraan?->model ?: '')) ?: 'Kendaraan';
-    $serviceLabel = $servis->bookingServis?->jenisServis?->nama_servis ?: 'Servis kendaraan';
+    $serviceLabel = $servis->bookingServis?->jenisServis?->nama_servis ?: 'Servis Berkala';
     $estimate = app(\App\Services\WorkOrderEstimateService::class)->calculate($servis);
     $laborTotal = $estimate['labor'];
     $partsTotal = $estimate['parts'];
     $otherTotal = $estimate['other'];
     $total = $estimate['total'];
-  $servis->loadMissing(['approvalRequests.items.sparepart']);
-    $approvedSparepartSources = $servis->approvalRequests->flatMap(fn ($approval) => $approval->items->filter(fn ($item) => $item->applied_sparepart_id)->mapWithKeys(fn ($item) => [(int) $item->applied_sparepart_id => ['title' => $approval->title, 'status' => $approval->status]]));
+
+    $servis->loadMissing(['approvalRequests.items.sparepart']);
     $currentStage = $stages->currentStage($servis);
-    $stageList = [['key'=>'pemeriksaan','label'=>'Pemeriksaan'],['key'=>'persetujuan','label'=>'Persetujuan Customer'],['key'=>'pengerjaan','label'=>'Pengerjaan'],['key'=>'quality-control','label'=>'Quality Control'],['key'=>'finalisasi','label'=>'Finalisasi & Pembayaran']];
+    $stageList = [
+        ['key' => 'pemeriksaan', 'label' => 'Pemeriksaan'],
+        ['key' => 'persetujuan', 'label' => 'Konfirmasi Member'],
+        ['key' => 'pengerjaan', 'label' => 'Pengerjaan'],
+        ['key' => 'quality-control', 'label' => 'Pemeriksaan Mutu'],
+        ['key' => 'finalisasi', 'label' => 'Finalisasi & Pembayaran'],
+    ];
     $currentStageIndex = array_search($currentStage, array_column($stageList, 'key'), true);
     $pendingApprovals = $servis->approvalRequests->where('status', 'pending');
-    $resolvedApprovals = $servis->approvalRequests->where('status', '!=', 'pending');
-    $allApprovalsResolved = $servis->approvalRequests->isNotEmpty() && $pendingApprovals->isEmpty();
-    $hasApprovedApproval = $resolvedApprovals->where('status', 'approved')->isNotEmpty();
-    $hasRejectedApproval = $resolvedApprovals->where('status', 'rejected')->isNotEmpty();
     $nextAction = $stages->nextAction($servis);
     $nextActionAllowed = $nextAction['stage'] && $stages->canAccess($servis, $nextAction['stage']);
 @endphp
-<div class="wz-page" data-tahap="{{ $stage }}" data-tahap-aktif="{{ $currentStage }}" data-jasa="{{ number_format($laborTotal, 2, '.', '') }}" data-suku-cadang="{{ number_format($partsTotal, 2, '.', '') }}" data-biaya-lain="{{ number_format($otherTotal, 2, '.', '') }}" data-estimasi-total="{{ number_format($total, 2, '.', '') }}" data-estimasi-final="{{ $estimate['is_final'] ? '1' : '0' }}">
-<style>
-.wz-page{max-width:1600px;margin:0 auto;padding:18px clamp(16px,2vw,28px) 40px;color:#142033}.wz-page *{box-sizing:border-box}.wz-alert{padding:12px 15px;border-radius:10px;margin-bottom:15px;font-size:13px}.wz-success{background:#e8f7ee;color:#177343}.wz-warning{background:#fff2d8;color:#8e5b00}.wz-error{background:#fff0f1;color:#b21d2c}.wz-crumb{display:flex;gap:9px;color:#728096;font-size:13px;margin-bottom:16px}.wz-crumb strong{color:#182538}.wz-head{display:flex;justify-content:space-between;align-items:center;gap:18px;margin-bottom:17px}.wz-title{display:flex;align-items:center;gap:16px}.wz-title img{width:92px;height:60px;object-fit:contain;border-radius:9px;background:#f5f7f9}.wz-kicker{color:#ed172e;font-size:10px;font-weight:900;letter-spacing:.16em;text-transform:uppercase}.wz-title h1{margin:4px 0 2px;font-size:25px;letter-spacing:-.03em}.wz-title p{margin:0;color:#718096;font-size:13px}.wz-back{color:#59687b;text-decoration:none;font-size:13px;font-weight:800}.wz-back:hover{color:#ed172e}.wz-stepper{display:grid;grid-template-columns:repeat(5,1fr);gap:0;padding:16px;margin-bottom:18px;background:#fff;border:1px solid #e2e8ef;border-radius:15px;box-shadow:0 8px 22px rgba(19,34,49,.045)}.wz-step{position:relative;text-align:center;color:#9aa6b5;font-size:12px;font-weight:800}.wz-step:not(:last-child):after{content:'';position:absolute;top:14px;left:58%;width:84%;height:2px;background:#dfe5eb}.wz-step-no{position:relative;z-index:1;display:grid;place-items:center;width:29px;height:29px;margin:0 auto 8px;border:2px solid #cbd5e0;border-radius:50%;background:#fff;color:#78869a}.wz-step.is-done,.wz-step.is-current{color:#ed172e}.wz-step.is-done .wz-step-no,.wz-step.is-current .wz-step-no{border-color:#ed172e;background:#ed172e;color:#fff}.wz-step.is-done:after{background:#ed172e}.wz-step a{color:inherit;text-decoration:none}.wz-step.is-locked{cursor:not-allowed}.wz-layout{display:grid;grid-template-columns:minmax(0,1fr) 315px;gap:17px;align-items:start}.wz-main,.wz-summary{display:grid;gap:16px}.wz-card{background:#fff;border:1px solid #e2e8ef;border-radius:15px;padding:18px;box-shadow:0 8px 22px rgba(19,34,49,.04)}.wz-card h2{margin:0;font-size:19px;letter-spacing:-.02em}.wz-card h3{margin:0 0 8px;font-size:15px}.wz-card-head{display:flex;justify-content:space-between;gap:15px;align-items:flex-start;margin-bottom:17px}.wz-card-head p{margin:5px 0 0;color:#718096;font-size:13px;line-height:1.5}.wz-label{display:block;margin-bottom:6px;color:#66758a;font-size:12px;font-weight:900;letter-spacing:.08em;text-transform:uppercase}.wz-input,.wz-select,.wz-textarea{width:100%;min-height:44px;border:1px solid #d8e1ea;border-radius:9px;padding:10px 12px;background:#fff;color:#1d2b3c;font:inherit;font-size:14px}.wz-textarea{min-height:112px;resize:vertical}.wz-input:focus,.wz-select:focus,.wz-textarea:focus{outline:0;border-color:#ed172e;box-shadow:0 0 0 3px rgba(237,23,46,.1)}.wz-form{display:grid;gap:13px}.wz-form-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:13px}.wz-full{grid-column:1/-1}.wz-actions{display:flex;justify-content:flex-end;gap:9px;flex-wrap:wrap}.wz-btn{display:inline-flex;align-items:center;justify-content:center;min-height:44px;padding:0 16px;border:1px solid #d8e1ea;border-radius:9px;background:#fff;color:#182538;font:inherit;font-size:13px;font-weight:800;text-decoration:none;cursor:pointer}.wz-btn:hover{border-color:#ed172e;color:#d7192d}.wz-primary{border-color:#ed172e;background:#ed172e;color:#fff;box-shadow:0 7px 16px rgba(237,23,46,.17)}.wz-primary:hover{background:#c91026;color:#fff}.wz-btn[disabled]{background:#edf1f4;color:#9aa5b2;border-color:#e0e5eb;cursor:not-allowed;box-shadow:none}.wz-facts{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px}.wz-fact small{display:block;margin-bottom:5px;color:#8390a1;font-size:10px;font-weight:900;letter-spacing:.08em;text-transform:uppercase}.wz-fact strong{display:block;font-size:14px;line-height:1.4}.wz-fact em{display:block;margin-top:4px;color:#8290a1;font-size:11px;font-style:normal;line-height:1.4}.wz-inset{padding:14px;border-radius:10px;background:#f5f7f9;color:#536276;font-size:14px;line-height:1.6}.wz-list{display:grid;gap:10px}.wz-item{padding:14px;border:1px solid #e4e9ef;border-radius:10px;background:#fbfcfd}.wz-item strong{display:block;margin-bottom:5px;font-size:14px}.wz-item p{margin:0;color:#647387;font-size:13px;line-height:1.5}.wz-item small{display:block;margin-top:8px;color:#8692a2;font-size:11px}.wz-empty{padding:26px;text-align:center;border:1px dashed #d7e0e8;border-radius:10px;color:#728095;font-size:13px}.wz-summary-card{background:#fff;border:1px solid #e2e8ef;border-radius:15px;padding:18px;box-shadow:0 8px 22px rgba(19,34,49,.04)}.wz-summary-card h3{font-size:15px}.wz-summary-row{display:flex;justify-content:space-between;gap:12px;padding:10px 0;border-bottom:1px solid #edf0f3;color:#65748a;font-size:12px}.wz-summary-row:last-child{border-bottom:0}.wz-summary-row strong{color:#172235;text-align:right}.wz-total{display:flex;justify-content:space-between;margin-top:12px;padding-top:13px;border-top:1px solid #e5e9ee;font-weight:900}.wz-total strong{color:#ed172e;font-size:22px}.wz-status{display:inline-flex;padding:6px 9px;border-radius:999px;background:#fff2d8;color:#946000;font-size:10px;font-weight:900}.wz-table{width:100%;border-collapse:collapse}.wz-table th{padding:10px;background:#f4f6f8;color:#66758a;font-size:10px;text-align:left;letter-spacing:.08em;text-transform:uppercase}.wz-table td{padding:12px 10px;border-bottom:1px solid #edf0f3;font-size:13px;color:#3c4b5e}.wz-table td strong{color:#182538}.wz-note{margin:0;color:#718096;font-size:13px;line-height:1.55}.wz-readonly{background:#f7f8fa}.wz-qc-item{display:grid;grid-template-columns:minmax(0,1fr) 160px minmax(170px,.7fr);gap:10px;align-items:center;padding:12px 0;border-bottom:1px solid #edf0f3}.wz-qc-item:last-child{border-bottom:0}.wz-qc-item strong{font-size:13px}.wz-qc-item small{display:block;margin-top:3px;color:#8592a1;font-size:11px}.wz-locked{padding:16px;border-radius:10px;background:#f6f7f9;color:#718096;font-size:13px}.wz-locked strong{display:block;margin-bottom:5px;color:#4e5d70}@media(max-width:980px){.wz-layout{grid-template-columns:1fr}.wz-summary{grid-template-columns:repeat(2,minmax(0,1fr))}.wz-summary-card:last-child{grid-column:1/-1}}@media(max-width:650px){.wz-page{padding:18px clamp(16px,2vw,28px) 40px}.wz-head{display:block}.wz-head .wz-back{display:block;margin-top:14px}.wz-stepper{grid-template-columns:repeat(2,1fr);gap:17px}.wz-step:nth-child(even):after{display:none}.wz-form-grid,.wz-facts,.wz-summary{grid-template-columns:1fr}.wz-summary-card:last-child{grid-column:auto}.wz-card{padding:18px}.wz-qc-item{grid-template-columns:1fr}.wz-table{min-width:560px}.wz-table-wrap{overflow-x:auto}}
-/* Large-screen layout: use the available workspace and keep the service data readable. */
-.wz-page{max-width:none;width:100%;padding:18px clamp(16px,2vw,28px) 40px}
-.wz-crumb{font-size:14px;margin-bottom:18px}
-.wz-head{margin-bottom:20px}
-.wz-title{gap:20px}
-.wz-title img{width:116px;height:76px}
-.wz-kicker{font-size:11px}
-.wz-title h1{font-size:32px}
-.wz-title p{font-size:15px}
-.wz-back{font-size:14px}
-.wz-stepper{padding:16px;margin-bottom:20px}
-.wz-step{font-size:14px}
-.wz-main > .wz-actions{display:none}
-.wz-estimate-breakdown{display:grid;gap:10px;margin-top:14px;padding-top:14px;border-top:1px solid #e5e9ee}
-.wz-estimate-row{display:flex;justify-content:space-between;gap:12px;color:#65748a;font-size:14px}
-.wz-estimate-row strong{color:#172235}
-.wz-step.is-clickable{cursor:pointer}
-.wz-step.is-clickable:hover .wz-step-no{box-shadow:0 0 0 5px rgba(237,23,46,.12)}
-.wz-step-no{width:34px;height:34px;margin-bottom:9px}
-.wz-step:not(:last-child):after{top:16px}
-.wz-layout{grid-template-columns:minmax(0,1fr) 350px;gap:20px}
-.wz-main,.wz-summary{gap:20px}
-.wz-card{padding:18px}
-.wz-card h2{font-size:23px}
-.wz-card h3{font-size:18px}
-.wz-card-head{margin-bottom:20px}
-.wz-card-head p{font-size:15px}
-.wz-label{font-size:12px}
-.wz-input,.wz-select,.wz-textarea{min-height:44px;padding:12px 14px;font-size:14px}
-.wz-textarea{min-height:150px}
-.wz-form{gap:16px}
-.wz-form-grid{gap:16px}
-.wz-btn{min-height:44px;padding:0 19px;font-size:15px}
-.wz-facts{gap:20px}
-.wz-fact small{font-size:11px}
-.wz-fact strong{font-size:16px}
-.wz-inset{padding:17px;font-size:16px}
-.wz-item{padding:17px}
-.wz-item strong{font-size:16px}
-.wz-item p{font-size:15px}
-.wz-item small{font-size:12px}
-.wz-empty{padding:32px;font-size:15px}
-.wz-summary-card{padding:22px}
-.wz-summary-card h3{font-size:18px}
-.wz-summary-row{padding:13px 0;font-size:14px}
-.wz-total strong{font-size:25px}
-.wz-table th{padding:13px;font-size:11px}
-.wz-table td{padding:15px 13px;font-size:15px}
-.wz-note{font-size:15px}
-.wz-qc-item{grid-template-columns:minmax(0,1fr) 190px minmax(210px,.7fr);gap:14px;padding:15px 0}
-.wz-qc-item strong{font-size:15px}
-.wz-qc-item small{font-size:12px}
-.wz-locked{padding:19px;font-size:15px}
-@media(max-width:1200px){.wz-layout{grid-template-columns:minmax(0,1fr) 320px}.wz-card{padding:18px}}
-@media(max-width:980px){.wz-layout{grid-template-columns:1fr}.wz-summary{grid-template-columns:repeat(2,minmax(0,1fr))}}
-@media(max-width:650px){.wz-page{padding:18px clamp(16px,2vw,28px) 40px}.wz-title img{width:88px;height:58px}.wz-title h1{font-size:26px}.wz-card{padding:18px}.wz-card h2{font-size:20px}.wz-input,.wz-select,.wz-textarea{font-size:14px}.wz-btn{font-size:14px}}
-</style>
-<style>
-.wz-readonly-panel{border:1px solid #cbd5e1;border-left:4px solid #64748b;background:#f1f5f9;box-shadow:none}.wz-readonly-panel .wz-card-head{align-items:flex-start}.wz-readonly-panel h2{color:#334155}.wz-readonly-panel p,.wz-readonly-panel .wz-fact strong{color:#64748b}.wz-editable-panel{border:1px solid #e5e7eb;border-left:4px solid #ed172b;background:#fff}.wz-editable-panel h2{color:#111827}.wz-panel-heading{display:flex;align-items:flex-start;gap:12px}.wz-panel-icon{display:grid;place-items:center;flex:0 0 32px;width:32px;height:32px;border-radius:9px;background:#e2e8f0;color:#334155;font-size:16px;font-weight:900}.wz-panel-icon.is-editable{background:#fee2e2;color:#ed172b}.wz-panel-label{display:block;margin-bottom:5px;color:#64748b;font-size:10px;font-weight:900;letter-spacing:.12em}.wz-panel-label.is-editable{color:#ed172b}.wz-panel-badge{display:inline-flex;align-items:center;white-space:nowrap;padding:7px 10px;border-radius:999px;font-size:10px;font-weight:900;letter-spacing:.04em}.wz-panel-badge.is-readonly{background:#e2e8f0;color:#475569}.wz-panel-badge.is-editable{background:#fee2e2;color:#b91c1c}.wz-readonly-block{margin-top:16px;padding:15px 16px;border:1px solid #cbd5e1;border-radius:10px;background:#e2e8f0}.wz-block-label,.wz-source-label{display:block;color:#64748b;font-size:10px;font-weight:900;letter-spacing:.1em;text-transform:uppercase}.wz-readonly-block p{margin:6px 0 0;color:#334155;line-height:1.6}.wz-approval-list{margin-top:14px}.wz-readonly-item{border-color:#cbd5e1;background:#f8fafc}.wz-readonly-item .wz-approval-title-row>div{display:grid;gap:5px}.wz-source-note{margin:10px 0 0;padding:9px 11px;border-radius:7px;background:#e2e8f0;color:#475569!important;font-size:12px!important}.wz-editable-panel .wz-form-grid{grid-template-columns:minmax(0,1.5fr) minmax(220px,1fr)}.wz-editable-panel .wz-input:focus,.wz-editable-panel .wz-select:focus,.wz-editable-panel .wz-textarea:focus{border-color:#ed172b;box-shadow:0 0 0 3px rgba(237,23,43,.12);outline:none}.wz-data-section{margin-top:20px;padding-top:18px;border-top:1px solid #e5e7eb}.wz-table-title{display:flex;justify-content:space-between;gap:15px;margin-bottom:12px}.wz-table-title h3{margin:0;color:#111827;font-size:16px}.wz-table-title p{margin:4px 0 0;color:#64748b;font-size:12px}.wz-status-pill{display:inline-flex;padding:5px 8px;border-radius:999px;font-size:10px;font-weight:900}.wz-status-pill.is-saved{background:#dcfce7;color:#15803d}.wz-status-pill.is-draft{background:#fef3c7;color:#92400e}.wz-table-action{padding:5px 8px;border:1px solid #cbd5e1;border-radius:6px;background:#fff;color:#475569;font-size:11px;font-weight:800;cursor:pointer}.wz-table-action:hover{border-color:#ed172b;color:#ed172b}.wz-helper,.wz-stock-note{display:block;margin-top:6px;color:#64748b;font-size:11px;line-height:1.5}.wz-stock-note{margin:12px 0 0;padding:10px 12px;border-left:3px solid #94a3b8;background:#f8fafc}.wz-editable-panel .wz-actions{margin-top:16px}@media(max-width:650px){.wz-panel-heading{gap:9px}.wz-panel-badge{margin-top:5px}.wz-editable-panel .wz-form-grid{grid-template-columns:1fr}.wz-table-wrap{overflow-x:auto}.wz-table{min-width:720px}}
-.wz-collapsible-head{gap:18px}.wz-collapse-actions{display:flex;align-items:center;justify-content:flex-end;gap:10px;flex-wrap:wrap}.wz-mini-summary{display:flex;gap:14px;align-items:center;margin-top:9px;color:#64748b;font-size:12px}.wz-mini-summary strong{color:#334155;font-size:12px}.wz-inline-form{display:grid;grid-template-rows:1fr;opacity:1;transform:translateY(0);margin-top:16px}.wz-js .wz-inline-form{grid-template-rows:0fr;opacity:0;transform:translateY(-10px);transition:grid-template-rows .26s ease-out,opacity .22s ease-out,transform .26s ease-out;margin:0 -2px}.wz-js .wz-inline-form>form{min-height:0;overflow:hidden}.wz-js .wz-inline-form.is-open{grid-template-rows:1fr;opacity:1;transform:translateY(0);margin-top:16px}.wz-toggle-form{min-width:140px}.wz-toggle-form.is-active{background:#991b1b}.wz-cancel-form{border:1px solid #cbd5e1;background:#fff;color:#475569}.wz-table-empty{display:grid;justify-items:center;gap:6px;padding:18px 12px}.wz-table-empty .wz-empty-icon{display:grid;place-items:center;width:30px;height:30px;border-radius:9px;background:#f1f5f9;color:#64748b;font-size:16px}.wz-table-empty strong{color:#334155}.wz-table-empty small{color:#64748b}.wz-empty-action{margin-top:6px}.wz-collapsible-section:has(.wz-inline-form.is-open) .wz-card-head{padding-bottom:4px}@media(max-width:780px){.wz-collapsible-head{align-items:flex-start}.wz-collapse-actions{width:100%;justify-content:flex-start}.wz-collapse-actions .wz-toggle-form{flex:1 1 100%}.wz-mini-summary{flex-wrap:wrap;gap:5px 12px}}@media(prefers-reduced-motion:reduce){.wz-js .wz-inline-form{transition:none;transform:none}}
-.wz-approved-summary{display:none}.wz-request-facts{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;margin-top:16px}.wz-request-facts>div{padding:12px 14px;border:1px solid #cbd5e1;border-radius:9px;background:#f8fafc}.wz-request-facts small{display:block;margin-bottom:4px;color:#64748b;font-size:10px;font-weight:900;letter-spacing:.08em;text-transform:uppercase}.wz-request-facts strong{color:#334155;font-size:13px;line-height:1.45}.wz-approval-groups{display:grid;gap:10px;margin-top:14px}.wz-approval-group{padding:14px;border:1px solid #cbd5e1;border-radius:10px;background:#f8fafc}.wz-approval-group.is-approved{border-color:#bbf7d0;background:#f0fdf4}.wz-approval-group.is-rejected{border-color:#fecdd3;background:#fff1f2}.wz-approval-group.is-pending{border-color:#fde68a;background:#fffbeb}.wz-approval-group p{margin:8px 0;color:#64748b;line-height:1.5}.wz-approval-group.is-rejected .wz-source-label{color:#be123c}.wz-approval-group.is-approved .wz-source-label{color:#15803d}.wz-clarification-banner{display:flex;align-items:flex-start;gap:12px;margin-top:16px;padding:16px 18px;border:1px solid #f2c879;border-left:5px solid #d97706;border-radius:11px;background:#fffbeb;color:#713f12}.wz-clarification-banner strong{display:block;margin-bottom:5px;color:#92400e}.wz-clarification-banner p{margin:0 0 10px;color:#92400e}.wz-clarification-banner .wz-btn{margin-top:2px}@media(max-width:780px){.wz-request-facts{grid-template-columns:1fr}}
-</style>
-<style>
-.wz-decision-banner{display:flex;align-items:flex-start;gap:14px;margin-bottom:16px;padding:18px 20px;border:1px solid #b8e3c8;border-left:5px solid #159463;border-radius:13px;background:#ecfaf1;color:#173b2a}.wz-decision-banner.is-pending{border-color:#f0d89b;border-left-color:#f0a900;background:#fffaf0;color:#5f430b}.wz-decision-banner.is-rejected{border-color:#f0c4ca;border-left-color:#d71935;background:#fff4f5;color:#5b1f28}.wz-decision-banner-icon{display:grid;place-items:center;flex:0 0 34px;width:34px;height:34px;border-radius:50%;background:#159463;color:#fff;font-size:20px;font-weight:950}.is-pending .wz-decision-banner-icon{background:#f0a900}.is-rejected .wz-decision-banner-icon{background:#d71935}.wz-decision-banner strong{display:block;margin-bottom:4px;font-size:15px}.wz-decision-banner span{font-size:13px;line-height:1.5}.wz-approval-history{border-color:#c5e8d2;background:linear-gradient(180deg,#fff 0%,#fbfffc 100%)}.wz-approval-history.is-rejected{border-color:#f0cbd0;background:#fffafb}.wz-approval-title-row{display:flex;align-items:center;justify-content:space-between;gap:14px}.wz-approval-title-row strong{font-size:16px}.wz-approval-badge{display:inline-flex;padding:6px 10px;border-radius:999px;font-size:11px;font-weight:900}.wz-approval-badge.is-approved{background:#e2f7ea;color:#147544}.wz-approval-badge.is-rejected{background:#ffe9ec;color:#b51e31}.wz-approval-badge.is-pending{background:#fff0cf;color:#8a5a08}.wz-approval-meta{display:flex;flex-wrap:wrap;gap:8px 18px;margin-top:8px;color:#708095;font-size:12px}.wz-customer-note{margin-top:13px;padding:12px 14px;border-radius:9px;background:#f4f7f5;color:#405868;font-size:13px;line-height:1.55}.wz-customer-note strong{display:block;margin-bottom:4px;color:#24533c;font-size:10px;letter-spacing:.08em;text-transform:uppercase}.wz-create-approval{margin-top:16px}.wz-create-approval summary{width:max-content;list-style:none}.wz-create-approval summary::-webkit-details-marker{display:none}.wz-create-approval[open] summary{margin-bottom:16px}.wz-next-action{display:grid;gap:12px}.wz-next-action p{margin:0}.wz-next-action .wz-btn{width:100%}
-</style>
-<style>
-.wz-context-card,.wz-main > .wz-card:first-of-type{border-left:4px solid #2878d7;background:linear-gradient(180deg,#fff 0%,#f8fbff 100%)}.wz-approval-panel{border-left:4px solid #f0a900;background:linear-gradient(180deg,#fff 0%,#fffdf8 100%)}.wz-summary > .wz-summary-card:first-child{border-left:4px solid #2878d7;background:linear-gradient(180deg,#fff 0%,#f8fbff 100%)}.wz-next-action{border-left:4px solid #159463;background:linear-gradient(180deg,#fff 0%,#f5fcf8 100%)}.wz-next-action .wz-btn{width:auto;justify-self:end;transition:transform .2s ease,box-shadow .2s ease}.wz-next-action .wz-btn:hover{transform:translateX(5px);box-shadow:0 10px 22px rgba(237,23,46,.25)}.wz-create-approval summary{margin-left:auto;transition:transform .2s ease,box-shadow .2s ease}.wz-create-approval summary:hover{transform:translateX(4px);box-shadow:0 8px 18px rgba(240,169,0,.2)}
-</style>
-<script>document.documentElement.classList.add('wz-js');</script>
-@if(session('success'))<div class="wz-alert wz-success">{{ session('success') }}</div>@endif
-@if(session('warning'))<div class="wz-alert wz-warning">{{ session('warning') }}</div>@endif
-@if($errors->any())<div class="wz-alert wz-error">{{ $errors->first() }}</div>@endif
-<div class="wz-crumb"><span>⌂</span><span>›</span><span>Servis / Work Order</span><span>›</span><strong>{{ $servis->kode_servis }}</strong></div>
-<header class="wz-head"><div class="wz-title"><img src="{{ $vehicleImage }}" alt="{{ $vehicleName }}"><div><span class="wz-kicker">Service Work Order</span><h1>{{ $vehicleName }}</h1><p>{{ $servis->kendaraan?->nomor_polisi ?: 'Nomor polisi belum diisi' }} · {{ $servis->kode_servis }} · {{ number_format((int)$servis->kilometer,0,',','.') }} km</p></div></div><a class="wz-back" href="{{ route($prefix.'.servis.index') }}">← Kembali ke Daftar</a></header>
-<nav class="wz-stepper" aria-label="Tahap Work Order">@foreach($stageList as $index => $item)@php($accessible=$stages->canAccess($servis,$item['key']))<div class="wz-step {{ $index < $currentStageIndex ? 'is-done' : '' }} {{ $item['key'] === $currentStage ? 'is-current' : '' }} {{ !$accessible ? 'is-locked' : '' }}" title="{{ $accessible ? '' : 'Selesaikan tahap sebelumnya terlebih dahulu.' }}"><span class="wz-step-no">{{ str_pad((string)($index+1),2,'0',STR_PAD_LEFT) }}</span>@if($accessible)<a href="{{ route($prefix.'.servis.'.$item['key'],$servis) }}">{{ $item['label'] }}</a>@else<span>{{ $item['label'] }}</span>@endif</div>@endforeach</nav>
-<div class="wz-layout"><main class="wz-main">
-@if($stage === 'pemeriksaan')
-<section class="wz-card"><div class="wz-card-head"><div><h2>Pemeriksaan Kendaraan</h2><p>Validasi keluhan, diagnosis, dan temuan sebelum pekerjaan dimulai.</p></div><span class="wz-status">TAHAP 01</span></div><div class="wz-card" style="background:#f8fafb;margin-bottom:16px"><h3>Customer Complaint</h3><div class="wz-inset">{{ $servis->keluhan ?: 'Tidak ada keluhan yang dicatat pada booking.' }}</div></div>@if($servis->status === 'pemeriksaan')<form class="wz-form" method="post" action="{{ route($prefix.'.servis.inspection',$servis) }}">@csrf<label><span class="wz-label">Hasil Pemeriksaan *</span><textarea class="wz-textarea" name="hasil_pemeriksaan" required placeholder="Tuliskan hasil pemeriksaan kendaraan...">{{ $servis->hasil_pemeriksaan }}</textarea></label><label><span class="wz-label">Catatan Teknisi</span><textarea class="wz-textarea" name="catatan" placeholder="Catatan teknisi..."></textarea></label><div class="wz-actions"><button class="wz-btn wz-primary" type="submit">Selesai Pemeriksaan &amp; Lanjut →</button></div></form>@else<div class="wz-facts"><div class="wz-fact"><small>Hasil Pemeriksaan</small><div class="wz-inset">{{ $servis->hasil_pemeriksaan ?: 'Belum tersedia' }}</div></div><div class="wz-fact"><small>Catatan Teknisi</small><div class="wz-inset">{{ $servis->catatan ?: '—' }}</div></div></div>@endif</section>
-<section class="wz-card"><div class="wz-card-head"><div><h2>Temuan Tambahan</h2><p>Temuan belum menjadi tagihan sampai customer menyetujui approval.</p></div></div><div class="wz-list">@forelse($servis->findings as $finding)<article class="wz-item"><strong>{{ $finding->title }}</strong><p>{{ $finding->description }}</p><small>Rekomendasi: {{ $finding->recommendation ?: '—' }} · {{ strtoupper($finding->severity) }}</small></article>@empty<div class="wz-empty">Belum ada temuan tambahan.<br>Tambahkan temuan dari hasil pemeriksaan kendaraan.</div>@endforelse</div><details style="margin-top:15px"><summary class="wz-btn">＋ Tambah Temuan</summary><form class="wz-form" style="margin-top:15px" method="post" action="{{ route($prefix.'.servis.findings.store',$servis) }}">@csrf<div class="wz-form-grid"><label class="wz-full"><span class="wz-label">Judul Temuan *</span><input class="wz-input" name="title" required maxlength="160"></label><label class="wz-full"><span class="wz-label">Deskripsi *</span><textarea class="wz-textarea" name="description" required></textarea></label><label><span class="wz-label">Rekomendasi</span><textarea class="wz-textarea" name="recommendation"></textarea></label><label><span class="wz-label">Tingkat</span><select class="wz-select" name="severity"><option value="info">Info</option><option value="warning">Perlu perhatian</option><option value="critical">Kritis</option></select></label></div><div class="wz-actions"><button class="wz-btn wz-primary" type="submit">Simpan Temuan</button></div></form></details></section>
-@endif
-@if($stage === 'persetujuan')
-<section class="wz-card wz-fitment-status"><div class="wz-card-head"><div><h2>KOMPATIBILITAS SUKU CADANG</h2><p>Kendaraan: <strong>{{ trim(($servis->kendaraan?->merk ?: '').' '.($servis->kendaraan?->model ?: '')) ?: 'Kendaraan' }}{{ $servis->kendaraan?->tahun ? ' · '.$servis->kendaraan->tahun : '' }}</strong></p><p>Fitment adalah bukti verifikasi saja; data tanpa bukti tidak dianggap kompatibel.</p></div><span class="wz-status">{{ $verifiedFitmentCount }} terverifikasi</span></div><div class="wz-inset"><strong>{{ $verifiedFitmentCount > 0 ? 'KOMPATIBEL TERVERIFIKASI' : 'KOMPATIBILITAS BELUM TERVERIFIKASI' }}</strong><br>Gunakan pencarian sparepart di bawah untuk melihat stok, harga, dan status kompatibilitas yang relevan.</div></section>
-<section class="wz-card wz-sparepart-picker" data-sparepart-picker data-sparepart-field="id_sparepart" data-search-url="{{ route($prefix.'.servis.sparepart-search', $servis) }}"><div class="wz-card-head"><div><h2>Suku Cadang Tambahan</h2><p>Cari berdasarkan nama, SKU, atau merek. Hanya sparepart compatible yang dapat dipilih.</p></div></div><div class="wz-form-grid"><label class="wz-full"><span class="wz-label">Cari Sparepart</span><input class="wz-input" type="search" data-sparepart-search placeholder="Cari nama / SKU sparepart..." autocomplete="off"><small class="wz-helper">Ketik minimal 2 karakter untuk mencari. Sparepart tanpa verifikasi hanya ditampilkan sebagai peringatan.</small></label></div><div class="wz-list" data-sparepart-results><div class="wz-empty">Mulai dengan mencari sparepart yang dibutuhkan.</div></div></section>
-@if($servis->status === 'dikerjakan')
-<section class="wz-card wz-editable-panel wz-approval-entry-panel" data-panel-kind="editable">
-    <div class="wz-card-head">
-        <div class="wz-panel-heading"><span class="wz-panel-icon is-editable" aria-hidden="true">▦</span><div><span class="wz-panel-label is-editable">ISI DATA PENGERJAAN</span><h2>Penggunaan Suku Cadang</h2><p>Catat suku cadang yang digunakan teknisi sebelum melanjutkan proses persetujuan pelanggan.</p></div></div>
-        <span class="wz-panel-badge is-editable">DAPAT DIISI</span>
-    </div>
-    <form class="wz-form" method="post" action="{{ route($prefix.'.servis.sparepart.store',$servis) }}">
-        @csrf
-        <div class="wz-form-grid">
-            <label><span class="wz-label">Suku Cadang</span><select class="wz-select" name="id_sparepart" required hidden aria-hidden="true" tabindex="-1"></select><small class="wz-helper">Pilih dari hasil pencarian di atas. Sistem tetap memvalidasi kompatibilitas dan stok.</small></label>
-            <label><span class="wz-label">Jumlah</span><input class="wz-input" name="jumlah" value="{{ old('jumlah', 1) }}" type="number" min="1" placeholder="1" required></label>
+
+<div class="mwz-page" data-tahap="{{ $stage }}" data-tahap-aktif="{{ $currentStage }}">
+    <!-- Header -->
+    <header class="mwz-header">
+        <div class="mwz-header-left">
+            <div class="mwz-thumb">
+                <img src="{{ $vehicleImage }}" alt="{{ $vehicleName }}">
+            </div>
+            <div>
+                <div class="mwz-eyebrow">
+                    <span class="mwz-eyebrow-dot" aria-hidden="true"></span>
+                    <span>Perintah Kerja Servis · {{ $servis->kode_servis }}</span>
+                </div>
+                <h1 class="mwz-title">{{ $vehicleName }}</h1>
+                <p class="mwz-subtitle">
+                    <span>{{ $servis->kendaraan?->nomor_polisi ?: 'Plat belum diisi' }}</span>
+                    <i aria-hidden="true">·</i>
+                    <span>{{ number_format((int) $servis->kilometer, 0, ',', '.') }} km</span>
+                    <i aria-hidden="true">·</i>
+                    <span>Layanan Awal: <strong>{{ $serviceLabel }}</strong></span>
+                </p>
+            </div>
         </div>
-        <div class="wz-actions"><button class="wz-btn wz-primary" type="submit">Simpan Suku Cadang</button><a class="wz-btn wz-cancel-form" href="{{ url()->current() }}">Batal</a></div>
-    </form>
-</section>
-@endif
-@if($servis->status === 'dikerjakan')
-<section class="wz-card wz-editable-panel wz-approval-entry-panel" data-panel-kind="editable">
-    <div class="wz-card-head">
-        <div class="wz-panel-heading"><span class="wz-panel-icon is-editable" aria-hidden="true">⚒</span><div><span class="wz-panel-label is-editable">ISI DATA PENGERJAAN</span><h2>Jasa &amp; Pekerjaan Berjalan</h2><p>Catat jasa yang dikerjakan teknisi sebelum melanjutkan proses persetujuan pelanggan.</p></div></div>
-        <span class="wz-panel-badge is-editable">DAPAT DIISI</span>
-    </div>
-    <form class="wz-form" method="post" action="{{ route($prefix.'.servis.detail.store',$servis) }}">
-        @csrf
-        <div class="wz-form-grid">
-            <label><span class="wz-label">Deskripsi Pekerjaan</span><input class="wz-input" name="deskripsi_pekerjaan" value="{{ old('deskripsi_pekerjaan') }}" placeholder="Contoh: Ganti oli mesin" required></label>
-            <label><span class="wz-label">Biaya Jasa</span><input class="wz-input" name="biaya" value="{{ old('biaya') }}" type="number" min="0" step="0.01" placeholder="0" required></label>
-            <label class="wz-full"><span class="wz-label">Catatan Pengerjaan</span><textarea class="wz-textarea" name="catatan" placeholder="Catatan teknisi, kondisi, atau hasil pekerjaan">{{ old('catatan') }}</textarea></label>
+        <a class="mwz-btn mwz-btn-ghost" href="{{ route($prefix.'.servis.index') }}">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <path d="m15 18-6-6 6-6"/>
+            </svg>
+            <span>Kembali ke Daftar</span>
+        </a>
+    </header>
+
+    @if(session('success'))
+        <div class="mwz-alert is-success" role="status">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/>
+            </svg>
+            <span>{{ session('success') }}</span>
         </div>
-        <div class="wz-actions"><button class="wz-btn wz-primary" type="submit">Simpan Jasa</button><a class="wz-btn wz-cancel-form" href="{{ url()->current() }}">Batal</a></div>
-    </form>
-</section>
-@endif
-@if($pendingApprovals->isNotEmpty())<div class="wz-decision-banner is-pending"><span class="wz-decision-banner-icon">!</span><div><strong>MENUNGGU PERSETUJUAN PELANGGAN</strong><span>Step Pengerjaan tetap terkunci sampai customer memberikan keputusan.</span></div></div>@elseif($allApprovalsResolved && $hasApprovedApproval)<div class="wz-decision-banner"><span class="wz-decision-banner-icon">✓</span><div><strong>PELANGGAN TELAH MEMBERIKAN PERSETUJUAN</strong><span>Permintaan pekerjaan tambahan telah disetujui dan Work Order dapat dilanjutkan ke tahap Pengerjaan.</span></div></div>@elseif($allApprovalsResolved && $hasRejectedApproval)<div class="wz-decision-banner is-rejected"><span class="wz-decision-banner-icon">×</span><div><strong>PELANGGAN MENOLAK PEKERJAAN TAMBAHAN</strong><span>Keputusan pelanggan tersimpan sebagai histori. Work Order dapat dilanjutkan sesuai aturan tahap berikutnya.</span></div></div>@endif
-<section class="wz-card"><div class="wz-card-head"><div><h2>Persetujuan Customer</h2><p>Kelola pekerjaan tambahan dan tunggu keputusan customer bila diperlukan.</p></div><span class="wz-status">TAHAP 02</span></div><div class="wz-inset" style="margin-bottom:16px"><strong>Hasil Pemeriksaan</strong><br>{{ $servis->hasil_pemeriksaan ?: 'Belum tersedia' }}</div><div class="wz-list">@forelse($servis->findings as $finding)<article class="wz-item"><strong>{{ $finding->title }}</strong><p>{{ $finding->description }}</p></article>@empty<div class="wz-empty">Geen aanvullende bevindingen geregistreerd.</div>@endforelse</div></section>
-<section class="wz-card wz-approval-panel"><div class="wz-card-head"><div><h2>Permintaan Persetujuan</h2><p>Keputusan customer tersimpan sebagai histori Work Order.</p></div><span class="wz-status">TAHAP 02</span></div>@forelse($servis->approvalRequests as $approval)@php($approvalStatusLabel = match($approval->status) { 'approved' => 'Disetujui', 'rejected' => 'Ditolak', 'cancelled' => 'Dibatalkan', default => 'Menunggu Pelanggan' })<article class="wz-item wz-approval-history is-{{ $approval->status }}"><div class="wz-approval-title-row"><strong>{{ $approval->title }}</strong><span class="wz-approval-badge is-{{ $approval->status }}">{{ $approvalStatusLabel }}</span></div><p>{{ $approval->reason }}</p><div class="wz-approval-meta"><span>Rp {{ number_format((float)$approval->items->sum('total_snapshot'),0,',','.') }}</span><span>{{ $approval->responded_at ? ($approvalStatusLabel.' pada '.$approval->responded_at->format('d M Y · H:i')) : 'Menunggu respons pelanggan' }}</span></div>@foreach($approval->items as $item)<div class="wz-summary-row"><span>{{ $item->quantity }} × {{ $item->description }}</span><strong>Rp {{ number_format((float)$item->total_snapshot,0,',','.') }}</strong></div>@endforeach @if($approval->customer_note)<div class="wz-customer-note"><strong>Catatan Pelanggan</strong>“{{ $approval->customer_note }}”</div>@endif</article>@empty<div class="wz-empty">Belum ada permintaan persetujuan pekerjaan tambahan.</div>@endforelse @if($servis->approvalRequests->where('status','pending')->isEmpty() && in_array($servis->status,['pemeriksaan','dikerjakan'],true))<details class="wz-create-approval"><summary class="wz-btn">＋ Buat Permintaan Persetujuan Baru</summary><form class="wz-form" method="post" action="{{ route($prefix.'.servis.approvals.store',$servis) }}">@csrf<div class="wz-form-grid"><label><span class="wz-label">Temuan Terkait</span><select class="wz-select" name="id_service_finding"><option value="">Tanpa temuan</option>@foreach($servis->findings as $finding)<option value="{{ $finding->id_service_finding }}">{{ $finding->title }}</option>@endforeach</select></label><label><span class="wz-label">Jenis Item</span><select class="wz-select" name="items[0][item_type]"><option value="labor">Jasa</option><option value="sparepart">Spare Part</option></select></label><label class="wz-full"><span class="wz-label">Judul Approval *</span><input class="wz-input" name="title" required></label><label><span class="wz-label">Jasa Tambahan</span><select class="wz-select" name="items[0][id_jenis_servis]"><option value="">Pilih jasa</option>@foreach($serviceTypes as $type)<option value="{{ $type->id_jenis_servis }}">{{ $type->nama_servis }} · Rp {{ number_format((float)$type->estimasi_harga,0,',','.') }}</option>@endforeach</select></label><label><span class="wz-label">Spare Part Tambahan</span><select class="wz-select" name="items[0][id_sparepart]"><option value="">Pilih spare part</option>@foreach($spareparts as $part)<option value="{{ $part->id_sparepart }}">{{ $part->nama_sparepart }} · Rp {{ number_format((float)$part->harga_jual,0,',','.') }}</option>@endforeach</select></label><label><span class="wz-label">Jumlah</span><input class="wz-input" type="number" min="1" name="items[0][quantity]" value="1"></label><label><span class="wz-label">Alasan *</span><input class="wz-input" name="reason" required></label></div><button class="wz-btn wz-primary" type="submit">Kirim Persetujuan Customer</button></form></details>@endif</section>
-@if($pendingApprovals->isNotEmpty())<div class="wz-locked"><strong>MENUNGGU PERSETUJUAN CUSTOMER</strong>Step Pengerjaan tetap terkunci sampai semua approval resolved.</div>@endif
-@endif
-@if($stage === 'pengerjaan')
-<section class="wz-card wz-approved-summary wz-readonly-panel" data-panel-kind="readonly"><div class="wz-card-head"><div class="wz-panel-heading"><span class="wz-panel-icon" aria-hidden="true">▣</span><div><span class="wz-panel-label">INFORMASI PEKERJAAN</span><h2>Ringkasan Pekerjaan yang Disetujui</h2><p>Informasi hasil pemeriksaan dan persetujuan yang sudah tercatat pada Work Order.</p></div></div><span class="wz-panel-badge is-readonly">HANYA DILIHAT</span></div><div class="wz-readonly-block"><span class="wz-block-label">HASIL PEMERIKSAAN</span><p>{{ $servis->hasil_pemeriksaan ?: 'Belum tersedia' }}</p></div>@if($servis->approvalRequests->isNotEmpty())<div class="wz-list wz-approval-list">@foreach($servis->approvalRequests as $approval)<article class="wz-item wz-readonly-item"><div class="wz-approval-title-row"><div><span class="wz-source-label">SUMBER: PERSETUJUAN PELANGGAN</span><strong>{{ $approval->title }}</strong></div><span class="wz-approval-badge is-{{ $approval->status }}">{{ $approval->status === 'approved' ? 'Disetujui' : ($approval->status === 'rejected' ? 'Ditolak' : 'Menunggu') }}</span></div><p>{{ $approval->reason }}</p>@foreach($approval->items as $item)<div class="wz-summary-row"><span>{{ $item->item_type === 'sparepart' ? 'Suku cadang: '.($item->sparepart?->nama_sparepart ?: $item->description) : 'Jasa: '.$item->description }} · {{ $item->quantity }} × Rp {{ number_format((float)$item->unit_price_snapshot,0,',','.') }}</span><strong>Rp {{ number_format((float)$item->total_snapshot,0,',','.') }}</strong></div><p class="wz-source-note">Item tercatat pada persetujuan — perlu pemeriksaan kesesuaian pekerjaan.</p>@endforeach</article>@endforeach</div>@else<div class="wz-empty">Belum ada pekerjaan tambahan yang memerlukan persetujuan.</div>@endif</section>
-<section class="wz-card wz-readonly-panel wz-work-info-panel" data-panel-kind="readonly"><div class="wz-card-head"><div class="wz-panel-heading"><span class="wz-panel-icon" aria-hidden="true">◉</span><div><span class="wz-panel-label">INFORMASI PEKERJAAN</span><h2>Informasi Pengerjaan</h2><p>Identitas petugas yang tercatat pada Work Order.</p></div></div><span class="wz-panel-badge is-readonly">HANYA DILIHAT</span></div><div class="wz-facts"><div class="wz-fact"><small>Teknisi Final</small><strong>{{ $servis->petugas?->nama_lengkap ?: 'Belum ditugaskan' }}</strong></div><div class="wz-fact"><small>Service Advisor</small><strong>{{ $servis->serviceAdvisor?->nama_lengkap ?: 'Belum ditugaskan' }}</strong></div></div></section>
-  @if(in_array(auth()->user()->roleKey(), ['super_admin', 'service_advisor', 'owner'], true) || in_array(auth()->user()->roleName(), ['admin', 'service_advisor', 'owner'], true))
-  @php($assignmentTechnicians = \App\Models\ServiceStaffProfile::with('petugas')->where('can_be_technician', true)->where('is_bookable', true)->whereHas('petugas', fn($q) => $q->where('status', 'aktif'))->get()->sortBy('petugas.nama_lengkap'))
- @if($assignmentTechnicians->isNotEmpty())
- <section class="wz-card"><div class="wz-card-head"><div><h2>Penugasan Work Order</h2><p>Pilih teknisi utama dan pendamping yang tersedia untuk pekerjaan ini.</p></div><span class="wz-status">PENUGASAN</span></div><form class="wz-form" method="post" action="{{ route('admin.servis.assignment.update', $servis) }}">@csrf @method('PUT')<div class="wz-form-grid"><label><span class="wz-label">Teknisi Utama *</span><select class="wz-select" name="id_petugas" required><option value="">Pilih teknisi</option>@foreach($assignmentTechnicians as $profile)<option value="{{ $profile->id_petugas }}" @selected((int) $servis->id_petugas === (int) $profile->id_petugas)>{{ $profile->petugas?->nama_lengkap }}{{ $profile->specialization ? ' · '.$profile->specialization : '' }}</option>@endforeach</select></label><label><span class="wz-label">Teknisi Pendamping</span><select class="wz-select" name="assistant_ids[]"><option value="">Tidak ada</option>@foreach($assignmentTechnicians as $profile)<option value="{{ $profile->id_petugas }}">{{ $profile->petugas?->nama_lengkap }}</option>@endforeach</select></label><label class="wz-full"><span class="wz-label">Alasan Penugasan *</span><input class="wz-input" name="reason" value="Penugasan UAT berdasarkan preferensi pelanggan dan ketersediaan teknisi" required></label></div><button class="wz-btn wz-primary" type="submit">Simpan Penugasan</button></form></section>
- @endif
-  @endif
-@php($jasaCount = $servis->details->count()) @php($sparepartCount = $servis->sparepartItems->count()) @php($jasaError = $errors->hasAny(['deskripsi_pekerjaan','biaya','catatan'])) @php($sparepartError = $errors->hasAny(['id_sparepart','jumlah']))
-<span id="wz-initial-form" data-form="{{ $jasaError ? 'jasa' : ($sparepartError ? 'sparepart' : '') }}" hidden></span>
-<section class="wz-card wz-readonly-panel wz-customer-request-panel" data-panel-kind="readonly"><div class="wz-card-head"><div class="wz-panel-heading"><span class="wz-panel-icon" aria-hidden="true">⌂</span><div><span class="wz-panel-label">PERMINTAAN PELANGGAN</span><h2>Permintaan Awal Pelanggan</h2><p>Ruang lingkup yang berasal dari booking servis member.</p></div></div><span class="wz-panel-badge is-readonly">{{ in_array($servis->bookingServis?->status, ['diterima','diproses','selesai'], true) ? 'DIKONFIRMASI' : 'PERLU KLARIFIKASI' }}</span></div><div class="wz-request-facts"><div><small>Jenis Servis</small><strong>{{ $servis->bookingServis?->jenisServis?->nama_servis ?: 'Tidak tercatat' }}</strong></div><div><small>Keluhan / Permintaan</small><strong>{{ $servis->bookingServis?->keluhan ?: $servis->keluhan ?: 'Tidak ada permintaan tertulis' }}</strong></div><div><small>Referensi Booking</small><strong>{{ $servis->bookingServis?->kode_booking ?: 'Tidak tersedia' }}</strong></div></div></section>
-@foreach($servis->approvalRequests as $approval)
-    @if($workSources->approvalNeedsClarification($approval))
-        <div class="wz-clarification-banner"><span class="wz-decision-banner-icon" style="background:#d97706">!</span><div><strong>Perlu Klarifikasi Persetujuan</strong><p>Pekerjaan yang disetujui dan item suku cadang yang tercatat tidak sepenuhnya sesuai. Periksa sumber pekerjaan atau ajukan persetujuan revisi sebelum finalisasi.</p><a class="wz-btn" href="{{ route($prefix.'.servis.persetujuan',$servis) }}#approval-{{ $approval->id_service_approval_request }}">Lihat rincian persetujuan</a><form method="post" action="{{ route($prefix.'.servis.approvals.clarification',[$servis,$approval]) }}" style="display:inline-block;margin-left:8px">@csrf<input type="hidden" name="reason" value="Snapshot item approval tidak sesuai dengan temuan/rekomendasi teknisi; persetujuan baru diperlukan untuk pekerjaan dan item sebenarnya."><button class="wz-btn wz-primary" type="submit">Ajukan klarifikasi</button></form></div></div>
     @endif
-@endforeach
-<section class="wz-card wz-readonly-panel" data-panel-kind="readonly"><div class="wz-card-head"><div class="wz-panel-heading"><span class="wz-panel-icon" aria-hidden="true">↳</span><div><span class="wz-panel-label">AUDIT SUMBER</span><h2>Sumber Item Pengerjaan</h2><p>Setiap jasa dan sparepart ditampilkan bersama dasar pekerjaan yang dapat ditelusuri.</p></div></div><span class="wz-panel-badge is-readonly">TRACEABLE</span></div><div class="wz-list">@foreach($servis->details as $detail) @php($source = $workSources->detail($servis, $detail))<div class="wz-summary-row"><span>Jasa: {{ $detail->deskripsi_pekerjaan }}</span><strong>{{ $source['label'] }}</strong></div>@endforeach @foreach($servis->sparepartItems as $item) @php($source = $workSources->sparepart($servis, $item))<div class="wz-summary-row"><span>Sparepart: {{ $item->sparepart?->nama_sparepart ?: 'Suku cadang' }}</span><strong>{{ $source['label'] }}</strong></div>@endforeach @if($servis->details->isEmpty() && $servis->sparepartItems->isEmpty())<div class="wz-empty">Belum ada item pengerjaan yang tersimpan.</div>@endif</div></section>
-<section class="wz-card wz-readonly-panel wz-additional-work-panel" data-panel-kind="readonly">
-<div class="wz-card-head"><div class="wz-panel-heading"><span class="wz-panel-icon" aria-hidden="true">✓</span><div><span class="wz-panel-label">REKOMENDASI TEKNISI</span><h2>Pekerjaan Tambahan &amp; Keputusan Pelanggan</h2><p>Item tambahan dipisahkan berdasarkan keputusan pelanggan dan tidak mengubah histori approval.</p></div></div><span class="wz-panel-badge is-readonly">READ-ONLY</span></div>
-@if($servis->approvalRequests->isNotEmpty())
-<div class="wz-approval-groups">
-@foreach($servis->approvalRequests as $approval)
-<article class="wz-approval-group is-{{ $approval->status }}"><div class="wz-approval-title-row"><div><span class="wz-source-label">{{ $approval->status === 'approved' ? 'DISETUJUI PELANGGAN' : ($approval->status === 'rejected' ? 'DITOLAK PELANGGAN' : 'MENUNGGU PERSETUJUAN') }}</span><strong>{{ $approval->title }}</strong></div><span class="wz-approval-badge is-{{ $approval->status }}">{{ $approval->status === 'approved' ? 'Disetujui' : ($approval->status === 'rejected' ? 'Ditolak' : 'Menunggu') }}</span></div><p>{{ $approval->reason }}</p>
-@foreach($approval->items as $item)<div class="wz-summary-row"><span>{{ $item->item_type === 'sparepart' ? 'Sparepart: '.($item->sparepart?->nama_sparepart ?: $item->description) : 'Jasa: '.$item->description }} · {{ $item->quantity }} × Rp {{ number_format((float)$item->unit_price_snapshot,0,',','.') }}</span><strong>Rp {{ number_format((float)$item->total_snapshot,0,',','.') }}</strong></div>@endforeach
-<p class="wz-customer-note"><strong>Catatan Pelanggan</strong>{{ $approval->customer_note ?: 'Tidak ada catatan pelanggan.' }}</p></article>
-@endforeach
+    @if(session('warning'))
+        <div class="mwz-alert is-warning" role="status">{{ session('warning') }}</div>
+    @endif
+    @if($errors->any())
+        <div class="mwz-alert is-error" role="alert">{{ $errors->first() }}</div>
+    @endif
+
+    <!-- Stepper -->
+    <nav class="mwz-stepper" aria-label="Tahap Perintah Kerja">
+        @foreach($stageList as $index => $item)
+            @php
+                $accessible = $stages->canAccess($servis, $item['key']);
+            @endphp
+            <div class="mwz-step {{ $index < $currentStageIndex ? 'is-done' : '' }} {{ $item['key'] === $stage ? 'is-current' : '' }} {{ !$accessible ? 'is-locked' : '' }}">
+                <span class="mwz-step-no">{{ str_pad((string) ($index + 1), 2, '0', STR_PAD_LEFT) }}</span>
+                @if($accessible)
+                    <a href="{{ route($prefix.'.servis.'.$item['key'], $servis) }}">{{ $item['label'] }}</a>
+                @else
+                    <span>{{ $item['label'] }}</span>
+                @endif
+            </div>
+        @endforeach
+    </nav>
+
+    <div class="mwz-layout">
+        <main class="mwz-main">
+            {{-- =================================================
+                 TAHAP 01: PEMERIKSAAN AWAL
+                 ================================================= --}}
+            @if($stage === 'pemeriksaan')
+                <section class="mwz-card">
+                    <div class="mwz-card-head">
+                        <div>
+                            <span class="mwz-section-kicker">Tahap 01 · Diagnosis Awal</span>
+                            <h2>Pemeriksaan Kendaraan</h2>
+                            <p>Periksa kondisi unit sesuai layanan awal dan keluhan pelanggan sebelum pengerjaan dimulai.</p>
+                        </div>
+                    </div>
+
+                    <div class="mwz-info-grid">
+                        <div class="mwz-info-box">
+                            <small>Layanan Terdaftar</small>
+                            <strong>{{ $serviceLabel }}</strong>
+                        </div>
+                        <div class="mwz-info-box">
+                            <small>Keluhan Pelanggan</small>
+                            <strong>{{ $servis->keluhan ?: ($servis->bookingServis?->keluhan ?: 'Tidak ada keluhan khusus') }}</strong>
+                        </div>
+                    </div>
+
+                    @if($servis->status === 'pemeriksaan')
+                        <form class="mwz-form" method="post" action="{{ route($prefix.'.servis.inspection', $servis) }}" style="margin-top: 16px;">
+                            @csrf
+                            <div class="mwz-field">
+                                <label>Hasil Pemeriksaan Fisik &amp; Teknis <span style="color:#ef233c;">*</span></label>
+                                <textarea name="hasil_pemeriksaan" rows="3" required placeholder="Contoh: Oli mesin sudah hitam dan perlu diganti sesuai jadwal, kondisi komponen lain aman...">{{ old('hasil_pemeriksaan', $servis->hasil_pemeriksaan) }}</textarea>
+                            </div>
+                            <div class="mwz-field">
+                                <label>Catatan Teknisi (Opsional)</label>
+                                <textarea name="catatan" rows="2" placeholder="Catatan tambahan saat pemeriksaan...">{{ old('catatan', $servis->catatan) }}</textarea>
+                            </div>
+                            <div class="mwz-actions">
+                                <button class="mwz-btn mwz-btn-primary" type="submit">Simpan Pemeriksaan &amp; Lanjut Pengerjaan →</button>
+                            </div>
+                        </form>
+                    @else
+                        <div class="mwz-info-box" style="margin-top: 14px;">
+                            <small>Hasil Pemeriksaan</small>
+                            <strong>{{ $servis->hasil_pemeriksaan ?: 'Sudah diperiksa' }}</strong>
+                        </div>
+                    @endif
+                </section>
+            @endif
+
+            {{-- =================================================
+                 TAHAP 02 & 03: KONFIRMASI MEMBER & PENGERJAAN
+                 ================================================= --}}
+            @if(in_array($stage, ['persetujuan', 'pengerjaan'], true))
+                @if($pendingApprovals->isNotEmpty())
+                    <div class="mwz-banner is-amber">
+                        <span class="mwz-banner-dot" aria-hidden="true"></span>
+                        <div>
+                            <strong>Menunggu Konfirmasi Member</strong>
+                            <p>Ada laporan temuan masalah yang sedang menunggu persetujuan pelanggan pada halaman Booking Servis member.</p>
+                        </div>
+                    </div>
+                @endif
+
+                <!-- 1. Ringkasan Tugas Servis (Tanpa Harga) -->
+                <section class="mwz-card">
+                    <div class="mwz-card-head">
+                        <div>
+                            <span class="mwz-section-kicker">Daftar Tugas</span>
+                            <h2>Pekerjaan Servis Kendaraan</h2>
+                            <p>Layanan awal sudah ditentukan dari pendaftaran booking. Item perbaikan tambahan akan otomatis masuk setelah disetujui member.</p>
+                        </div>
+                    </div>
+
+                    <div class="mwz-info-grid" style="margin-bottom: 16px;">
+                        <div class="mwz-info-box">
+                            <small>Layanan Booking Awal</small>
+                            <strong>{{ $serviceLabel }}</strong>
+                        </div>
+                        <div class="mwz-info-box">
+                            <small>Keluhan Pelanggan</small>
+                            <strong>{{ $servis->keluhan ?: ($servis->bookingServis?->keluhan ?: 'Tidak ada keluhan khusus') }}</strong>
+                        </div>
+                        <div class="mwz-info-box" style="grid-column: 1 / -1;">
+                            <small>Hasil Diagnosis Pemeriksaan</small>
+                            <strong>{{ $servis->hasil_pemeriksaan ?: 'Pemeriksaan standar selesai' }}</strong>
+                        </div>
+                    </div>
+
+                    <div class="mwz-table-wrap">
+                        <table class="mwz-table">
+                            <thead>
+                                <tr>
+                                    <th>Nama Pekerjaan / Tindakan</th>
+                                    <th>Keterangan Sumber</th>
+                                    <th style="width: 130px;">Status</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @forelse($servis->details as $detail)
+                                    <tr>
+                                        <td><strong>{{ $detail->deskripsi_pekerjaan }}</strong></td>
+                                        <td class="mwz-muted">{{ $detail->catatan ?: 'Layanan awal sesuai reservasi booking' }}</td>
+                                        <td><span class="mwz-pill is-emerald">Terjadwal</span></td>
+                                    </tr>
+                                @empty
+                                    <tr>
+                                        <td><strong>{{ $serviceLabel }}</strong></td>
+                                        <td class="mwz-muted">Layanan awal sesuai reservasi booking</td>
+                                        <td><span class="mwz-pill is-emerald">Terjadwal</span></td>
+                                    </tr>
+                                @endforelse
+                            </tbody>
+                        </table>
+                    </div>
+                </section>
+
+                <!-- 2. Penggunaan Suku Cadang (Tanpa Harga) -->
+                <section class="mwz-card">
+                    <div class="mwz-card-head mwz-card-head-row">
+                        <div>
+                            <span class="mwz-section-kicker">Suku Cadang Bengkel</span>
+                            <h2>Penggunaan Suku Cadang</h2>
+                            <p>Pilih suku cadang (oli, filter, kampas rem, dll.) yang digunakan pada pengerjaan servis ini.</p>
+                        </div>
+                        @if($servis->status === 'dikerjakan')
+                            <button type="button" class="mwz-btn mwz-btn-primary" data-mwz-open-sparepart>
+                                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                                    <path d="M12 5v14"/><path d="M5 12h14"/>
+                                </svg>
+                                <span>Tambah Suku Cadang</span>
+                            </button>
+                        @endif
+                    </div>
+
+                    <div class="mwz-table-wrap">
+                        <table class="mwz-table">
+                            <thead>
+                                <tr>
+                                    <th>Nama Suku Cadang</th>
+                                    <th>Kode SKU</th>
+                                    <th>Jumlah</th>
+                                    <th>Status</th>
+                                    @if($servis->status === 'dikerjakan')
+                                        <th style="text-align:right;">Aksi</th>
+                                    @endif
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @forelse($servis->sparepartItems as $item)
+                                    <tr>
+                                        <td><strong>{{ $item->sparepart?->nama_sparepart ?: 'Suku Cadang' }}</strong></td>
+                                        <td class="mwz-mono">{{ $item->sparepart?->kode_sparepart ?: '#'.$item->id_sparepart }}</td>
+                                        <td><strong>{{ $item->jumlah }} {{ $item->sparepart?->satuan ?: 'pcs' }}</strong></td>
+                                        <td><span class="mwz-pill is-blue">Tercatat</span></td>
+                                        @if($servis->status === 'dikerjakan')
+                                            <td style="text-align:right;">
+                                                <form method="post" action="{{ route($prefix.'.servis.sparepart.destroy', [$servis, $item]) }}" style="display:inline;">
+                                                    @csrf
+                                                    @method('DELETE')
+                                                    <button class="mwz-del-btn" type="submit">Hapus</button>
+                                                </form>
+                                            </td>
+                                        @endif
+                                    </tr>
+                                @empty
+                                    <tr>
+                                        <td colspan="{{ $servis->status === 'dikerjakan' ? 5 : 4 }}" class="mwz-empty-cell">
+                                            Belum ada suku cadang yang dicatat pada pengerjaan ini.
+                                        </td>
+                                    </tr>
+                                @endforelse
+                            </tbody>
+                        </table>
+                    </div>
+                </section>
+
+                <!-- 3. Lapor Temuan Masalah & Konfirmasi ke Member (Tanpa Harga di UI Mekanik) -->
+                <section class="mwz-card">
+                    <div class="mwz-card-head">
+                        <div>
+                            <span class="mwz-section-kicker">Temuan Masalah Tambahan</span>
+                            <h2>Laporan Temuan &amp; Konfirmasi Member</h2>
+                            <p>Jika ditemukan masalah tambahan pada kendaraan, laporkan di sini untuk meminta konfirmasi member. Jika disetujui member, perbaikan dan biayanya otomatis masuk ke tagihan akhir.</p>
+                        </div>
+                    </div>
+
+                    @if($servis->approvalRequests->isNotEmpty())
+                        <div class="mwz-approval-list">
+                            @foreach($servis->approvalRequests as $approval)
+                                @php
+                                    $apMeta = match($approval->status) {
+                                        'approved' => ['cls' => 'is-emerald', 'lbl' => 'Disetujui Member · Masuk Pengerjaan & Tagihan Akhir'],
+                                        'rejected' => ['cls' => 'is-crimson', 'lbl' => 'Ditolak Member'],
+                                        default => ['cls' => 'is-amber', 'lbl' => 'Menunggu Konfirmasi Member'],
+                                    };
+                                @endphp
+                                <article class="mwz-approval-card">
+                                    <div class="mwz-approval-top">
+                                        <strong>{{ $approval->title }}</strong>
+                                        <span class="mwz-pill {{ $apMeta['cls'] }}">{{ $apMeta['lbl'] }}</span>
+                                    </div>
+                                    <p class="mwz-approval-reason">{{ $approval->reason }}</p>
+                                    <div class="mwz-approval-items">
+                                        @foreach($approval->items as $it)
+                                            <span class="mwz-item-chip">
+                                                {{ $it->item_type === 'sparepart' ? 'Part: '.$it->description : 'Tindakan: '.$it->description }} ({{ $it->quantity }}x)
+                                            </span>
+                                        @endforeach
+                                    </div>
+                                    @if($approval->customer_note)
+                                        <small class="mwz-cust-note">Catatan Member: “{{ $approval->customer_note }}”</small>
+                                    @endif
+                                </article>
+                            @endforeach
+                        </div>
+                    @endif
+
+                    @if($pendingApprovals->isEmpty() && in_array($servis->status, ['pemeriksaan', 'dikerjakan'], true))
+                        <details class="mwz-report-drawer" {{ $stage === 'persetujuan' ? 'open' : '' }}>
+                            <summary class="mwz-btn mwz-btn-ghost">+ Laporkan Temuan Masalah ke Member</summary>
+                            <form class="mwz-form" method="post" action="{{ route($prefix.'.servis.approvals.store', $servis) }}" style="margin-top: 14px;">
+                                @csrf
+                                <div class="mwz-form-grid">
+                                    <div class="mwz-field mwz-full">
+                                        <label>Masalah / Temuan pada Kendaraan <span style="color:#ef233c;">*</span></label>
+                                        <input type="text" name="title" required maxlength="160" placeholder="Contoh: Kampas rem depan sudah tipis & aus">
+                                    </div>
+                                    <div class="mwz-field mwz-full">
+                                        <label>Penjelasan &amp; Rekomendasi Perbaikan untuk Member <span style="color:#ef233c;">*</span></label>
+                                        <textarea name="reason" rows="2" required placeholder="Jelaskan kondisi temuan agar member dapat memutuskan apakah ingin diperbaiki sekalian..."></textarea>
+                                    </div>
+                                    <div class="mwz-field">
+                                        <label>Tindakan / Layanan Perbaikan</label>
+                                        <select name="id_jenis_servis">
+                                            <option value="">— Pilih tindakan perbaikan (opsional) —</option>
+                                            @foreach($serviceTypes as $type)
+                                                <option value="{{ $type->id_jenis_servis }}">{{ $type->nama_servis }}</option>
+                                            @endforeach
+                                        </select>
+                                    </div>
+                                    <div class="mwz-field">
+                                        <label>Suku Cadang yang Diperlukan</label>
+                                        <div style="display:flex; gap:8px;">
+                                            <select name="id_sparepart" style="flex:1;">
+                                                <option value="">— Pilih suku cadang (opsional) —</option>
+                                                @foreach($spareparts as $part)
+                                                    <option value="{{ $part->id_sparepart }}">{{ $part->nama_sparepart }} (Stok: {{ $part->stok }})</option>
+                                                @endforeach
+                                            </select>
+                                            <input type="number" name="sparepart_qty" value="1" min="1" style="width:76px;" title="Jumlah part">
+                                        </div>
+                                    </div>
+                                </div>
+                                <small class="mwz-hint">Pilih minimal salah satu tindakan perbaikan atau suku cadang. Sistem akan otomatis mengirimkan estimasi dan rincian konfirmasi ke akun member.</small>
+                                <div class="mwz-actions">
+                                    <button type="submit" class="mwz-btn mwz-btn-primary">Kirim Konfirmasi ke Member →</button>
+                                </div>
+                            </form>
+                        </details>
+                    @endif
+                </section>
+            @endif
+
+            {{-- =================================================
+                 TAHAP 04: PEMERIKSAAN MUTU (QUALITY CONTROL)
+                 ================================================= --}}
+            @if($stage === 'quality-control')
+                @php
+                    $qc = $servis->qualityControl;
+                    $qcItems = $qc ? $qc->items : collect();
+                    $standardQcItems = $qcItems->where('item_key', '!=', 'work_order')->values();
+                    $woQcItems = $qcItems->where('item_key', 'work_order')->values();
+                    $qcTotal = $qcItems->count();
+                    $qcChecked = $qcItems->filter(fn ($i) => filled(old("items.{$i->id_service_quality_control_item}.result", $i->result)))->count();
+                    $qcPassedCount = $qcItems->filter(fn ($i) => old("items.{$i->id_service_quality_control_item}.result", $i->result) === 'PASS')->count();
+                    $qcFailedCount = $qcItems->filter(fn ($i) => old("items.{$i->id_service_quality_control_item}.result", $i->result) === 'FAIL')->count();
+                    $qcLocked = $qc && $qc->status === 'passed';
+                @endphp
+                <section class="mwz-card mwz-qc-card">
+                    <div class="mwz-card-head mwz-qc-head">
+                        <div>
+                            <span class="mwz-section-kicker">Tahap 04 · Pemeriksaan Mutu</span>
+                            <h2>Quality Control Bengkel</h2>
+                            <p>Periksa standar kualitas bengkel dan kesesuaian hasil pengerjaan terhadap Work Order sebelum lanjut ke finalisasi.</p>
+                        </div>
+                        @if($qc)
+                            <div class="mwz-qc-status-pill is-{{ $qc->status === 'passed' ? 'passed' : ($qc->status === 'failed' ? 'failed' : 'progress') }}">
+                                <span class="mwz-qc-status-dot" aria-hidden="true"></span>
+                                <span>
+                                    {{ $qc->status === 'passed' ? 'Lulus Quality Control' : ($qc->status === 'failed' ? 'Perlu Perbaikan Ulang' : 'Sedang Diperiksa') }}
+                                </span>
+                            </div>
+                        @endif
+                    </div>
+
+                    @if(auth()->user()?->roleKey() === 'mechanic')
+                        <div class="mwz-banner is-amber" style="margin-bottom: 0;">
+                            <span class="mwz-banner-dot" aria-hidden="true"></span>
+                            <div>
+                                <strong>{{ $qc?->status === 'passed' ? 'Quality Control Lulus' : ($qc?->status === 'failed' ? 'QC Meminta Perbaikan Ulang' : 'Menunggu Pemeriksaan Tim Quality Control (QC)') }}</strong>
+                                <p>{{ $qc?->status === 'passed' ? 'Unit telah lulus pemeriksaan mutu oleh tim QC.' : ($qc?->status === 'failed' ? 'Silakan perbaiki pekerjaan sesuai catatan QC, lalu kirim ulang ke QC.' : 'Unit telah diserahkan ke tim Quality Control untuk pemeriksaan mutu.') }}</p>
+                            </div>
+                        </div>
+                    @elseif(!$qc)
+                        <div class="mwz-qc-empty">
+                            <div>
+                                <strong>Pemeriksaan Quality Control Belum Dimulai</strong>
+                                <p>Mulai sesi QC untuk membuka checklist pemeriksaan standar dan verifikasi kesesuaian Work Order.</p>
+                            </div>
+                            <form method="post" action="{{ route($prefix.'.servis.qc.start', $servis) }}">
+                                @csrf
+                                <button class="mwz-btn mwz-btn-primary" type="submit">Mulai Pemeriksaan Quality Control</button>
+                            </form>
+                        </div>
+                    @else
+                        @if($qcLocked)
+                            <div class="mwz-banner is-emerald" style="margin-bottom: 18px;">
+                                <span class="mwz-banner-dot is-emerald" aria-hidden="true"></span>
+                                <div>
+                                    <strong>Quality Control Lulus</strong>
+                                    <p>Seluruh checklist pemeriksaan standar dan penyesuaian Work Order telah dinyatakan lulus. Unit siap dilanjutkan ke tahap finalisasi &amp; pembayaran.</p>
+                                </div>
+                            </div>
+                        @elseif($qc->status === 'failed')
+                            <div class="mwz-banner is-rose" style="margin-bottom: 18px;">
+                                <span class="mwz-banner-dot is-rose" aria-hidden="true"></span>
+                                <div>
+                                    <strong>QC Meminta Perbaikan Ulang</strong>
+                                    <p>Terdapat item yang dinyatakan Tidak Lulus. Perbaiki catatan di bawah atau perbarui hasil setelah mekanik menyelesaikan perbaikan.</p>
+                                </div>
+                            </div>
+                        @endif
+
+                        {{-- Progress Strip --}}
+                        <div class="mwz-qc-progress-strip" data-qc-progress>
+                            <div class="mwz-qc-progress-meta">
+                                <span class="mwz-qc-progress-label">Progres Checklist</span>
+                                <strong data-qc-count>{{ $qcChecked }} / {{ $qcTotal }} Item Diperiksa</strong>
+                            </div>
+                            <div class="mwz-qc-progress-pills">
+                                <span class="mwz-qc-mini-stat is-pass">Lulus: <strong data-qc-pass-count>{{ $qcPassedCount }}</strong></span>
+                                <span class="mwz-qc-mini-stat is-fail">Tidak Lulus: <strong data-qc-fail-count>{{ $qcFailedCount }}</strong></span>
+                            </div>
+                        </div>
+
+                        <form class="mwz-form mwz-qc-form" method="post" action="{{ route($prefix.'.servis.qc.update', $servis) }}" data-qc-form novalidate>
+                            @csrf
+                            @method('PUT')
+
+                            {{-- BAGIAN 1: CHECKLIST PEMERIKSAAN STANDAR --}}
+                            <div class="mwz-qc-section">
+                                <div class="mwz-qc-section-head">
+                                    <div>
+                                        <span class="mwz-qc-section-badge">01 · Pemeriksaan Standar</span>
+                                        <h3>Checklist Pemeriksaan Standar Bengkel</h3>
+                                        <p>Pastikan kebersihan area kerja, indikator instrumen, fluida, sistem keselamatan, dan uji fungsi kendaraan.</p>
+                                    </div>
+                                    <span class="mwz-qc-section-count">{{ $standardQcItems->count() }} Kriteria</span>
+                                </div>
+
+                                <div class="mwz-qc-grid">
+                                    @foreach($standardQcItems as $item)
+                                        @php
+                                            $itemId = $item->id_service_quality_control_item;
+                                            $currentResult = old("items.{$itemId}.result", $item->result);
+                                            $currentNote = old("items.{$itemId}.note", $item->note);
+                                            $isFail = $currentResult === 'FAIL';
+                                        @endphp
+                                        <div class="mwz-qc-item {{ $currentResult === 'PASS' ? 'is-pass' : ($isFail ? 'is-fail' : ($currentResult === 'N/A' ? 'is-na' : '')) }}" data-qc-item>
+                                            <div class="mwz-qc-item-top">
+                                                <div class="mwz-qc-item-info">
+                                                    <div class="mwz-qc-item-title-row">
+                                                        <strong>{{ $item->label_snapshot }}</strong>
+                                                        <span class="mwz-qc-req-tag">{{ $item->is_mandatory ? 'Wajib Lulus' : 'Opsional' }}</span>
+                                                    </div>
+                                                    <small>Pilih status hasil pemeriksaan untuk kriteria standar ini.</small>
+                                                </div>
+
+                                                <div class="mwz-qc-toggle-group" role="radiogroup" aria-label="{{ $item->label_snapshot }}">
+                                                    <label class="mwz-qc-pill is-pass">
+                                                        <input type="radio" name="items[{{ $itemId }}][result]" value="PASS" @checked($currentResult === 'PASS') @disabled($qcLocked) required>
+                                                        <span>✓ Lulus</span>
+                                                    </label>
+                                                    <label class="mwz-qc-pill is-fail">
+                                                        <input type="radio" name="items[{{ $itemId }}][result]" value="FAIL" @checked($isFail) @disabled($qcLocked)>
+                                                        <span>✕ Tidak Lulus</span>
+                                                    </label>
+                                                    <label class="mwz-qc-pill is-na">
+                                                        <input type="radio" name="items[{{ $itemId }}][result]" value="N/A" @checked($currentResult === 'N/A') @disabled($qcLocked)>
+                                                        <span>— N/A</span>
+                                                    </label>
+                                                </div>
+                                            </div>
+
+                                            <div class="mwz-qc-note-wrap {{ $isFail ? 'is-visible' : '' }}" data-qc-note-wrap @if(!$isFail) hidden @endif>
+                                                <label class="mwz-qc-note-label" for="qc-note-{{ $itemId }}">
+                                                    Catatan Perbaikan <span class="mwz-qc-required-star">* Wajib diisi jika Tidak Lulus</span>
+                                                </label>
+                                                <textarea
+                                                    id="qc-note-{{ $itemId }}"
+                                                    class="mwz-qc-note-input"
+                                                    name="items[{{ $itemId }}][note]"
+                                                    rows="2"
+                                                    placeholder="Jelaskan temuan ketidaksesuaian dan perbaikan yang harus dilakukan mekanik..."
+                                                    @required($isFail)
+                                                    @disabled($qcLocked)
+                                                    data-qc-note
+                                                >{{ $currentNote }}</textarea>
+                                            </div>
+                                        </div>
+                                    @endforeach
+                                </div>
+                            </div>
+
+                            {{-- BAGIAN 2: PEMERIKSAAN PENYESUAIAN WORK ORDER --}}
+                            <div class="mwz-qc-section">
+                                <div class="mwz-qc-section-head">
+                                    <div>
+                                        <span class="mwz-qc-section-badge is-wo">02 · Penyesuaian Work Order</span>
+                                        <h3>Pemeriksaan Penyesuaian Work Order</h3>
+                                        <p>Verifikasi bahwa seluruh pekerjaan jasa, suku cadang terpasang, dan keluhan pelanggan telah dikerjakan sesuai Work Order.</p>
+                                    </div>
+                                    <span class="mwz-qc-section-count">{{ $servis->details->count() }} Jasa · {{ $servis->sparepartItems->count() }} Part</span>
+                                </div>
+
+                                {{-- Ringkasan Referensi Work Order --}}
+                                <div class="mwz-qc-wo-ref">
+                                    <div class="mwz-qc-wo-ref-grid">
+                                        <div class="mwz-qc-wo-box">
+                                            <span class="mwz-qc-wo-kicker">Layanan Booking &amp; Keluhan</span>
+                                            <strong>{{ $servis->bookingServis?->jenisServis?->nama_servis ?? 'Servis Umum' }}</strong>
+                                            <p>{{ $servis->keluhan ?: 'Tidak ada keluhan khusus tercatat.' }}</p>
+                                            @if($servis->hasil_pemeriksaan)
+                                                <div class="mwz-qc-wo-diag">
+                                                    <span>Diagnosis Mekanik:</span> {{ $servis->hasil_pemeriksaan }}
+                                                </div>
+                                            @endif
+                                        </div>
+
+                                        <div class="mwz-qc-wo-box">
+                                            <span class="mwz-qc-wo-kicker">Pekerjaan &amp; Sparepart Terpasang</span>
+                                            <ul class="mwz-qc-wo-list">
+                                                @forelse($servis->details as $detail)
+                                                    <li>
+                                                        <span>{{ $detail->deskripsi_pekerjaan }}</span>
+                                                        <small>{{ $detail->catatan ?: 'Jasa Work Order' }}</small>
+                                                    </li>
+                                                @empty
+                                                    <li class="is-muted">Belum ada rincian jasa tercatat.</li>
+                                                @endforelse
+                                                @foreach($servis->sparepartItems as $part)
+                                                    <li>
+                                                        <span>{{ $part->sparepart?->nama_sparepart ?? 'Sparepart' }}</span>
+                                                        <small>{{ $part->jumlah }} pcs</small>
+                                                    </li>
+                                                @endforeach
+                                            </ul>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="mwz-qc-grid">
+                                    @foreach($woQcItems as $item)
+                                        @php
+                                            $itemId = $item->id_service_quality_control_item;
+                                            $currentResult = old("items.{$itemId}.result", $item->result);
+                                            $currentNote = old("items.{$itemId}.note", $item->note);
+                                            $isFail = $currentResult === 'FAIL';
+                                        @endphp
+                                        <div class="mwz-qc-item is-wo-card {{ $currentResult === 'PASS' ? 'is-pass' : ($isFail ? 'is-fail' : ($currentResult === 'N/A' ? 'is-na' : '')) }}" data-qc-item>
+                                            <div class="mwz-qc-item-top">
+                                                <div class="mwz-qc-item-info">
+                                                    <div class="mwz-qc-item-title-row">
+                                                        <strong>{{ $item->label_snapshot }}</strong>
+                                                        <span class="mwz-qc-req-tag">{{ $item->is_mandatory ? 'Wajib Lulus' : 'Opsional' }}</span>
+                                                    </div>
+                                                    <small>Apakah hasil pengerjaan mekanik &amp; sparepart sudah 100% sesuai dengan daftar Work Order di atas?</small>
+                                                </div>
+
+                                                <div class="mwz-qc-toggle-group" role="radiogroup" aria-label="{{ $item->label_snapshot }}">
+                                                    <label class="mwz-qc-pill is-pass">
+                                                        <input type="radio" name="items[{{ $itemId }}][result]" value="PASS" @checked($currentResult === 'PASS') @disabled($qcLocked) required>
+                                                        <span>✓ Lulus</span>
+                                                    </label>
+                                                    <label class="mwz-qc-pill is-fail">
+                                                        <input type="radio" name="items[{{ $itemId }}][result]" value="FAIL" @checked($isFail) @disabled($qcLocked)>
+                                                        <span>✕ Tidak Lulus</span>
+                                                    </label>
+                                                    <label class="mwz-qc-pill is-na">
+                                                        <input type="radio" name="items[{{ $itemId }}][result]" value="N/A" @checked($currentResult === 'N/A') @disabled($qcLocked)>
+                                                        <span>— N/A</span>
+                                                    </label>
+                                                </div>
+                                            </div>
+
+                                            <div class="mwz-qc-note-wrap {{ $isFail ? 'is-visible' : '' }}" data-qc-note-wrap @if(!$isFail) hidden @endif>
+                                                <label class="mwz-qc-note-label" for="qc-note-{{ $itemId }}">
+                                                    Catatan Ketidaksesuaian Work Order <span class="mwz-qc-required-star">* Wajib diisi jika Tidak Lulus</span>
+                                                </label>
+                                                <textarea
+                                                    id="qc-note-{{ $itemId }}"
+                                                    class="mwz-qc-note-input"
+                                                    name="items[{{ $itemId }}][note]"
+                                                    rows="2"
+                                                    placeholder="Tuliskan item Work Order yang belum sesuai atau perlu dikerjakan ulang..."
+                                                    @required($isFail)
+                                                    @disabled($qcLocked)
+                                                    data-qc-note
+                                                >{{ $currentNote }}</textarea>
+                                            </div>
+                                        </div>
+                                    @endforeach
+                                </div>
+                            </div>
+
+                            {{-- Catatan Akhir QC --}}
+                            <div class="mwz-field mwz-qc-final-notes">
+                                <label for="qc-final-notes">Catatan Umum Quality Control (Opsional)</label>
+                                <textarea id="qc-final-notes" name="notes" rows="2" placeholder="Ringkasan kondisi kendaraan atau catatan tambahan untuk Service Advisor / Mekanik..." @disabled($qcLocked)>{{ old('notes', $qc->notes) }}</textarea>
+                            </div>
+
+                            <div class="mwz-qc-client-alert" data-qc-client-error hidden></div>
+
+                            <div class="mwz-actions mwz-qc-actions">
+                                @if(!$qcLocked)
+                                    <button class="mwz-btn mwz-btn-primary" type="submit">Kirim Serah Terima ke Finance / Kasir →</button>
+                                @endif
+                                @if($qc->status === 'passed')
+                                    <a class="mwz-btn mwz-btn-dark" href="{{ route($prefix.'.servis.finalisasi', $servis) }}">Lanjut ke Finalisasi &amp; Pembayaran →</a>
+                                @endif
+                            </div>
+                        </form>
+                    @endif
+                </section>
+            @endif
+
+            {{-- =================================================
+                 TAHAP 05: FINALISASI & PEMBAYARAN (RINCIAN BIAYA AKHIR)
+                 ================================================= --}}
+            @if($stage === 'finalisasi')
+                <section class="mwz-card">
+                    <div class="mwz-card-head">
+                        <div>
+                            <span class="mwz-section-kicker">Tahap 05 · Alur Akhir Pembayaran</span>
+                            <h2>Rincian Biaya Servis &amp; Permasalahan Tambahan</h2>
+                            <p>Biaya layanan awal beserta biaya perbaikan temuan masalah yang telah dikonfirmasi member dijumlahkan secara otomatis.</p>
+                        </div>
+                    </div>
+
+                    <div class="mwz-table-wrap" style="margin-bottom: 18px;">
+                        <table class="mwz-table">
+                            <thead>
+                                <tr>
+                                    <th>Deskripsi Layanan / Suku Cadang</th>
+                                    <th>Keterangan / Detail Masalah</th>
+                                    <th>Qty</th>
+                                    <th style="text-align:right;">Biaya (Rp)</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach($servis->details as $d)
+                                    <tr>
+                                        <td><strong>{{ $d->deskripsi_pekerjaan }}</strong></td>
+                                        <td class="mwz-muted">{{ $d->catatan ?: 'Layanan awal sesuai reservasi booking' }}</td>
+                                        <td>1</td>
+                                        <td style="text-align:right; font-weight:700;">Rp {{ number_format((float) $d->biaya, 0, ',', '.') }}</td>
+                                    </tr>
+                                @endforeach
+                                @foreach($servis->sparepartItems as $sp)
+                                    <tr>
+                                        <td><strong>{{ $sp->sparepart?->nama_sparepart ?: 'Suku Cadang' }}</strong></td>
+                                        <td class="mwz-muted">Suku cadang servis ({{ $sp->sparepart?->kode_sparepart ?: '#'.$sp->id_sparepart }})</td>
+                                        <td>{{ $sp->jumlah }}</td>
+                                        <td style="text-align:right; font-weight:700;">Rp {{ number_format((float) $sp->subtotal, 0, ',', '.') }}</td>
+                                    </tr>
+                                @endforeach
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <div class="mwz-final-totals">
+                        <div class="mwz-total-row">
+                            <span>Subtotal Layanan &amp; Perbaikan</span>
+                            <strong>Rp {{ number_format($laborTotal, 0, ',', '.') }}</strong>
+                        </div>
+                        <div class="mwz-total-row">
+                            <span>Subtotal Suku Cadang</span>
+                            <strong>Rp {{ number_format($partsTotal, 0, ',', '.') }}</strong>
+                        </div>
+                        <div class="mwz-total-row is-grand">
+                            <span>Total Akhir Tagihan</span>
+                            <strong>Rp {{ number_format($total, 0, ',', '.') }}</strong>
+                        </div>
+                    </div>
+
+                    @if($servis->transaksi)
+                        <div class="mwz-actions" style="margin-top: 18px;">
+                            <a class="mwz-btn mwz-btn-ghost" href="{{ route($prefix.'.invoice.servis', $servis->transaksi) }}">Lihat Invoice Resmi</a>
+                            @if(in_array($servis->transaksi->status, ['belum_bayar', 'dp'], true))
+                                <a class="mwz-btn mwz-btn-primary" href="{{ route($prefix.'.payment.create', $servis->transaksi) }}">Catat Pembayaran</a>
+                            @endif
+                        </div>
+                    @elseif($servis->status === 'dikerjakan')
+                        <form method="post" action="{{ route($prefix.'.servis.finalize', $servis) }}" style="margin-top: 18px;">
+                            @csrf
+                            <x-promo-selector :promos="$promos" scope="servis" :subtotal="$total"/>
+                            <div class="mwz-actions" style="margin-top: 14px;">
+                                <button class="mwz-btn mwz-btn-primary" type="submit">Proses Finalisasi &amp; Terbitkan Tagihan</button>
+                            </div>
+                        </form>
+                    @endif
+                </section>
+            @endif
+        </main>
+
+        <!-- Sidebar Ringkasan (Tanpa Harga untuk Mekanik di Tahap 01-04) -->
+        <aside class="mwz-sidebar">
+            <section class="mwz-card">
+                <h3 class="mwz-side-title">Ringkasan Perintah Kerja</h3>
+                <dl class="mwz-side-dl">
+                    <div>
+                        <dt>Status</dt>
+                        <dd>{{ $pendingApprovals->isNotEmpty() ? 'Menunggu Konfirmasi' : \App\Services\ServiceStatusPresenter::label($servis->status) }}</dd>
+                    </div>
+                    <div>
+                        <dt>Pelanggan</dt>
+                        <dd>{{ $servis->pelanggan?->nama_lengkap ?: '—' }}</dd>
+                    </div>
+                    <div>
+                        <dt>Kendaraan</dt>
+                        <dd>{{ $vehicleName }}</dd>
+                    </div>
+                    <div>
+                        <dt>Layanan Awal</dt>
+                        <dd>{{ $serviceLabel }}</dd>
+                    </div>
+                    <div>
+                        <dt>Mekanik Pelaksana</dt>
+                        <dd>{{ $servis->petugas?->nama_lengkap ?: 'Belum ditugaskan' }}</dd>
+                    </div>
+                    @if($stage === 'finalisasi')
+                        <div class="mwz-side-total">
+                            <dt>Total Tagihan</dt>
+                            <dd>Rp {{ number_format($total, 0, ',', '.') }}</dd>
+                        </div>
+                    @endif
+                </dl>
+            </section>
+
+            <section class="mwz-card">
+                <h3 class="mwz-side-title">Tahap Selanjutnya</h3>
+                @if($pendingApprovals->isNotEmpty())
+                    <p class="mwz-side-note">Menunggu konfirmasi dari member atas laporan temuan masalah yang diajukan.</p>
+                @elseif($currentStage === 'pengerjaan' && $stage === 'pengerjaan')
+                    <p class="mwz-side-note">Jika pengerjaan reparasi dan alokasi suku cadang sudah selesai, kirim serah terima unit ke tim Quality Control (QC).</p>
+                    <form method="post" action="{{ route($prefix.'.servis.qc.start', $servis) }}">
+                        @csrf
+                        <button class="mwz-btn mwz-btn-primary" style="width:100%;" type="submit">Kirim Serah Terima ke QC →</button>
+                    </form>
+                @elseif($nextAction['stage'] && $nextActionAllowed)
+                    <p class="mwz-side-note">{{ $nextAction['description'] }}</p>
+                    <a class="mwz-btn mwz-btn-primary" style="width:100%;" href="{{ route($prefix.'.servis.'.$nextAction['stage'], $servis) }}">{{ $nextAction['label'] }} →</a>
+                @else
+                    <p class="mwz-side-note">{{ $nextAction['description'] }}</p>
+                @endif
+            </section>
+        </aside>
+    </div>
 </div>
-@else<div class="wz-empty">Belum ada rekomendasi tambahan yang memerlukan persetujuan.</div>@endif
-</section>
-<section class="wz-card wz-editable-panel wz-collapsible-section" data-panel-kind="editable" data-collapsible-section="jasa"><div class="wz-card-head wz-collapsible-head"><div class="wz-panel-heading"><span class="wz-panel-icon is-editable" aria-hidden="true">⚒</span><div><span class="wz-panel-label is-editable">ISI DATA PENGERJAAN</span><h2>Jasa &amp; Pekerjaan Berjalan</h2><p>Kelola jasa dan pekerjaan yang dilakukan teknisi.</p><div class="wz-mini-summary"><span>{{ $jasaCount }} Jasa Tercatat</span><strong>Total Jasa: Rp {{ number_format((float)$laborTotal,0,',','.') }}</strong></div></div></div><div class="wz-collapse-actions"><span class="wz-panel-badge is-editable">DAPAT DIISI</span>@if($servis->status === 'dikerjakan')<button class="wz-btn wz-primary wz-toggle-form" type="button" data-toggle-form="jasa" aria-expanded="false" aria-controls="wz-form-jasa">＋ Tambah Jasa</button>@endif</div></div>@if($servis->status === 'dikerjakan')<div class="wz-inline-form" id="wz-form-jasa" data-form-panel="jasa" aria-hidden="true"><form class="wz-form" method="post" action="{{ route($prefix.'.servis.detail.store',$servis) }}">@csrf<div class="wz-form-grid"><label><span class="wz-label">Deskripsi Pekerjaan</span><input class="wz-input" name="deskripsi_pekerjaan" value="{{ old('deskripsi_pekerjaan') }}" placeholder="Contoh: Ganti oli mesin" required></label><label><span class="wz-label">Biaya Jasa</span><input class="wz-input" name="biaya" value="{{ old('biaya') }}" type="number" min="0" step="0.01" placeholder="0" required></label><label class="wz-full"><span class="wz-label">Catatan Pengerjaan</span><textarea class="wz-textarea" name="catatan" placeholder="Catatan teknisi, kondisi, atau hasil pekerjaan">{{ old('catatan') }}</textarea></label></div><div class="wz-actions"><button class="wz-btn wz-primary" type="submit">Simpan Jasa</button><button class="wz-btn wz-cancel-form" type="button" data-close-form="jasa">Batal</button></div></form></div>@endif<div class="wz-data-section"><div class="wz-table-title"><div><h3>Jasa yang Sudah Dicatat</h3><p>Daftar pekerjaan yang telah disimpan pada Work Order.</p></div></div><div class="wz-table-wrap"><table class="wz-table"><thead><tr><th>Pekerjaan</th><th>Catatan</th><th>Biaya</th><th>Status</th>@if($servis->status === 'dikerjakan')<th>Aksi</th>@endif</tr></thead><tbody>@forelse($servis->details as $detail)<tr><td><strong>{{ $detail->deskripsi_pekerjaan }}</strong></td><td>{{ $detail->catatan ?: '—' }}</td><td>Rp {{ number_format((float)$detail->biaya,0,',','.') }}</td><td><span class="wz-status-pill is-saved">Tersimpan</span></td>@if($servis->status === 'dikerjakan')<td><form method="post" action="{{ route($prefix.'.servis.detail.destroy',[$servis,$detail]) }}">@csrf @method('DELETE')<button class="wz-table-action" type="submit">Hapus</button></form></td>@endif</tr>@empty<tr><td colspan="{{ $servis->status === 'dikerjakan' ? 5 : 4 }}"><div class="wz-empty wz-table-empty"><span class="wz-empty-icon">⚒</span><strong>Belum ada jasa yang dicatat</strong><small>Tambahkan pekerjaan yang benar-benar dilakukan teknisi.</small><button class="wz-btn wz-primary wz-empty-action" type="button" data-toggle-form="jasa">＋ Tambah Jasa</button></div></td></tr>@endforelse</tbody></table></div></div></section>
-<section class="wz-card wz-editable-panel wz-collapsible-section" data-panel-kind="editable" data-collapsible-section="sparepart"><div class="wz-card-head wz-collapsible-head"><div class="wz-panel-heading"><span class="wz-panel-icon is-editable" aria-hidden="true">▦</span><div><span class="wz-panel-label is-editable">ISI DATA PENGERJAAN</span><h2>Penggunaan Suku Cadang</h2><p>Kelola sparepart yang digunakan selama servis.</p><div class="wz-mini-summary"><span>{{ $sparepartCount }} Item Tercatat</span><strong>Total Sparepart: Rp {{ number_format((float)$partsTotal,0,',','.') }}</strong></div></div></div><div class="wz-collapse-actions"><span class="wz-panel-badge is-editable">DAPAT DIISI</span>@if($servis->status === 'dikerjakan')<button class="wz-btn wz-primary wz-toggle-form" type="button" data-toggle-form="sparepart" aria-expanded="false" aria-controls="wz-form-sparepart">＋ Tambah Suku Cadang</button>@endif</div></div>@if($servis->status === 'dikerjakan')<div class="wz-inline-form" id="wz-form-sparepart" data-form-panel="sparepart" aria-hidden="true"><form class="wz-form" method="post" action="{{ route($prefix.'.servis.sparepart.store',$servis) }}">@csrf<div class="wz-form-grid"><label><span class="wz-label">Suku Cadang</span><select class="wz-select" name="id_sparepart" required hidden aria-hidden="true" tabindex="-1"></select><small class="wz-helper">Gunakan pencarian kompatibilitas pada kartu di atas; backend tetap memvalidasi fitment dan stok.</small></label><label><span class="wz-label">Jumlah</span><input class="wz-input" name="jumlah" value="{{ old('jumlah') }}" type="number" min="1" placeholder="1" required></label></div><div class="wz-actions"><button class="wz-btn wz-primary" type="submit">Simpan Suku Cadang</button><button class="wz-btn wz-cancel-form" type="button" data-close-form="sparepart">Batal</button></div></form></div>@endif<div class="wz-data-section"><div class="wz-table-title"><div><h3>Suku Cadang yang Sudah Dicatat</h3><p>Daftar penggunaan suku cadang yang tersimpan pada Work Order.</p></div></div><div class="wz-table-wrap"><table class="wz-table"><thead><tr><th>Nama Sparepart</th><th>SKU</th><th>Jumlah</th><th>Harga Satuan</th><th>Subtotal</th><th>Status</th>@if($servis->status === 'dikerjakan')<th>Aksi</th>@endif</tr></thead><tbody>@forelse($servis->sparepartItems as $item)<tr><td><strong>{{ $item->sparepart?->nama_sparepart ?: 'Suku cadang' }}</strong></td><td>#{{ $item->id_sparepart }}</td><td>{{ $item->jumlah }}</td><td>Rp {{ number_format((float)$item->harga_satuan,0,',','.') }}</td><td>Rp {{ number_format((float)$item->subtotal,0,',','.') }}</td><td><span class="wz-status-pill is-draft">Draft</span></td>@if($servis->status === 'dikerjakan')<td><form method="post" action="{{ route($prefix.'.servis.sparepart.destroy',[$servis,$item]) }}">@csrf @method('DELETE')<button class="wz-table-action" type="submit">Hapus</button></form></td>@endif</tr>@empty<tr><td colspan="{{ $servis->status === 'dikerjakan' ? 7 : 6 }}"><div class="wz-empty wz-table-empty"><span class="wz-empty-icon">▦</span><strong>Belum ada suku cadang yang dicatat</strong><small>Tambahkan sparepart yang digunakan untuk pengerjaan kendaraan.</small><button class="wz-btn wz-primary wz-empty-action" type="button" data-toggle-form="sparepart">＋ Tambah Suku Cadang</button></div></td></tr>@endforelse</tbody></table></div><p class="wz-stock-note">Pencatatan suku cadang belum mengurangi stok fisik. Stok diperbarui pada finalisasi pemakaian yang sah.</p></div></section>
-@endif
-@if($stage === 'quality-control')
- <section class="wz-card"><div class="wz-card-head"><div><h2>Quality Control</h2><p>Checklist harus lengkap; item FAIL wajib memiliki catatan.</p></div><span class="wz-status">TAHAP 04</span></div>@if(!$servis->qualityControl)<form method="post" action="{{ route($prefix.'.servis.qc.start',$servis) }}">@csrf<button class="wz-btn wz-primary" type="submit">Mulai Quality Control</button></form>@else<form class="wz-form" method="post" action="{{ route($prefix.'.servis.qc.update',$servis) }}">@csrf @method('PUT')@foreach($servis->qualityControl->items as $item)<div class="wz-qc-item"><div><strong>{{ $item->label_snapshot }}</strong><small>{{ $item->is_mandatory ? 'Mandatory' : 'Optional' }}</small></div><select class="wz-select" name="items[{{ $item->id_service_quality_control_item }}][result]" required><option value="">Pilih hasil</option><option value="PASS" @selected($item->result === 'PASS')>PASS</option><option value="FAIL" @selected($item->result === 'FAIL')>FAIL</option><option value="N/A" @selected($item->result === 'N/A')>N/A</option></select><input class="wz-input" name="items[{{ $item->id_service_quality_control_item }}][note]" value="{{ $item->note }}" placeholder="Catatan FAIL"></div>@endforeach<label><span class="wz-label">Catatan QC</span><textarea class="wz-textarea" name="notes">{{ $servis->qualityControl->notes }}</textarea></label><div class="wz-actions"><button class="wz-btn wz-primary" type="submit">Simpan Hasil QC</button></div></form>@if($servis->qualityControl->status === 'failed')<div class="wz-alert wz-warning" style="margin-top:15px"><strong>PERLU PERBAIKAN ULANG</strong><br>Perbaiki pekerjaan lalu perbarui checklist QC.</div>@elseif($servis->qualityControl->status === 'passed')<div class="wz-actions" style="margin-top:15px"><a class="wz-btn wz-primary" href="{{ route($prefix.'.servis.finalisasi',$servis) }}">QC Lulus &amp; Lanjut ke Finalisasi →</a></div>@endif
- @endif
- </section>
-@endif
-@if($stage === 'finalisasi')
-<section class="wz-card"><div class="wz-card-head"><div><h2>Finalisasi &amp; Pembayaran</h2><p>Pastikan approval, QC, dan stok valid sebelum membuat transaksi.</p></div><span class="wz-status">TAHAP 05</span></div><div class="wz-facts"><div class="wz-fact"><small>Customer</small><strong>{{ $servis->pelanggan?->nama_lengkap ?: '—' }}</strong></div><div class="wz-fact"><small>Vehicle</small><strong>{{ $vehicleName }}</strong></div><div class="wz-fact"><small>Teknisi</small><strong>{{ $servis->petugas?->nama_lengkap ?: '—' }}</strong></div><div class="wz-fact"><small>Service Advisor</small><strong>{{ $servis->serviceAdvisor?->nama_lengkap ?: '—' }}</strong></div></div></section><section class="wz-card"><h2>Final Work Summary</h2><div class="wz-total"><span>Jasa</span><strong>Rp {{ number_format($laborTotal,0,',','.') }}</strong></div><div class="wz-total"><span>Sparepart</span><strong>Rp {{ number_format($partsTotal,0,',','.') }}</strong></div><div class="wz-total"><span>Total</span><strong>Rp {{ number_format($total,0,',','.') }}</strong></div><p class="wz-note" style="margin-top:15px">QC: {{ $servis->qualityControl?->status === 'passed' ? 'Passed' : 'Tidak ada / belum lulus' }} · Approval pending: {{ $servis->approvalRequests->where('status','pending')->count() }}</p></section>@if($servis->transaksi)<section class="wz-card"><h2>Servis Selesai</h2><p class="wz-note" style="margin:10px 0 15px">Transaksi {{ $servis->transaksi->kode_transaksi }} · Status pembayaran {{ $servis->transaksi->status }}</p><div class="wz-actions"><a class="wz-btn" href="{{ route($prefix.'.invoice.servis',$servis->transaksi) }}">Lihat Invoice</a>@if(in_array($servis->transaksi->status,['belum_bayar','dp'],true))<a class="wz-btn wz-primary" href="{{ route($prefix.'.payment.create',$servis->transaksi) }}">Catat Pembayaran</a>@endif</div></section>@elseif($servis->status === 'dikerjakan')<section class="wz-card"><p class="wz-note">Finalisasi membutuhkan approval selesai, QC lulus bila QC dibuat, dan stok valid.</p><form method="post" action="{{ route($prefix.'.servis.finalize',$servis) }}" style="margin-top:15px">@csrf<x-promo-selector :promos="$promos" scope="servis" :subtotal="$total"/><div class="wz-actions" style="margin-top:13px"><button class="wz-btn wz-primary" type="submit">Proses Finalisasi</button></div></form></section>@else<div class="wz-locked"><strong>FINALISASI TERKUNCI</strong>Work Order belum memenuhi seluruh prerequisite.</div>@endif
-@endif
-</main><aside class="wz-summary"><section class="wz-summary-card"><h3>Ringkasan Work Order</h3><div class="wz-summary-row"><span>Status</span><strong>{{ \App\Services\ServiceStatusPresenter::label($servis->status) }}</strong></div><div class="wz-summary-row"><span>Customer</span><strong>{{ $servis->pelanggan?->nama_lengkap ?: '—' }}</strong></div><div class="wz-summary-row"><span>Kendaraan</span><strong>{{ $vehicleName }}</strong></div><div class="wz-summary-row"><span>Preferensi Teknisi Pelanggan</span><strong>{{ $servis->bookingServis?->preferredPetugas?->nama_lengkap ?: 'Tidak ada preferensi' }}</strong></div><div class="wz-summary-row"><span>Teknisi Penanggung Jawab</span><strong>{{ $servis->petugas?->nama_lengkap ?: 'Belum ditugaskan' }}</strong></div><div class="wz-summary-row"><span>Service Advisor</span><strong>{{ $servis->serviceAdvisor?->nama_lengkap ?: 'Belum ditugaskan' }}</strong></div><div class="wz-estimate-breakdown"><div class="wz-estimate-row"><span>Estimasi Jasa</span><strong>Rp {{ number_format($laborTotal,0,',','.') }}</strong></div><div class="wz-estimate-row"><span>Estimasi Suku Cadang</span><strong>Rp {{ number_format($partsTotal,0,',','.') }}</strong></div><div class="wz-estimate-row"><span>Biaya Lain</span><strong>Rp {{ number_format($otherTotal,0,',','.') }}</strong></div></div><div class="wz-total"><span>{{ $estimate['is_final'] ? 'Total Final' : 'Estimasi Total' }}</span><strong>Rp {{ number_format($total,0,',','.') }}</strong></div></section><section class="wz-summary-card wz-next-action"><h3>Tindakan Berikutnya</h3>@if($currentStage === 'pengerjaan')<p class="wz-note">Pastikan seluruh pekerjaan, jasa, dan sparepart sudah tercatat sebelum melanjutkan ke pemeriksaan mutu.</p>@if($nextActionAllowed)<a class="wz-btn wz-primary" href="{{ route($prefix.'.servis.quality-control',$servis) }}">Lanjut ke Pemeriksaan Mutu →</a>@endif @elseif($nextAction['stage'] && $nextActionAllowed)<p class="wz-note">{{ $nextAction['description'] }}</p><a class="wz-btn wz-primary" href="{{ route($prefix.'.servis.'.$nextAction['stage'],$servis) }}">{{ $nextAction['label'] }} →</a>@elseif($pendingApprovals->isNotEmpty())<p class="wz-note">Menunggu keputusan pelanggan sebelum Work Order dapat masuk ke tahap Pengerjaan.</p>@elseif($nextAction['stage'])<p class="wz-note">{{ $nextAction['description'] }} Tahap berikutnya belum dapat dibuka karena masih ada persyaratan yang belum terpenuhi.</p>@else<p class="wz-note">{{ $nextAction['description'] }}</p>@endif</section></aside></div>
+
+@if($servis->status === 'dikerjakan' && in_array($stage, ['persetujuan', 'pengerjaan'], true))
+<!-- Modal Pilih Suku Cadang -->
+<div class="mwz-modal-backdrop" id="mwz-sparepart-modal" hidden aria-hidden="true" role="dialog" aria-modal="true" aria-labelledby="mwz-sp-modal-title">
+    <div class="mwz-modal-dialog" role="document">
+        <div class="mwz-modal-head">
+            <div>
+                <span class="mwz-modal-eyebrow">SUKU CADANG BENGKEL</span>
+                <h2 class="mwz-modal-title" id="mwz-sp-modal-title">Pilih Suku Cadang</h2>
+                <p class="mwz-modal-sub">Cari dan pilih suku cadang yang digunakan untuk Work Order {{ $servis->kode_servis }}.</p>
+            </div>
+            <button type="button" class="mwz-modal-close" data-mwz-modal-close aria-label="Tutup modal">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                    <path d="M18 6 6 18"/><path d="m6 6 12 12"/>
+                </svg>
+            </button>
+        </div>
+
+        <div class="mwz-modal-search">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/>
+            </svg>
+            <input type="search" id="mwz-sp-search" placeholder="Cari nama sparepart, merk, atau kode SKU..." autocomplete="off">
+        </div>
+
+        <form method="post" action="{{ route($prefix.'.servis.sparepart.store', $servis) }}" id="mwz-sp-submit-form" hidden>
+            @csrf
+            <input type="hidden" name="id_sparepart" id="mwz-sp-input-id">
+            <input type="hidden" name="jumlah" id="mwz-sp-input-qty">
+        </form>
+
+        <div class="mwz-modal-list" id="mwz-sp-list">
+            @forelse($spareparts as $part)
+                <div class="mwz-sp-row" data-sp-item data-sp-search="{{ strtolower(trim($part->nama_sparepart.' '.$part->merk.' '.$part->kode_sparepart)) }}">
+                    <div class="mwz-sp-info">
+                        <strong>{{ $part->nama_sparepart }}</strong>
+                        <small>
+                            <span>SKU: {{ $part->kode_sparepart }}</span>
+                            @if($part->merk)
+                                <i>·</i>
+                                <span>{{ $part->merk }}</span>
+                            @endif
+                            <i>·</i>
+                            <span>Stok: {{ $part->stok }} {{ $part->satuan ?: 'pcs' }}</span>
+                        </small>
+                    </div>
+                    <div class="mwz-sp-actions">
+                        <input type="number" class="mwz-sp-qty" value="1" min="1" max="{{ $part->stok }}" aria-label="Jumlah {{ $part->nama_sparepart }}">
+                        <button type="button" class="mwz-btn mwz-btn-primary mwz-sp-pick-btn" data-sp-pick="{{ $part->id_sparepart }}">Pilih</button>
+                    </div>
+                </div>
+            @empty
+                <div class="mwz-sp-empty">Belum ada data sparepart aktif yang memiliki stok.</div>
+            @endforelse
+            <div class="mwz-sp-empty" id="mwz-sp-no-match" hidden>Tidak ada sparepart yang cocok dengan pencarian Anda.</div>
+        </div>
+
+        <div class="mwz-modal-foot">
+            <button type="button" class="mwz-btn mwz-btn-ghost" data-mwz-modal-close>Tutup</button>
+        </div>
+    </div>
 </div>
+@endif
+@endsection
+
+@push('styles')
+<style>
+.admin-main-content:has(.mwz-page),
+.admin-content:has(.mwz-page),
+main:has(.mwz-page) {
+    padding-top: 10px !important;
+}
+
+.mwz-page {
+    --mwz-ink: #0f172a;
+    --mwz-muted: #64748b;
+    --mwz-subtle: #94a3b8;
+    --mwz-line: #e2e8f0;
+    --mwz-line-soft: #f1f5f9;
+    --mwz-surface: #ffffff;
+    --mwz-bg-soft: #f8fafc;
+    --mwz-accent: #ef233c;
+
+    max-width: 1480px;
+    margin: 0 auto;
+    padding: 0 clamp(14px, 2.5vw, 28px) 48px;
+    color: var(--mwz-ink);
+}
+
+.mwz-page * { box-sizing: border-box; }
+
+/* 1. HEADER */
+.mwz-header {
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 18px;
+    flex-wrap: wrap;
+    padding-bottom: 16px;
+    margin-bottom: 16px;
+    border-bottom: 1px solid var(--mwz-line);
+}
+
+.mwz-header-left {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    flex-wrap: wrap;
+}
+
+.mwz-thumb {
+    width: 84px;
+    height: 56px;
+    border-radius: 12px;
+    overflow: hidden;
+    border: 1px solid var(--mwz-line);
+    background: var(--mwz-bg-soft);
+    flex: 0 0 auto;
+}
+
+.mwz-thumb img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+}
+
+.mwz-eyebrow {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--mwz-muted);
+    margin-bottom: 4px;
+}
+
+.mwz-eyebrow-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 999px;
+    background: var(--mwz-accent);
+}
+
+.mwz-title {
+    margin: 0 0 4px;
+    font-size: clamp(1.4rem, 2.3vw, 1.85rem);
+    font-weight: 800;
+    letter-spacing: -0.03em;
+    line-height: 1.1;
+}
+
+.mwz-subtitle {
+    margin: 0;
+    font-size: 13px;
+    color: var(--mwz-muted);
+}
+
+.mwz-subtitle i {
+    font-style: normal;
+    margin: 0 5px;
+    color: var(--mwz-subtle);
+}
+
+.mwz-subtitle strong {
+    color: var(--mwz-ink);
+}
+
+/* 2. STEPPER */
+.mwz-stepper {
+    display: grid;
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+    gap: 8px;
+    padding: 14px 16px;
+    margin-bottom: 20px;
+    background: var(--mwz-surface);
+    border: 1px solid var(--mwz-line);
+    border-radius: 14px;
+}
+
+.mwz-step {
+    position: relative;
+    display: flex;
+    align-items: center;
+    gap: 9px;
+    font-size: 12.5px;
+    font-weight: 700;
+    color: var(--mwz-muted);
+}
+
+.mwz-step-no {
+    width: 28px;
+    height: 28px;
+    border-radius: 999px;
+    border: 1.5px solid #cbd5e1;
+    background: #ffffff;
+    color: var(--mwz-muted);
+    display: grid;
+    place-items: center;
+    font-size: 11px;
+    font-weight: 800;
+    flex: 0 0 auto;
+}
+
+.mwz-step a {
+    color: inherit;
+    text-decoration: none;
+}
+
+.mwz-step.is-done {
+    color: #059669;
+}
+
+.mwz-step.is-done .mwz-step-no {
+    background: #10b981;
+    border-color: #10b981;
+    color: #ffffff;
+}
+
+.mwz-step.is-current {
+    color: var(--mwz-ink);
+}
+
+.mwz-step.is-current .mwz-step-no {
+    background: var(--mwz-accent);
+    border-color: var(--mwz-accent);
+    color: #ffffff;
+    box-shadow: 0 0 0 3px rgba(239, 35, 60, 0.16);
+}
+
+.mwz-step.is-locked {
+    opacity: 0.55;
+}
+
+/* 3. LAYOUT & CARDS */
+.mwz-layout {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 320px;
+    gap: 20px;
+    align-items: flex-start;
+}
+
+.mwz-main,
+.mwz-sidebar {
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+}
+
+.mwz-sidebar {
+    position: sticky;
+    top: 20px;
+}
+
+.mwz-card {
+    background: var(--mwz-surface);
+    border: 1px solid var(--mwz-line);
+    border-radius: 16px;
+    padding: 20px 22px;
+}
+
+.mwz-card-head {
+    margin-bottom: 16px;
+    padding-bottom: 14px;
+    border-bottom: 1px solid var(--mwz-line-soft);
+}
+
+.mwz-section-kicker {
+    display: block;
+    font-size: 10.5px;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--mwz-accent);
+    margin-bottom: 4px;
+}
+
+.mwz-card-head h2 {
+    margin: 0 0 4px;
+    font-size: 17px;
+    font-weight: 800;
+    letter-spacing: -0.02em;
+}
+
+.mwz-card-head p {
+    margin: 0;
+    font-size: 13px;
+    color: var(--mwz-muted);
+    line-height: 1.5;
+}
+
+/* 4. INFO BOXES & TABLES */
+.mwz-info-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 12px;
+}
+
+.mwz-info-box {
+    padding: 12px 14px;
+    border-radius: 12px;
+    background: var(--mwz-bg-soft);
+    border: 1px solid var(--mwz-line-soft);
+}
+
+.mwz-info-box small {
+    display: block;
+    font-size: 10.5px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--mwz-muted);
+    margin-bottom: 4px;
+}
+
+.mwz-info-box strong {
+    display: block;
+    font-size: 13.5px;
+    color: var(--mwz-ink);
+    line-height: 1.45;
+}
+
+.mwz-table-wrap {
+    overflow-x: auto;
+    border: 1px solid var(--mwz-line);
+    border-radius: 12px;
+}
+
+.mwz-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13px;
+    text-align: left;
+}
+
+.mwz-table th {
+    padding: 11px 14px;
+    background: var(--mwz-bg-soft);
+    border-bottom: 1px solid var(--mwz-line);
+    font-size: 10.5px;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--mwz-muted);
+}
+
+.mwz-table td {
+    padding: 12px 14px;
+    border-bottom: 1px solid var(--mwz-line-soft);
+    vertical-align: middle;
+}
+
+.mwz-table tbody tr:last-child td {
+    border-bottom: 0;
+}
+
+.mwz-muted { color: var(--mwz-muted); }
+.mwz-mono { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: 12px; color: var(--mwz-muted); }
+.mwz-empty-cell { text-align: center; padding: 24px !important; color: var(--mwz-muted); }
+
+/* 5. FORMS, INPUTS & SPAREPART PICKER */
+.mwz-form {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+}
+
+.mwz-form-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 12px;
+}
+
+.mwz-full { grid-column: 1 / -1; }
+
+.mwz-field label {
+    display: block;
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--mwz-ink);
+    margin-bottom: 6px;
+}
+
+.mwz-field input,
+.mwz-field select,
+.mwz-field textarea {
+    width: 100%;
+    height: 40px;
+    padding: 0 12px;
+    border: 1px solid var(--mwz-line);
+    border-radius: 10px;
+    background: var(--mwz-bg-soft);
+    color: var(--mwz-ink);
+    font: inherit;
+    font-size: 13px;
+    outline: none;
+}
+
+.mwz-field textarea {
+    height: auto;
+    padding: 10px 12px;
+    resize: vertical;
+}
+
+.mwz-field input:focus,
+.mwz-field select:focus,
+.mwz-field textarea:focus {
+    background: #ffffff;
+    border-color: var(--mwz-ink);
+}
+
+.mwz-part-form-row {
+    display: flex;
+    align-items: flex-end;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+.mwz-search-results {
+    margin-top: 10px;
+    display: grid;
+    gap: 8px;
+}
+
+.mwz-search-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 10px 14px;
+    border-radius: 10px;
+    background: var(--mwz-bg-soft);
+    border: 1px solid var(--mwz-line);
+}
+
+.mwz-search-item strong {
+    display: block;
+    font-size: 13px;
+}
+
+.mwz-search-item small {
+    color: var(--mwz-muted);
+    font-size: 11.5px;
+}
+
+/* 6. APPROVAL CARDS & DRAWER */
+.mwz-approval-list {
+    display: grid;
+    gap: 10px;
+    margin-bottom: 14px;
+}
+
+.mwz-approval-card {
+    padding: 14px 16px;
+    border-radius: 12px;
+    background: var(--mwz-bg-soft);
+    border: 1px solid var(--mwz-line);
+}
+
+.mwz-approval-top {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    flex-wrap: wrap;
+    margin-bottom: 6px;
+}
+
+.mwz-approval-reason {
+    margin: 0 0 10px;
+    font-size: 13px;
+    color: #334155;
+    line-height: 1.5;
+}
+
+.mwz-approval-items {
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
+}
+
+.mwz-item-chip {
+    padding: 4px 10px;
+    border-radius: 7px;
+    background: #ffffff;
+    border: 1px solid var(--mwz-line);
+    font-size: 12px;
+    font-weight: 600;
+}
+
+.mwz-cust-note {
+    display: block;
+    margin-top: 8px;
+    color: var(--mwz-muted);
+    font-size: 12px;
+}
+
+.mwz-report-drawer summary {
+    list-style: none;
+}
+
+.mwz-report-drawer summary::-webkit-details-marker {
+    display: none;
+}
+
+.mwz-hint {
+    color: var(--mwz-muted);
+    font-size: 12px;
+}
+
+/* 7. BADGES, BUTTONS, ALERTS */
+.mwz-pill {
+    display: inline-flex;
+    align-items: center;
+    padding: 3px 9px;
+    border-radius: 999px;
+    font-size: 11px;
+    font-weight: 700;
+    white-space: nowrap;
+}
+
+.mwz-pill.is-emerald { background: #ecfdf5; color: #047857; border: 1px solid #a7f3d0; }
+.mwz-pill.is-blue { background: #eff6ff; color: #1d4ed8; border: 1px solid #bfdbfe; }
+.mwz-pill.is-amber { background: #fffbeb; color: #b45309; border: 1px solid #fde68a; }
+.mwz-pill.is-crimson { background: #fef2f2; color: #b91c1c; border: 1px solid #fecaca; }
+
+.mwz-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 7px;
+    height: 40px;
+    padding: 0 16px;
+    border-radius: 10px;
+    font: inherit;
+    font-size: 13px;
+    font-weight: 600;
+    text-decoration: none;
+    cursor: pointer;
+    border: 1px solid transparent;
+    white-space: nowrap;
+    transition: background 0.15s ease, border-color 0.15s ease, color 0.15s ease;
+}
+
+.mwz-btn-primary { background: var(--mwz-ink); color: #ffffff; }
+.mwz-btn-primary:hover { background: var(--mwz-accent); }
+.mwz-btn-dark { background: #334155; color: #ffffff; }
+.mwz-btn-ghost { background: #ffffff; border-color: var(--mwz-line); color: var(--mwz-ink); }
+.mwz-btn-ghost:hover { background: var(--mwz-bg-soft); border-color: #cbd5e1; }
+
+.mwz-del-btn {
+    padding: 4px 10px;
+    border-radius: 7px;
+    border: 1px solid var(--mwz-line);
+    background: #ffffff;
+    color: var(--mwz-muted);
+    font-size: 11.5px;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.mwz-del-btn:hover {
+    border-color: #fecaca;
+    background: #fef2f2;
+    color: var(--mwz-accent);
+}
+
+.mwz-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+.mwz-alert,
+.mwz-banner {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 13px 16px;
+    margin-bottom: 16px;
+    border-radius: 12px;
+    font-size: 13px;
+    font-weight: 600;
+}
+
+.mwz-alert.is-success { background: #ecfdf5; border: 1px solid #a7f3d0; color: #065f46; }
+.mwz-alert.is-warning,
+.mwz-banner.is-amber { background: #fffbeb; border: 1px solid #fde68a; color: #92400e; }
+.mwz-alert.is-error { background: #fef2f2; border: 1px solid #fecaca; color: #991b1b; }
+
+.mwz-banner p { margin: 2px 0 0; font-weight: 500; font-size: 12.5px; }
+.mwz-banner-dot { width: 8px; height: 8px; border-radius: 999px; background: #f59e0b; flex: 0 0 auto; }
+
+/* 8. QC & FINALISASI */
+.mwz-qc-head {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 16px;
+    flex-wrap: wrap;
+}
+
+.mwz-qc-status-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 7px 14px;
+    border-radius: 999px;
+    font-size: 12px;
+    font-weight: 700;
+    border: 1px solid var(--mwz-line);
+    background: var(--mwz-bg-soft);
+    color: var(--mwz-text);
+}
+
+.mwz-qc-status-pill.is-passed { background: #ecfdf5; border-color: #a7f3d0; color: #065f46; }
+.mwz-qc-status-pill.is-failed { background: #fef2f2; border-color: #fecaca; color: #991b1b; }
+.mwz-qc-status-pill.is-progress { background: #eff6ff; border-color: #bfdbfe; color: #1e40af; }
+
+.mwz-qc-status-dot { width: 8px; height: 8px; border-radius: 999px; background: currentColor; }
+
+.mwz-banner.is-emerald { background: #ecfdf5; border: 1px solid #a7f3d0; color: #065f46; }
+.mwz-banner.is-rose { background: #fef2f2; border: 1px solid #fecaca; color: #991b1b; }
+.mwz-banner-dot.is-emerald { background: #10b981; }
+.mwz-banner-dot.is-rose { background: #ef4444; }
+
+.mwz-qc-empty {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    flex-wrap: wrap;
+    padding: 18px 20px;
+    border-radius: 12px;
+    background: var(--mwz-bg-soft);
+    border: 1px dashed var(--mwz-line);
+}
+
+.mwz-qc-empty strong { display: block; font-size: 14px; margin-bottom: 4px; }
+.mwz-qc-empty p { margin: 0; font-size: 12.5px; color: var(--mwz-muted); }
+
+.mwz-qc-progress-strip {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    flex-wrap: wrap;
+    padding: 12px 16px;
+    margin-bottom: 18px;
+    border-radius: 12px;
+    background: var(--mwz-bg-soft);
+    border: 1px solid var(--mwz-line-soft);
+}
+
+.mwz-qc-progress-meta { display: flex; align-items: center; gap: 10px; }
+.mwz-qc-progress-label { font-size: 12px; color: var(--mwz-muted); font-weight: 600; }
+.mwz-qc-progress-meta strong { font-size: 13px; color: var(--mwz-text); }
+
+.mwz-qc-progress-pills { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.mwz-qc-mini-stat {
+    padding: 4px 10px;
+    border-radius: 999px;
+    font-size: 12px;
+    font-weight: 600;
+    background: #ffffff;
+    border: 1px solid var(--mwz-line-soft);
+}
+.mwz-qc-mini-stat.is-pass strong { color: #059669; }
+.mwz-qc-mini-stat.is-fail strong { color: #dc2626; }
+
+.mwz-qc-section {
+    padding: 18px;
+    border-radius: 14px;
+    border: 1px solid var(--mwz-line);
+    background: #ffffff;
+    display: grid;
+    gap: 14px;
+}
+
+.mwz-qc-section-head {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 12px;
+    flex-wrap: wrap;
+    padding-bottom: 12px;
+    border-bottom: 1px solid var(--mwz-line-soft);
+}
+
+.mwz-qc-section-badge {
+    display: inline-block;
+    padding: 3px 9px;
+    border-radius: 999px;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.03em;
+    text-transform: uppercase;
+    background: #f1f5f9;
+    color: #334155;
+    margin-bottom: 6px;
+}
+
+.mwz-qc-section-badge.is-wo {
+    background: #fef2f2;
+    color: #b91c1c;
+}
+
+.mwz-qc-section-head h3 { margin: 0 0 3px; font-size: 15px; font-weight: 700; color: var(--mwz-text); }
+.mwz-qc-section-head p { margin: 0; font-size: 12.5px; color: var(--mwz-muted); }
+
+.mwz-qc-section-count {
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--mwz-muted);
+    background: var(--mwz-bg-soft);
+    border: 1px solid var(--mwz-line-soft);
+    padding: 5px 11px;
+    border-radius: 999px;
+}
+
+.mwz-qc-wo-ref {
+    padding: 14px;
+    border-radius: 12px;
+    background: var(--mwz-bg-soft);
+    border: 1px solid var(--mwz-line-soft);
+}
+
+.mwz-qc-wo-ref-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 14px;
+}
+
+.mwz-qc-wo-box {
+    background: #ffffff;
+    border: 1px solid var(--mwz-line-soft);
+    border-radius: 10px;
+    padding: 12px 14px;
+}
+
+.mwz-qc-wo-kicker {
+    display: block;
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: var(--mwz-muted);
+    margin-bottom: 6px;
+}
+
+.mwz-qc-wo-box strong { display: block; font-size: 13.5px; margin-bottom: 4px; }
+.mwz-qc-wo-box p { margin: 0; font-size: 12.5px; color: var(--mwz-muted); line-height: 1.45; }
+
+.mwz-qc-wo-diag {
+    margin-top: 8px;
+    padding-top: 8px;
+    border-top: 1px dashed var(--mwz-line);
+    font-size: 12px;
+    color: var(--mwz-text);
+}
+.mwz-qc-wo-diag span { font-weight: 700; color: var(--mwz-muted); }
+
+.mwz-qc-wo-list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: grid;
+    gap: 6px;
+}
+
+.mwz-qc-wo-list li {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 10px;
+    font-size: 12.5px;
+    padding-bottom: 5px;
+    border-bottom: 1px solid var(--mwz-line-soft);
+}
+.mwz-qc-wo-list li:last-child { border-bottom: 0; padding-bottom: 0; }
+.mwz-qc-wo-list li small { color: var(--mwz-muted); font-size: 11.5px; flex-shrink: 0; }
+.mwz-qc-wo-list li.is-muted { color: var(--mwz-muted); }
+
+.mwz-qc-grid {
+    display: grid;
+    gap: 10px;
+}
+
+.mwz-qc-item {
+    padding: 14px 16px;
+    border-radius: 12px;
+    background: var(--mwz-bg-soft);
+    border: 1px solid var(--mwz-line-soft);
+    transition: border-color 0.16s ease, background-color 0.16s ease;
+}
+
+.mwz-qc-item.is-pass {
+    background: #f0fdf4;
+    border-color: #bbf7d0;
+}
+
+.mwz-qc-item.is-fail {
+    background: #fef2f2;
+    border-color: #fecaca;
+}
+
+.mwz-qc-item.is-na {
+    background: #f8fafc;
+    border-color: #cbd5e1;
+}
+
+.mwz-qc-item-top {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 14px;
+    flex-wrap: wrap;
+}
+
+.mwz-qc-item-info { flex: 1 1 280px; min-width: 0; }
+.mwz-qc-item-title-row { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-bottom: 2px; }
+.mwz-qc-item-info strong { font-size: 13.5px; color: var(--mwz-text); }
+.mwz-qc-item-info small { display: block; color: var(--mwz-muted); font-size: 12px; }
+
+.mwz-qc-req-tag {
+    font-size: 10.5px;
+    font-weight: 700;
+    padding: 2px 7px;
+    border-radius: 999px;
+    background: #ffffff;
+    border: 1px solid var(--mwz-line);
+    color: var(--mwz-muted);
+}
+
+.mwz-qc-toggle-group {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    flex-wrap: wrap;
+}
+
+.mwz-qc-pill {
+    position: relative;
+    cursor: pointer;
+    user-select: none;
+}
+
+.mwz-qc-pill input {
+    position: absolute;
+    opacity: 0;
+    pointer-events: none;
+}
+
+.mwz-qc-pill span {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 7px 12px;
+    border-radius: 8px;
+    border: 1px solid var(--mwz-line);
+    background: #ffffff;
+    font-size: 12.5px;
+    font-weight: 600;
+    color: var(--mwz-text);
+    transition: all 0.15s ease;
+}
+
+.mwz-qc-pill.is-pass input:checked + span {
+    background: #059669;
+    border-color: #059669;
+    color: #ffffff;
+}
+
+.mwz-qc-pill.is-fail input:checked + span {
+    background: #dc2626;
+    border-color: #dc2626;
+    color: #ffffff;
+}
+
+.mwz-qc-pill.is-na input:checked + span {
+    background: #475569;
+    border-color: #475569;
+    color: #ffffff;
+}
+
+.mwz-qc-pill input:disabled + span {
+    opacity: 0.78;
+    cursor: default;
+}
+
+.mwz-qc-note-wrap {
+    margin-top: 12px;
+    padding-top: 12px;
+    border-top: 1px dashed #fca5a5;
+}
+
+.mwz-qc-note-wrap[hidden] {
+    display: none !important;
+}
+
+.mwz-qc-note-label {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    flex-wrap: wrap;
+    font-size: 12px;
+    font-weight: 700;
+    color: #991b1b;
+    margin-bottom: 6px;
+}
+
+.mwz-qc-required-star {
+    font-size: 11px;
+    font-weight: 600;
+    color: #dc2626;
+}
+
+.mwz-qc-note-input {
+    width: 100%;
+    padding: 9px 12px;
+    border: 1px solid #fca5a5;
+    border-radius: 9px;
+    background: #ffffff;
+    font: inherit;
+    font-size: 12.5px;
+    color: var(--mwz-text);
+    resize: vertical;
+}
+
+.mwz-qc-note-input:focus {
+    outline: none;
+    border-color: #dc2626;
+    box-shadow: 0 0 0 3px rgba(220, 38, 38, 0.12);
+}
+
+.mwz-qc-client-alert {
+    padding: 11px 14px;
+    border-radius: 10px;
+    background: #fef2f2;
+    border: 1px solid #fecaca;
+    color: #991b1b;
+    font-size: 12.5px;
+    font-weight: 600;
+}
+
+.mwz-qc-client-alert[hidden] {
+    display: none !important;
+}
+
+.mwz-final-totals {
+    padding: 14px 16px;
+    border-radius: 12px;
+    background: var(--mwz-bg-soft);
+    border: 1px solid var(--mwz-line);
+    display: grid;
+    gap: 8px;
+}
+
+.mwz-total-row {
+    display: flex;
+    justify-content: space-between;
+    font-size: 13px;
+    color: var(--mwz-muted);
+}
+
+.mwz-total-row strong { color: var(--mwz-ink); }
+.mwz-total-row.is-grand {
+    padding-top: 8px;
+    border-top: 1px solid var(--mwz-line);
+    font-size: 15px;
+    font-weight: 800;
+    color: var(--mwz-ink);
+}
+
+.mwz-total-row.is-grand strong { color: var(--mwz-accent); font-size: 18px; }
+
+/* 9. SIDEBAR */
+.mwz-side-title {
+    margin: 0 0 12px;
+    font-size: 14.5px;
+    font-weight: 800;
+}
+
+.mwz-side-dl {
+    margin: 0;
+    display: grid;
+    gap: 10px;
+}
+
+.mwz-side-dl div {
+    display: flex;
+    justify-content: space-between;
+    gap: 10px;
+    font-size: 12.5px;
+    padding-bottom: 8px;
+    border-bottom: 1px solid var(--mwz-line-soft);
+}
+
+.mwz-side-dl div:last-child { border-bottom: 0; padding-bottom: 0; }
+.mwz-side-dl dt { color: var(--mwz-muted); }
+.mwz-side-dl dd { margin: 0; font-weight: 700; text-align: right; }
+.mwz-side-total dd { color: var(--mwz-accent); font-size: 15px; }
+.mwz-side-note { margin: 0 0 12px; font-size: 12.5px; color: var(--mwz-muted); line-height: 1.5; }
+
+@media (max-width: 1024px) {
+    .mwz-layout { grid-template-columns: 1fr; }
+    .mwz-sidebar { position: static; }
+    .mwz-stepper { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+
+@media (max-width: 640px) {
+    .mwz-info-grid,
+    .mwz-form-grid,
+    .mwz-qc-wo-ref-grid { grid-template-columns: 1fr; }
+}
+
+.mwz-card-head-row {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 14px;
+    flex-wrap: wrap;
+}
+
+/* 10. MODAL SPAREPART */
+.mwz-modal-backdrop[hidden] {
+    display: none !important;
+}
+
+.mwz-modal-backdrop {
+    position: fixed;
+    inset: 0;
+    z-index: 999;
+    background: rgba(15, 23, 42, 0.58);
+    backdrop-filter: blur(5px);
+    -webkit-backdrop-filter: blur(5px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 16px;
+}
+
+.mwz-modal-dialog {
+    width: 100%;
+    max-width: 660px;
+    max-height: calc(100dvh - 36px);
+    display: flex;
+    flex-direction: column;
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 18px;
+    box-shadow: 0 24px 60px rgba(15, 23, 42, 0.25);
+    overflow: hidden;
+    color: #0f172a;
+}
+
+.mwz-modal-head {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 14px;
+    padding: 18px 22px;
+    border-bottom: 1px solid #e2e8f0;
+    background: #f8fafc;
+}
+
+.mwz-modal-eyebrow {
+    display: inline-block;
+    font-size: 10.5px;
+    font-weight: 800;
+    letter-spacing: 0.12em;
+    color: #ef233c;
+    margin-bottom: 4px;
+}
+
+.mwz-modal-title {
+    margin: 0 0 3px;
+    font-size: 18px;
+    font-weight: 800;
+    letter-spacing: -0.02em;
+}
+
+.mwz-modal-sub {
+    margin: 0;
+    font-size: 12.5px;
+    color: #64748b;
+}
+
+.mwz-modal-close {
+    width: 34px;
+    height: 34px;
+    border-radius: 9px;
+    border: 1px solid #e2e8f0;
+    background: #ffffff;
+    color: #64748b;
+    display: grid;
+    place-items: center;
+    cursor: pointer;
+    padding: 0;
+    flex: 0 0 auto;
+}
+
+.mwz-modal-close:hover {
+    color: #0f172a;
+    border-color: #cbd5e1;
+}
+
+.mwz-modal-search {
+    position: relative;
+    padding: 14px 22px;
+    border-bottom: 1px solid #f1f5f9;
+    background: #ffffff;
+}
+
+.mwz-modal-search svg {
+    position: absolute;
+    left: 34px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #94a3b8;
+    pointer-events: none;
+}
+
+.mwz-modal-search input {
+    width: 100%;
+    height: 42px;
+    padding: 0 14px 0 38px;
+    border: 1px solid #cbd5e1;
+    border-radius: 10px;
+    background: #f8fafc;
+    color: #0f172a;
+    font: inherit;
+    font-size: 13.5px;
+    outline: none;
+}
+
+.mwz-modal-search input:focus {
+    background: #ffffff;
+    border-color: #0f172a;
+}
+
+.mwz-modal-list {
+    padding: 12px 22px;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    flex: 1 1 auto;
+}
+
+.mwz-sp-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 12px 14px;
+    border-radius: 12px;
+    border: 1px solid #e2e8f0;
+    background: #f8fafc;
+    transition: border-color 0.15s ease, background 0.15s ease;
+}
+
+.mwz-sp-row:hover {
+    background: #ffffff;
+    border-color: #cbd5e1;
+}
+
+.mwz-sp-row[hidden] {
+    display: none !important;
+}
+
+.mwz-sp-info {
+    min-width: 0;
+}
+
+.mwz-sp-info strong {
+    display: block;
+    font-size: 13.5px;
+    color: #0f172a;
+    margin-bottom: 2px;
+}
+
+.mwz-sp-info small {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    flex-wrap: wrap;
+    font-size: 11.5px;
+    color: #64748b;
+}
+
+.mwz-sp-info i {
+    font-style: normal;
+    color: #94a3b8;
+}
+
+.mwz-sp-actions {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-shrink: 0;
+}
+
+.mwz-sp-qty {
+    width: 64px;
+    height: 34px;
+    padding: 0 8px;
+    border: 1px solid #cbd5e1;
+    border-radius: 8px;
+    background: #ffffff;
+    text-align: center;
+    font: inherit;
+    font-size: 13px;
+    font-weight: 700;
+    color: #0f172a;
+}
+
+.mwz-sp-pick-btn {
+    height: 34px !important;
+    padding: 0 14px !important;
+    font-size: 12px !important;
+    background: #0f172a !important;
+    color: #ffffff !important;
+}
+
+.mwz-sp-pick-btn:hover {
+    background: #ef233c !important;
+}
+
+.mwz-sp-empty {
+    padding: 32px 16px;
+    text-align: center;
+    font-size: 13px;
+    color: #64748b;
+}
+
+.mwz-modal-foot {
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+    padding: 12px 22px;
+    border-top: 1px solid #e2e8f0;
+    background: #f8fafc;
+}
+</style>
+@endpush
+
+@push('scripts')
 <script>
 (() => {
-    const terjemahan = {
-        'Service Work Order': 'Perintah Kerja Servis',
-        'Work Order': 'Perintah Kerja',
-        'Persetujuan Customer': 'Persetujuan Pelanggan',
-        'Customer Complaint': 'Keluhan Pelanggan',
-        'Approval Requests': 'Permintaan Persetujuan',
-        'Approval pending': 'Persetujuan yang menunggu',
-        'Approved': 'Disetujui',
-        'rejected': 'ditolak',
-        'Customer': 'Pelanggan',
-        'Vehicle': 'Kendaraan',
-        'Service Advisor': 'Penasihat Servis',
-        'Quality Control': 'Pemeriksaan Mutu',
-        'Work In Progress': 'Pekerjaan Berjalan',
-        'Approved work': 'Pekerjaan yang disetujui',
-        'Spare Parts': 'Suku Cadang',
-        'Final Work Summary': 'Ringkasan Pekerjaan Akhir',
-        'Next Action': 'Tindakan Berikutnya',
-        'Spare Part': 'Suku Cadang',
-        'Sparepart': 'Suku Cadang',
-        'Part': 'Suku Cadang',
-        'Qty': 'Jumlah',
-        'Subtotal': 'Jumlah Subtotal',
-        'Passed': 'Lulus',
-        'PASS': 'LULUS',
-        'FAIL': 'GAGAL',
-        'N/A': 'TIDAK BERLAKU',
-        'pending': 'menunggu',
-        'Mandatory': 'Wajib',
-        'Optional': 'Pilihan',
-        'Step': 'Tahap',
-        'resolved': 'diselesaikan',
-        'Geen aanvullende bevindingen geregistreerd.': 'Belum ada temuan tambahan.',
-        'Tidak Ada Pekerjaan Tambahan yang Memerlukan Persetujuan': 'Belum ada pekerjaan tambahan yang memerlukan persetujuan',
+    const modal = document.getElementById('mwz-sparepart-modal');
+    if (!modal) return;
+
+    const searchInput = document.getElementById('mwz-sp-search');
+    const items = [...modal.querySelectorAll('[data-sp-item]')];
+    const noMatch = document.getElementById('mwz-sp-no-match');
+    const submitForm = document.getElementById('mwz-sp-submit-form');
+    const inputId = document.getElementById('mwz-sp-input-id');
+    const inputQty = document.getElementById('mwz-sp-input-qty');
+
+    const closeModal = () => {
+        modal.hidden = true;
+        modal.setAttribute('aria-hidden', 'true');
+        document.body.style.overflow = '';
     };
-    const walker = document.createTreeWalker(document.querySelector('.wz-page'), NodeFilter.SHOW_TEXT);
-    const nodes = [];
-    while (walker.nextNode()) nodes.push(walker.currentNode);
-    nodes.forEach((node) => {
-        let text = node.nodeValue;
-        Object.entries(terjemahan).forEach(([asing, indonesia]) => {
-            text = text.split(asing).join(indonesia);
-        });
-        node.nodeValue = text;
+
+    const openModal = () => {
+        if (searchInput) searchInput.value = '';
+        items.forEach(el => { el.hidden = false; });
+        if (noMatch) noMatch.hidden = items.length > 0;
+        modal.hidden = false;
+        modal.setAttribute('aria-hidden', 'false');
+        document.body.style.overflow = 'hidden';
+        setTimeout(() => searchInput?.focus(), 50);
+    };
+
+    document.querySelectorAll('[data-mwz-open-sparepart]').forEach(btn => {
+        btn.addEventListener('click', openModal);
     });
-    document.querySelectorAll('.wz-step').forEach((step) => {
-        const link = step.querySelector('a');
-        if (!link) return;
-        step.classList.add('is-clickable');
-        step.addEventListener('click', (event) => {
-            if (!event.target.closest('a')) window.location.assign(link.href);
+
+    modal.querySelectorAll('[data-mwz-modal-close]').forEach(btn => {
+        btn.addEventListener('click', closeModal);
+    });
+
+    modal.addEventListener('click', e => {
+        if (e.target === modal) closeModal();
+    });
+
+    document.addEventListener('keydown', e => {
+        if (e.key === 'Escape' && !modal.hidden) closeModal();
+    });
+
+    if (searchInput) {
+        searchInput.addEventListener('input', () => {
+            const q = searchInput.value.trim().toLowerCase();
+            let visible = 0;
+            items.forEach(el => {
+                const hay = el.dataset.spSearch || '';
+                const match = q === '' || hay.includes(q);
+                el.hidden = !match;
+                if (match) visible++;
+            });
+            if (noMatch) noMatch.hidden = visible > 0;
+        });
+    }
+
+    modal.querySelectorAll('[data-sp-pick]').forEach(btn => {
+        btn.addEventListener('click', () => {
+            const row = btn.closest('[data-sp-item]');
+            const qtyEl = row?.querySelector('.mwz-sp-qty');
+            const qty = Math.max(1, parseInt(qtyEl?.value || '1', 10));
+            if (inputId) inputId.value = btn.dataset.spPick || '';
+            if (inputQty) inputQty.value = String(qty);
+            btn.disabled = true;
+            btn.textContent = 'Menyimpan...';
+            submitForm?.submit();
         });
     });
 })();
-</script>
-<script>
+
 (() => {
-    const panels = [...document.querySelectorAll('[data-form-panel]')];
-    if (!panels.length) return;
-    let active = null;
-    const hasValue = (panel) => [...panel.querySelectorAll('input, select, textarea')].some((field) => field.value !== '');
-    const isDirty = (panel) => panel ? [...panel.querySelectorAll('input, select, textarea')].some((field) => field.value !== (field.defaultValue || '') || (field.tagName === 'SELECT' && [...field.options].some((option) => option.selected !== option.defaultSelected))) : false;
-    const setState = (name, open, focus = false) => {
-        panels.forEach((panel) => {
-            const button = document.querySelector(`[data-toggle-form="${panel.dataset.formPanel}"]`);
-            const isOpen = open && panel.dataset.formPanel === name;
-            panel.classList.toggle('is-open', isOpen);
-            panel.setAttribute('aria-hidden', String(!isOpen));
-            panel.inert = !isOpen;
-            if (button) {
-                button.classList.toggle('is-active', isOpen);
-                button.setAttribute('aria-expanded', String(isOpen));
-                button.textContent = isOpen ? 'Tutup Form' : (panel.dataset.formPanel === 'jasa' ? '＋ Tambah Jasa' : '＋ Tambah Suku Cadang');
+    const qcForm = document.querySelector('[data-qc-form]');
+    if (!qcForm) return;
+
+    const items = Array.from(qcForm.querySelectorAll('[data-qc-item]'));
+    const countEl = document.querySelector('[data-qc-count]');
+    const passEl = document.querySelector('[data-qc-pass-count]');
+    const failEl = document.querySelector('[data-qc-fail-count]');
+    const errorBox = qcForm.querySelector('[data-qc-client-error]');
+
+    const syncState = () => {
+        let checked = 0;
+        let pass = 0;
+        let fail = 0;
+
+        items.forEach(item => {
+            const selected = item.querySelector('input[type="radio"]:checked');
+            const noteWrap = item.querySelector('[data-qc-note-wrap]');
+            const noteInput = item.querySelector('[data-qc-note]');
+            const val = selected ? selected.value : '';
+
+            item.classList.remove('is-pass', 'is-fail', 'is-na');
+            if (val === 'PASS') {
+                item.classList.add('is-pass');
+                checked++;
+                pass++;
+            } else if (val === 'FAIL') {
+                item.classList.add('is-fail');
+                checked++;
+                fail++;
+            } else if (val === 'N/A') {
+                item.classList.add('is-na');
+                checked++;
+            }
+
+            if (noteWrap && noteInput) {
+                const isFail = val === 'FAIL';
+                noteWrap.hidden = !isFail;
+                noteWrap.classList.toggle('is-visible', isFail);
+                noteInput.required = isFail;
             }
         });
-        active = open ? name : null;
-        if (focus) {
-            window.setTimeout(() => {
-                const target = document.querySelector(`[data-form-panel="${name}"] input, [data-form-panel="${name}"] select`);
-                target?.focus();
-            }, 280);
-        }
+
+        if (countEl) countEl.textContent = `${checked} / ${items.length} Item Diperiksa`;
+        if (passEl) passEl.textContent = String(pass);
+        if (failEl) failEl.textContent = String(fail);
     };
-    const requestSwitch = (name) => {
-        if (active && active !== name && isDirty(document.querySelector(`[data-form-panel="${active}"]`))) {
-            if (!window.confirm('Form yang sedang diisi belum disimpan. Tutup dan buka form lain?')) return;
-        }
-        setState(name, true, true);
-    };
-    document.querySelectorAll('[data-toggle-form]').forEach((button) => button.addEventListener('click', () => {
-        const name = button.dataset.toggleForm;
-        if (active === name) setState(name, false);
-        else requestSwitch(name);
-    }));
-    document.querySelectorAll('[data-close-form]').forEach((button) => button.addEventListener('click', () => setState(button.dataset.closeForm, false)));
-    const initialName = document.querySelector('#wz-initial-form')?.dataset.form || '';
-    const initial = panels.find((panel) => panel.dataset.formPanel === initialName) || panels.find((panel) => hasValue(panel));
-    setState(initial?.dataset.formPanel || null, Boolean(initial), Boolean(initial));
-})();
-</script>
-<script>
-(() => {
-    let pickers = [...document.querySelectorAll('[data-sparepart-picker]')];
-    const pengerjaanSelect = document.querySelector('select[name="id_sparepart"]');
-    if (!pickers.length && pengerjaanSelect) {
-        const picker = document.createElement('div');
-        picker.className = 'wz-sparepart-picker';
-        picker.dataset.sparepartPicker = '';
-        picker.dataset.sparepartField = 'id_sparepart';
-        picker.dataset.searchUrl = window.location.pathname.replace(/\/(pemeriksaan|persetujuan|pengerjaan|quality-control|finalisasi)\/?$/, '/spareparts/search');
-        picker.innerHTML = '<input class="wz-input" type="search" data-sparepart-search placeholder="Cari nama / SKU sparepart..." autocomplete="off"><div class="wz-list" data-sparepart-results><div class="wz-empty">Ketik minimal 2 karakter untuk mencari.</div></div>';
-        pengerjaanSelect.parentElement.insertBefore(picker, pengerjaanSelect);
-        pickers = [picker];
-    }
-    if (!pickers.length) return;
-    const money = value => new Intl.NumberFormat('id-ID').format(value);
-    const esc = value => String(value ?? '').replace(/[&<>"']/g, char => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;' })[char]);
-    const render = (picker, items) => {
-        const results = picker.querySelector('[data-sparepart-results]');
-        const fieldName = picker.dataset.sparepartField || 'id_sparepart';
-        const select = document.querySelector(`select[name="${fieldName}"]`);
-        const hidden = picker.querySelector('[data-sparepart-selected]');
-        results.replaceChildren();
-        if (!items.length) { results.innerHTML = '<div class="wz-empty">Tidak ada sparepart yang cocok dengan pencarian.</div>'; return; }
-        items.forEach(item => {
-            const card = document.createElement('article'); card.className = 'wz-item';
-            const stateClass = item.status === 'verified_fit' ? 'is-success' : (item.status === 'verified_not_fit' ? 'is-danger' : 'is-warning');
-            card.innerHTML = `<div class="wz-approval-title-row"><strong>${esc(item.name)}</strong><span class="wz-status-pill ${stateClass}">${esc(item.label)}</span></div><p>SKU: ${esc(item.sku)} · Stok: ${esc(item.stock)} · Rp ${money(item.price)}</p>`;
-            const action = document.createElement('button'); action.type = 'button'; action.className = 'wz-btn ' + (item.can_select ? 'wz-primary' : ''); action.textContent = item.can_select ? 'Pilih' : (item.status === 'verified_not_fit' ? 'Tidak dapat dipilih' : 'Verifikasi Dulu'); action.disabled = !item.can_select;
-            if (item.can_select) action.addEventListener('click', () => { if (hidden) hidden.value = String(item.id); if (select) { let option = [...select.options].find((candidate) => candidate.value === String(item.id)); if (!option) { option = new Option(`${item.name} · stok ${item.stock} · Rp ${money(item.price)}`, String(item.id)); select.add(option); } select.value = String(item.id); select.dispatchEvent(new Event('change', { bubbles: true })); } action.textContent = '✓ Dipilih'; });
-            if (!item.can_select && item.manage_url) { const manage = document.createElement('a'); manage.href = item.manage_url; manage.className = 'wz-btn'; manage.textContent = 'Kelola Fitment'; card.append(manage); }
-            card.append(action); results.append(card);
+
+    items.forEach(item => {
+        item.querySelectorAll('input[type="radio"]').forEach(radio => {
+            radio.addEventListener('change', () => {
+                if (errorBox) errorBox.hidden = true;
+                syncState();
+                if (radio.value === 'FAIL') {
+                    const noteInput = item.querySelector('[data-qc-note]');
+                    noteInput?.focus();
+                }
+            });
         });
-    };
-    pickers.forEach((picker) => {
-        const input = picker.querySelector('[data-sparepart-search]');
-        const results = picker.querySelector('[data-sparepart-results]');
-        const fieldName = picker.dataset.sparepartField || 'id_sparepart';
-        const select = document.querySelector(`select[name="${fieldName}"]`);
-        let timer = null;
-        const search = async () => { const q = input.value.trim(); if (q.length < 2) { results.innerHTML = '<div class="wz-empty">Mulai dengan mencari sparepart yang dibutuhkan.</div>'; return; } try { const response = await fetch(`${picker.dataset.searchUrl}?q=${encodeURIComponent(q)}`, { headers: { Accept: 'application/json', 'X-Requested-With': 'XMLHttpRequest' }, credentials: 'same-origin' }); if (!response.ok) throw new Error('search failed'); render(picker, (await response.json()).results || []); } catch (error) { results.innerHTML = '<div class="wz-empty">Pencarian belum tersedia. Coba lagi.</div>'; } };
-        input.addEventListener('input', () => { window.clearTimeout(timer); timer = window.setTimeout(search, 260); });
     });
+
+    qcForm.addEventListener('submit', e => {
+        if (errorBox) errorBox.hidden = true;
+
+        for (const item of items) {
+            const selected = item.querySelector('input[type="radio"]:checked');
+            if (!selected) {
+                e.preventDefault();
+                if (errorBox) {
+                    errorBox.textContent = 'Semua item checklist pemeriksaan standar dan penyesuaian Work Order wajib dipilih hasilnya (Lulus / Tidak Lulus / N/A).';
+                    errorBox.hidden = false;
+                }
+                item.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                return;
+            }
+
+            if (selected.value === 'FAIL') {
+                const noteInput = item.querySelector('[data-qc-note]');
+                if (noteInput && noteInput.value.trim() === '') {
+                    e.preventDefault();
+                    if (errorBox) {
+                        errorBox.textContent = 'Item yang dinyatakan Tidak Lulus wajib dilengkapi catatan perbaikan.';
+                        errorBox.hidden = false;
+                    }
+                    noteInput.focus();
+                    noteInput.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    return;
+                }
+            }
+        }
+    });
+
+    syncState();
 })();
 </script>
-@endsection
+@endpush

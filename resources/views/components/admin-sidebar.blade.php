@@ -103,11 +103,11 @@
                     'owner' => [['Executive dashboard','owner.dashboard','reports.view'],['Sales Excellence Awards','owner.sales-awards','reports.view'],['Rekap penjualan','owner.sales-report','reports.view'],['Performa Sales','owner.performance-report','reports.view'],['Laporan Servis','owner.service-report','reports.view'],['Pendapatan & Pembayaran','owner.payment-report','reports.view'],['Inventori Kendaraan','owner.inventory-report','reports.view']],
                     'sales' => [['Dashboard Sales','sales.dashboard','sales.view'],['Sales Excellence Awards','sales.awards','sales.view'],['Prospek pelanggan','sales.leads.index','sales.view'],['Jadwal test drive','sales.test-drives.index','sales.view'],['Pesanan mobil','sales.orders.index','sales.view'],['Penjualan saya','sales.sales.index','sales.view'],['Target penjualan','sales.targets.index','sales.view']],
                     'service_advisor' => [['Booking servis','admin.booking-servis.index','service.view'],['Work Order','admin.servis.index','service.manage']],
-                    'mechanic' => [['Pekerjaan servis','admin.servis.index','service.assigned'],['Sparepart','admin.sparepart.index','inventory.view']],
-                    'warehouse_staff' => [['Sparepart','admin.sparepart.index','inventory.view'],['Stok masuk','admin.stok-masuk.index','inventory.manage']],
-                    'finance' => [['Pembayaran','admin.payments.index','finance.view'],['Refund & Reversal','admin.financial-adjustments.index','finance.view'],['Laporan keuangan','admin.payments.index','reports.view']],
+                    'mechanic' => [['Pekerjaan servis','admin.servis.index','service.assigned'],['Riwayat','admin.sparepart.index','inventory.view']],
+                    'warehouse_staff' => [['Sparepart','admin.sparepart.index','inventory.view'],['Stok masuk','admin.stok-masuk.index','inventory.manage'],['Stok Mobil','admin.mobil.index','inventory.view']],
+                    'finance' => [['Pembayaran','admin.payments.index','finance.view'],['Refund & Reversal','admin.financial-adjustments.index','finance.view'],['Laporan keuangan','admin.finance.report','reports.view']],
                     'operational_staff' => [['Booking mobil','admin.booking.index','sales.view'],['Test drive','admin.test-drive.index','sales.view']],
-                    'quality_control' => [['QC Work Order','admin.servis.index','qc.manage']],
+                    'quality_control' => [['QC Work Order','admin.servis.index','qc.manage'],['Riwayat QC','admin.servis.qc-history','qc.manage'],['PDI Kendaraan','admin.pdi.index','qc.manage']],
                 ][$adminUser->roleKey()] ?? [];
             @endphp
             @php($roleLinks[] = ['Profil Admin', 'account.password', null])

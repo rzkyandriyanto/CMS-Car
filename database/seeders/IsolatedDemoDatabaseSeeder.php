@@ -123,7 +123,7 @@ class IsolatedDemoDatabaseSeeder extends Seeder
         // 3. Jenis Servis
         $serviceTypes = [
             ['nama_servis' => 'Servis Berkala', 'deskripsi' => 'Pemeriksaan menyeluruh dan servis berkala kendaraan YZA', 'estimasi_harga' => 350000],
-            ['nama_servis' => 'Ganti Oli', 'deskripsi' => 'Penggantian oli mesin dan filter oli berkala', 'estimasi_harga' => 150000],
+            ['nama_servis' => 'Ganti Oli', 'deskripsi' => 'Jasa penggantian oli mesin dan filter oli berkala (belum termasuk oli/sparepart)', 'estimasi_harga' => 50000],
             ['nama_servis' => 'Tune Up', 'deskripsi' => 'Penyetelan dan optimalisasi sistem pembakaran', 'estimasi_harga' => 400000],
             ['nama_servis' => 'Servis Rem', 'deskripsi' => 'Pembersihan kampas dan bleed minyak rem', 'estimasi_harga' => 300000],
             ['nama_servis' => 'Servis AC', 'deskripsi' => 'Pembersihan evaporator dan ganti filter kabin', 'estimasi_harga' => 300000],

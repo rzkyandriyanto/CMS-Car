@@ -43,7 +43,9 @@ class DashboardController extends Controller
 
         $data = $members->for($customer, $request->user());
         $verifiedVehicles = $ownership->verifiedVehiclesFor((int) $customer->id_pelanggan);
-        $verifiedVehicles->load(['penjualan.mobil', 'pesanan']);
+        if ($verifiedVehicles->isNotEmpty()) {
+            $verifiedVehicles->load(['penjualan.mobil', 'pesanan']);
+        }
 
         $remindersByVehicle = collect($data['reminders'] ?? [])->keyBy(fn ($r) => (int) ($r['vehicle']?->id_kendaraan_pelanggan ?? 0));
 

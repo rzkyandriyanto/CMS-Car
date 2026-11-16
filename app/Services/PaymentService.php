@@ -43,5 +43,5 @@ class PaymentService{
    return$p;
   });
  }
- public function summary(int $transactionId):array{$tx=Transaksi::findOrFail($transactionId);$paid=$this->paid($tx);return['paid'=>$paid,'remaining'=>(string)DB::selectOne('SELECT CAST(? - ? AS DECIMAL(15,2)) AS value',[$tx->total,$paid])->value,'status'=>$tx->status];}
+ public function summary(int $transactionId):array{$tx=Transaksi::findOrFail($transactionId);$paid=$this->paid($tx);return['paid'=>$paid,'remaining'=>(string)DB::selectOne('SELECT CAST(CAST(? AS DECIMAL(15,2)) - CAST(? AS DECIMAL(15,2)) AS DECIMAL(15,2)) AS value',[$tx->total,$paid])->value,'status'=>$tx->status];}
 }

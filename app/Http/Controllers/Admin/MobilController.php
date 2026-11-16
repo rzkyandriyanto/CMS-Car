@@ -95,6 +95,16 @@ class MobilController extends Controller
 
         if ($catalogModel) $carsQuery->whereIn('id_mobil', $identity->physical($catalogModel)->pluck('id_mobil'));
         if (request()->integer('stock_mobil') > 0) $carsQuery->reorder()->orderByRaw('id_mobil = ? DESC',[request()->integer('stock_mobil')])->orderByDesc('id_mobil');
+
+        // Group inventory table to 1 representative row per model/type so colors are managed inside the modal
+        $representativeIds = (clone $carsQuery)
+            ->reorder()
+            ->get(['id_mobil', 'merk', 'model', 'tipe', 'tahun', 'kondisi', 'status'])
+            ->groupBy(fn (Mobil $m) => mb_strtolower(trim($m->merk . '|' . $m->model . '|' . ($m->tipe ?? '') . '|' . $m->tahun . '|' . ($m->kondisi ?? ''))))
+            ->map(fn ($group) => ($group->firstWhere('status', 'tersedia') ?? $group->first())->id_mobil)
+            ->values();
+        $carsQuery->whereIn('id_mobil', $representativeIds->isNotEmpty() ? $representativeIds : [-1]);
+
         $allCatalogModels = $identity->models();
         $catalogCars = $allCatalogModels->filter(function ($car) use ($q,$merk,$kondisi,$status,$catalogKey,$identity,$tahunMin,$tahunMaks,$hargaMin,$hargaMaks) {
             $text = mb_strtolower($car->merk.' '.$car->model.' '.$car->tipe.' '.$car->kode_mobil.' '.$car->showcase_slug.' '.($car->nomor_rangka ?? ''));

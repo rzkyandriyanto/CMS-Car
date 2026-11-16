@@ -365,10 +365,20 @@
                             @php
                                 $renderedAny = true;
                                 $availability = $mobil->getAttribute('availability') ?? [];
-                                $stockTotal = $availability['stock_total'] ?? (($availability['stock'] ?? null) !== null ? $availability['stock'] : 0);
-                                $stockOrderable = $availability['stock'] ?? 0;
-                                $reservedUnits = $availability['reserved_units'] ?? ($availability['active_reservation_count'] ?? 0);
-                                $soldUnits = $availability['sold_units'] ?? 0;
+                                $colorStocks = array_values(app(\App\Services\VehicleColorStockService::class)->colors($mobil));
+                                $colorColl = collect($colorStocks);
+                                $stockTotal = $colorColl->isNotEmpty()
+                                    ? (int) $colorColl->sum('stock_total')
+                                    : ($availability['stock_total'] ?? (($availability['stock'] ?? null) !== null ? $availability['stock'] : 0));
+                                $stockOrderable = $colorColl->isNotEmpty()
+                                    ? (int) $colorColl->sum('stock')
+                                    : ($availability['stock'] ?? 0);
+                                $reservedUnits = $colorColl->isNotEmpty()
+                                    ? (int) $colorColl->sum('reserved_units')
+                                    : ($availability['reserved_units'] ?? ($availability['active_reservation_count'] ?? 0));
+                                $soldUnits = $colorColl->isNotEmpty()
+                                    ? (int) $colorColl->sum('sold_units')
+                                    : ($availability['sold_units'] ?? 0);
                                 $fotoUrl = $resolveCarThumbnail($mobil);
                                 $cleanStatus = strtolower((string) $mobil->status);
                                 $invHistory = isset($inventories[$mobil->id_mobil]) ? $inventories[$mobil->id_mobil]->histories : collect();
@@ -428,7 +438,7 @@
                                     'deskripsi' => $mobil->deskripsi ?: '',
                                     'tanggal_masuk' => optional($mobil->tanggal_masuk)->format('Y-m-d') ?: '',
                                     'thumbnail' => $fotoUrl,
-                                    'color_stocks' => array_values(app(\App\Services\VehicleColorStockService::class)->colors($mobil)),
+                                    'color_stocks' => $colorStocks,
                                     'stock_total' => $stockTotal,
                                     'stock_orderable' => $stockOrderable,
                                     'reserved_units' => $reservedUnits,
@@ -513,12 +523,19 @@
                                         </div>
                                         <div class="car-meta">
                                             <div class="car-title-wrapper">
-                                                <button type="button" class="car-title-btn" onclick="openVehicleActionModal({{ $mobil->id_mobil }}, 'detail')" title="Lihat detail mobil">
+                                                <button type="button" class="car-title-btn" onclick="openVehicleActionModal({{ $mobil->id_mobil }}, 'stock')" title="Klik untuk melihat stok per warna &amp; tambah stok">
                                                     <strong class="car-title">{{ $mobil->merk }} {{ $mobil->model }}</strong>
                                                 </button>
                                                 <span class="car-code-pill">{{ $mobil->kode_mobil }}</span>
                                             </div>
-                                            <span class="car-subtext">{{ $mobil->tipe ?: 'Varian Standar' }} &bull; {{ $mobil->tahun }} &bull; {{ $mobil->warna }}</span>
+                                            <span class="car-subtext" style="display:flex; align-items:center; gap:6px; flex-wrap:wrap;">
+                                                <span>{{ $mobil->tipe ?: 'Varian Standar' }} &bull; {{ $mobil->tahun }} &bull; {{ count($colorStocks) }} Warna</span>
+                                                <span style="display:inline-flex; align-items:center; gap:3px;" title="Klik nama mobil untuk lihat stok tiap warna">
+                                                    @foreach($colorColl->take(6) as $cs)
+                                                        <i style="width:9px; height:9px; border-radius:999px; display:inline-block; border:1px solid rgba(15,23,42,.25); background:{{ preg_match('/^#[0-9a-f]{6}$/i', (string)($cs['swatch'] ?? '')) ? $cs['swatch'] : '#cbd5e1' }};" title="{{ $cs['label'] }} ({{ $cs['stock'] }} ready)"></i>
+                                                    @endforeach
+                                                </span>
+                                            </span>
                                             <div class="car-vin-subline">
                                                 <span class="vin-badge" title="Nomor Rangka (VIN)"><strong>VIN:</strong> {{ $mobil->nomor_rangka ?: '—' }}</span>
                                                 <span class="vin-separator">&bull;</span>
@@ -3542,7 +3559,7 @@ function updateLocalCarPayload(carId, updatedData) {
     }
 }
 
-async function openVehicleActionModal(carId, action) {
+async function openVehicleActionModal(carId, action, preselectedColor = null) {
     activeModalTriggerElement = document.activeElement;
     let car = null;
     if (carId === 'new') {
@@ -3583,8 +3600,12 @@ async function openVehicleActionModal(carId, action) {
         try {
             const response = await fetch(car.urls.show, {headers:{Accept:'application/json'}, cache:'no-store', credentials:'same-origin'});
             if (!response.ok) throw new Error('Stok terbaru belum dapat dimuat.');
-            const data = await response.json(), state = data.availability || {};
-            Object.assign(car, {color_stocks:data.color_stocks || [], stock_total:state.stock_total || 0, stock_orderable:state.stock || 0, reserved_units:state.reserved_units || 0, sold_units:state.sold_units || 0});
+            const data = await response.json(), state = data.availability || {}, colorList = data.color_stocks || [];
+            const sumTotal = colorList.length ? colorList.reduce((acc, c) => acc + Number(c.stock_total || 0), 0) : Number(state.stock_total || 0);
+            const sumReady = colorList.length ? colorList.reduce((acc, c) => acc + Number(c.stock || 0), 0) : Number(state.stock || 0);
+            const sumReserved = colorList.length ? colorList.reduce((acc, c) => acc + Number(c.reserved_units || 0), 0) : Number(state.reserved_units || 0);
+            const sumSold = colorList.length ? colorList.reduce((acc, c) => acc + Number(c.sold_units || 0), 0) : Number(state.sold_units || 0);
+            Object.assign(car, {color_stocks:colorList, stock_total:sumTotal, stock_orderable:sumReady, reserved_units:sumReserved, sold_units:sumSold});
             car.histories = (data.histories || []).map(h => ({tanggal:h.created_at,jenis:h.jenis,jumlah:h.jumlah_perubahan,before_after:h.stock_before+' → '+h.stock_after,catatan:h.catatan}));
         } catch (error) { showNotificationToast(error.message, 'error'); return; }
     }
@@ -3621,7 +3642,7 @@ async function openVehicleActionModal(carId, action) {
             renderEditVehicleModal(car, { title, kicker, meta, body, footer, dialog });
             break;
         case 'add_unit':
-            renderAddUnitModal(car, { title, kicker, meta, body, footer, dialog });
+            renderAddUnitModal(car, { title, kicker, meta, body, footer, dialog }, preselectedColor);
             break;
         case 'preorder':
             renderPreorderModal(car, { title, kicker, meta, body, footer, dialog });
@@ -3878,7 +3899,7 @@ function renderDetailAndSpecsModal(car, initialTab, dom) {
 // -------------------------------------------------------------
 function colorStockEscape(value) { const el = document.createElement('span'); el.textContent = String(value ?? ''); return el.innerHTML; }
 function renderColorStockCards(car) {
-    return '<section class="color-stock-summary"><h4>Stok per warna fisik</h4><div class="color-stock-grid">' + (car.color_stocks || []).map(c => '<article class="color-stock-card"><strong><i style="background:' + (/^#[0-9a-f]{6}$/i.test(c.swatch) ? c.swatch : '#cbd5e1') + '"></i>' + colorStockEscape(c.label) + '</strong><span class="color-stock-status">' + (c.stock > 0 ? 'Tersedia' : '× Stok Habis') + '</span><dl><div><dt>Fisik</dt><dd>' + Number(c.stock_total) + '</dd></div><div><dt>Reservasi</dt><dd>' + Number(c.reserved_units) + '</dd></div><div><dt>Ready</dt><dd>' + Number(c.stock) + '</dd></div></dl>' + (c.unverified_units > 0 ? '<small>' + Number(c.unverified_units) + ' stok agregat lama belum terverifikasi</small>' : '') + '</article>').join('') + '</div></section>';
+    return '<section class="color-stock-summary"><h4>Stok per warna fisik</h4><div class="color-stock-grid">' + (car.color_stocks || []).map(c => '<article class="color-stock-card"><strong><i style="background:' + (/^#[0-9a-f]{6}$/i.test(c.swatch) ? c.swatch : '#cbd5e1') + '"></i>' + colorStockEscape(c.label) + '</strong><span class="color-stock-status">' + (c.stock > 0 ? 'Tersedia' : '× Stok Habis') + '</span><dl><div><dt>Fisik</dt><dd>' + Number(c.stock_total) + '</dd></div><div><dt>Reservasi</dt><dd>' + Number(c.reserved_units) + '</dd></div><div><dt>Ready</dt><dd>' + Number(c.stock) + '</dd></div></dl>' + (c.unverified_units > 0 ? '<small>' + Number(c.unverified_units) + ' stok agregat lama belum terverifikasi</small>' : '') + (!isUserOwner ? '<button type="button" class="btn-modal-secondary" style="margin-top:8px; width:100%; padding:6px 8px; font-size:11.5px;" data-car-id="' + colorStockEscape(car.id) + '" data-add-color="' + colorStockEscape(c.label) + '" onclick="openVehicleActionModal(this.dataset.carId, \'add_unit\', this.dataset.addColor)">+ Tambah Stok Warna Ini</button>' : '') + '</article>').join('') + '</div></section>';
 }
 function renderStockManagementModal(car, dom) {
     dom.title.textContent = 'Manajemen Stok Kendaraan';
@@ -3912,6 +3933,8 @@ function renderStockManagementModal(car, dom) {
                     <div style="font-size:24px; font-weight:800; color:#0f172a;">${car.sold_units} <small style="font-size:12px; font-weight:500;">unit</small></div>
                 </div>
             </div>
+
+            ${renderColorStockCards(car)}
 
             <div class="modal-info-callout" style="margin-bottom:16px;">
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg>
@@ -4035,7 +4058,6 @@ function renderStockManagementModal(car, dom) {
         stockInput.addEventListener('input', updateDelta);
     }
 
-    dom.body.insertAdjacentHTML('afterbegin', renderColorStockCards(car));
     function updateStockFooter(activePaneId) {
         if (activePaneId === 'pane-stock-overview') {
             dom.footer.innerHTML = `
@@ -4348,7 +4370,7 @@ async function submitEditVehicle(e, carId) {
 // -------------------------------------------------------------
 // 3B. MODAL TAMBAH UNIT FISIK KE INVENTORI (CODEX REFINEMENT)
 // -------------------------------------------------------------
-function renderAddUnitModal(car, dom) {
+function renderAddUnitModal(car, dom, preselectedColor = null) {
     const isNew = car.id === 'new';
     dom.title.textContent = isNew ? 'Daftarkan Unit Mobil Baru ke Inventori' : `Tambah Unit Fisik — ${car.merk} ${car.model}`;
     dom.kicker.textContent = 'INVENTORI FISIK DEALER · REGISTRASI UNIT';
@@ -4365,9 +4387,82 @@ function renderAddUnitModal(car, dom) {
         return;
     }
 
+    const uniqueSuffix = Date.now().toString().slice(-5) + Math.floor(10 + Math.random() * 90);
     const defaultCode = (isNew || !car.kode || car.is_virtual)
-        ? ('YZA-' + Math.floor(1000 + Math.random() * 9000))
-        : (car.kode + '-U' + Math.floor(10 + Math.random() * 90));
+        ? ('YZA-' + uniqueSuffix)
+        : (car.kode.slice(0, 18) + '-U' + uniqueSuffix.slice(-4));
+    const defaultVin = 'YZA-VIN-' + uniqueSuffix;
+    const todayStr = new Date().toISOString().split('T')[0];
+    const defaultBuyPrice = car.harga_beli || Math.round((car.harga_jual || 1000000000) * 0.85);
+
+    if (!isNew) {
+        dom.body.innerHTML = `
+            <form id="addUnitVehicleForm" onsubmit="submitAddUnit(event, '${car.id}')" autocomplete="off">
+                <input type="hidden" name="_token" value="${document.querySelector('meta[name="csrf-token"]')?.content}">
+                <input type="hidden" name="catalog_identity" value="${colorStockEscape(car.catalog_key || ('mobil:' + car.id))}">
+                <input type="hidden" name="merk" value="${colorStockEscape(car.merk || '')}">
+                <input type="hidden" name="model" value="${colorStockEscape(car.model || '')}">
+                <input type="hidden" name="tipe" value="${colorStockEscape(car.tipe || '')}">
+                <input type="hidden" name="tahun" value="${car.tahun || new Date().getFullYear()}">
+                <input type="hidden" name="kode_mobil" value="${colorStockEscape(defaultCode)}">
+                <input type="hidden" name="nomor_rangka" value="${colorStockEscape(defaultVin)}">
+                <input type="hidden" name="kilometer" value="0">
+                <input type="hidden" name="transmisi" value="${colorStockEscape(car.transmisi || 'automatic')}">
+                <input type="hidden" name="bahan_bakar" value="${colorStockEscape(car.bahan_bakar || 'bensin')}">
+                <input type="hidden" name="status" value="tersedia">
+                <input type="hidden" name="tanggal_masuk" value="${todayStr}">
+                <input type="hidden" name="alasan_stok" value="Penambahan stok unit gudang">
+                <input type="hidden" name="bukti_stok" value="Input cepat stok mobil gudang (${todayStr})">
+
+                <div class="modal-form-grid">
+                    <div class="modal-form-group" style="grid-column: 1 / -1;">
+                        <label class="modal-form-label" for="add_unit_warna">Warna Fisik Unit <span class="required-mark">*</span></label>
+                        <input type="text" id="add_unit_warna" name="warna" list="addUnitColorOptions" class="modal-form-input" value="${colorStockEscape(preselectedColor || car.warna || '')}" placeholder="Pilih atau ketik warna (contoh: Pearl White)" required>
+                        <datalist id="addUnitColorOptions">
+                            ${(car.color_stocks || []).map(c => `<option value="${colorStockEscape(c.label)}">Stok ready: ${Number(c.stock || 0)} unit</option>`).join('')}
+                        </datalist>
+                        <div class="modal-field-error" data-error-field="warna" style="display:none;"></div>
+                    </div>
+
+                    <div class="modal-form-group">
+                        <label class="modal-form-label" for="add_unit_kondisi">Kondisi Unit <span class="required-mark">*</span></label>
+                        <select id="add_unit_kondisi" name="kondisi" class="modal-form-select" required>
+                            <option value="baru" ${car.kondisi === 'baru' ? 'selected' : ''}>Baru</option>
+                            <option value="bekas" ${car.kondisi === 'bekas' ? 'selected' : ''}>Bekas</option>
+                        </select>
+                        <div class="modal-field-error" data-error-field="kondisi" style="display:none;"></div>
+                    </div>
+
+                    <div class="modal-form-group">
+                        <label class="modal-form-label" for="add_unit_mesin">Nomor Mesin <span class="required-mark">*</span></label>
+                        <input type="text" id="add_unit_mesin" name="nomor_mesin" class="modal-form-input" style="font-family:monospace; text-transform:uppercase;" placeholder="Contoh: VR38DETT-9823140" required>
+                        <div class="modal-field-error" data-error-field="nomor_mesin" style="display:none;"></div>
+                    </div>
+
+                    <div class="modal-form-group">
+                        <label class="modal-form-label" for="add_unit_harga_beli">Harga Beli (Rp) <span class="required-mark">*</span></label>
+                        <input type="number" id="add_unit_harga_beli" name="harga_beli" class="modal-form-input" value="${defaultBuyPrice}" min="0" required>
+                        <div class="modal-field-error" data-error-field="harga_beli" style="display:none;"></div>
+                    </div>
+
+                    <div class="modal-form-group">
+                        <label class="modal-form-label" for="add_unit_harga_jual">Harga Jual (Rp) <span class="required-mark">*</span></label>
+                        <input type="number" id="add_unit_harga_jual" name="harga_jual" class="modal-form-input" value="${car.harga_jual || ''}" min="0" required>
+                        <div class="modal-field-error" data-error-field="harga_jual" style="display:none;"></div>
+                    </div>
+                </div>
+
+                <div id="addUnitGlobalError" class="modal-field-error" style="display:none; margin-top:12px; margin-bottom:8px;"></div>
+            </form>
+        `;
+
+        dom.footer.innerHTML = `
+            <button type="button" class="btn-modal-secondary" onclick="closeVehicleModal()">Batal</button>
+            <button type="submit" form="addUnitVehicleForm" class="btn-modal-primary" id="btnSubmitAddUnit" style="background:#059669; border-color:#059669;">+ Simpan Unit ke Inventori</button>
+        `;
+        setupFormDirtyTracking(document.getElementById('addUnitVehicleForm'));
+        return;
+    }
 
     dom.body.innerHTML = `
         <form id="addUnitVehicleForm" onsubmit="submitAddUnit(event, '${car.id}')" autocomplete="off">
@@ -4410,7 +4505,10 @@ function renderAddUnitModal(car, dom) {
                 {{-- Warna Fisik Unit & Kode Mobil --}}
                 <div class="modal-form-group">
                     <label class="modal-form-label" for="add_unit_warna">Warna Fisik Unit <span class="required-mark">*</span></label>
-                    <input type="text" id="add_unit_warna" name="warna" class="modal-form-input" value="${car.warna || ''}" placeholder="contoh: Pearl White, Nardo Gray, Midnight Black" required>
+                    <input type="text" id="add_unit_warna" name="warna" list="addUnitColorOptions" class="modal-form-input" value="${colorStockEscape(preselectedColor || car.warna || '')}" placeholder="Pilih atau ketik warna (contoh: Pearl White)" required>
+                    <datalist id="addUnitColorOptions">
+                        ${(car.color_stocks || []).map(c => `<option value="${colorStockEscape(c.label)}">Stok ready: ${Number(c.stock || 0)} unit</option>`).join('')}
+                    </datalist>
                     <div class="modal-field-error" data-error-field="warna" style="display:none;"></div>
                 </div>
 

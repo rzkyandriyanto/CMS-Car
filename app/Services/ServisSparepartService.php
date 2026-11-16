@@ -10,7 +10,7 @@ class ServisSparepartService
 {
     private function subtotal(string $price, int $qty): string
     {
-        return (string) DB::selectOne('SELECT CAST(? * ? AS DECIMAL(15,2)) AS value', [$price, $qty])->value;
+        return (string) DB::selectOne('SELECT CAST(CAST(? AS DECIMAL(15,2)) * CAST(? AS INTEGER) AS DECIMAL(15,2)) AS value', [$price, $qty])->value;
     }
 
     public function add(int $serviceId, int $sparepartId, int $qty): ServisSparepart

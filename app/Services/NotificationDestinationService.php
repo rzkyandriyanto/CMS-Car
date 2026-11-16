@@ -16,7 +16,7 @@ class NotificationDestinationService
             $customer = $user->pelanggan?->id_pelanggan;
             if (!$customer) return $fallback;
             return match ($notification->referensi_tipe) {
-                'servis' => Servis::whereKey($id)->where('id_pelanggan', $customer)->exists() ? route('pelanggan.servis.approval', $id) : $fallback,
+                'servis' => $this->memberServis($id, (int) $customer, $fallback),
                 'booking_servis' => $this->memberBooking($id, (int) $customer, $fallback),
                 'pesanan_mobil_member' => PesananMobilMember::whereKey($id)->where('id_pelanggan', $customer)->exists() ? route('pelanggan.pesanan-mobil.show', $id) : $fallback,
                 'pre_order_mobil' => $this->memberPreorder($notification, (int) $customer, $fallback),
@@ -50,12 +50,20 @@ class NotificationDestinationService
         return $fallback;
     }
 
+    private function memberServis(int $id, int $customer, string $fallback): string
+    {
+        $service = Servis::whereKey($id)->where('id_pelanggan', $customer)->first();
+        if (!$service) return $fallback;
+        return $service->id_booking_servis
+            ? route('pelanggan.booking-servis.show', $service->id_booking_servis)
+            : route('pelanggan.servis.approval', $service);
+    }
+
     private function memberBooking(int $id, int $customer, string $fallback): string
     {
         $booking = BookingServis::whereKey($id)->where('id_pelanggan', $customer)->first();
         if (!$booking) return $fallback;
-        $service = $booking->servis()->where('id_pelanggan', $customer)->first();
-        return $service ? route('pelanggan.servis.approval', $service) : route('pelanggan.booking-servis.show', $booking);
+        return route('pelanggan.booking-servis.show', $booking);
     }
 
     private function memberPreorder(Notifikasi $notification, int $customer, string $fallback): string

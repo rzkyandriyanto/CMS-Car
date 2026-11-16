@@ -42,7 +42,7 @@ class PenjualanMobilService
             $discount = (string)$input['diskon'];
             $dp = (string)$input['dp'];
             if ($discount < 0 || $discount > $price) throw new RuntimeException('Diskon tidak valid.');
-            $total = (string) DB::selectOne('SELECT CAST(? - ? AS DECIMAL(15,2)) AS amount', [$price, $discount])->amount;
+            $total = (string) DB::selectOne('SELECT CAST(CAST(? AS DECIMAL(15,2)) - CAST(? AS DECIMAL(15,2)) AS DECIMAL(15,2)) AS amount', [$price, $discount])->amount;
             if ($dp < 0 || $dp > $total) throw new RuntimeException('DP tidak boleh negatif atau melebihi total.');
             $bookingId = !empty($input['id_booking']) ? (int)$input['id_booking'] : null;
             if ($car->status === 'dibooking') {

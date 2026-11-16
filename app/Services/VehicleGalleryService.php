@@ -128,6 +128,14 @@ class VehicleGalleryService
     private function structuredGallery(Mobil $mobil): array
     {
         $colors = $mobil->warnaPilihan()->with('galeri')->get();
+        if ($colors->isEmpty() && $mobil->merk && $mobil->model) {
+            $sibling = Mobil::query()
+                ->whereRaw('LOWER(merk) = ? AND LOWER(model) = ?', [strtolower($mobil->merk), strtolower($mobil->model)])
+                ->whereHas('warnaPilihan.galeri')
+                ->with('warnaPilihan.galeri')
+                ->first();
+            $colors = $sibling?->warnaPilihan ?? collect();
+        }
         if ($colors->isEmpty()) return [];
         $result = [];
         foreach ($colors as $color) {
@@ -163,6 +171,9 @@ class VehicleGalleryService
             str_contains($identity, 'bmw') && str_contains($identity, 'm4') => 'bmw-m4',
             str_contains($identity, 'bugatti') && str_contains($identity, 'chiron') => 'bugatti-chiron',
             str_contains($identity, 'mclaren') && str_contains($identity, '720') => 'mclaren-720s',
+            str_contains($identity, '33 stradale') || str_contains($identity, 'alfa romeo') => 'alfa-romeo-33-stradale',
+            str_contains($identity, 'huracan') => 'lamborghini-huracan',
+            str_contains($identity, 'mclaren') && str_contains($identity, 'p1') => 'mclaren-p1',
             default => (string) ($mobil->kode_mobil ?: 'default'),
         };
     }
@@ -333,6 +344,27 @@ class VehicleGalleryService
             'bmw-m4' => $this->sportConfig('bmw-m4', 'toronto-red', 'Toronto Red', '#b51c25', $sportFallbacks['bmw-m4'], ['alpine-white' => ['Alpine White', '#eeeeeb'], 'black-sapphire' => ['Black Sapphire', '#15171b'], 'portimao-blue' => ['Portimao Blue', '#1f5b9e']]),
             'bugatti-chiron' => $this->sportConfig('bugatti-chiron', 'atlantic-blue', 'Atlantic Blue', '#145b9e', $sportFallbacks['bugatti-chiron'], ['carbon-black' => ['Carbon Black', '#151618'], 'racing-red' => ['Racing Red', '#c51d2b'], 'glacier-white' => ['Glacier White', '#f2f2ee']]),
             'mclaren-720s' => $this->sportConfig('mclaren-720s', 'papaya-spark', 'Papaya Spark', '#f47b18', $sportFallbacks['mclaren-720s'], ['onyx-black' => ['Onyx Black', '#151618'], 'silica-white' => ['Silica White', '#eeeeeb'], 'vega-blue' => ['Vega Blue', '#2370a9'], 'racing-red' => ['Racing Red', '#c51d2b']]),
+            'alfa-romeo-33-stradale' => [
+                'defaultColor' => 'rosso-alfa',
+                'interiorFallback' => asset('assets/images/hero/hero-slide-1.png'),
+                'colors' => [
+                    'rosso-alfa' => ['label' => 'Rosso Alfa', 'swatch' => '#b91c1c', 'fallback' => asset('assets/images/hero/hero-slide-1.png'), 'images' => [['type' => 'front', 'label' => 'Front 3/4', 'path' => 'assets/images/hero/hero-slide-1.png']]],
+                ],
+            ],
+            'lamborghini-huracan' => [
+                'defaultColor' => 'rosso-mars',
+                'interiorFallback' => asset('assets/images/hero/hero-slide-2.png'),
+                'colors' => [
+                    'rosso-mars' => ['label' => 'Rosso Mars', 'swatch' => '#dc2626', 'fallback' => asset('assets/images/hero/hero-slide-2.png'), 'images' => [['type' => 'front', 'label' => 'Front 3/4', 'path' => 'assets/images/hero/hero-slide-2.png']]],
+                ],
+            ],
+            'mclaren-p1' => [
+                'defaultColor' => 'papaya-spark',
+                'interiorFallback' => asset('assets/images/hero/hero-slide-3.png'),
+                'colors' => [
+                    'papaya-spark' => ['label' => 'Papaya Spark', 'swatch' => '#f47b18', 'fallback' => asset('assets/images/hero/hero-slide-3.png'), 'images' => [['type' => 'front', 'label' => 'Front 3/4', 'path' => 'assets/images/hero/hero-slide-3.png']]],
+                ],
+            ],
         ];
     }
 

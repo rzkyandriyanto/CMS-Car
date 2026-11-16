@@ -179,7 +179,39 @@ class MemberVehiclePurchaseController extends Controller
         try { $service->reject($pesanan_mobil, (int) $inventory->actorPetugasId($request->user()->id_user), (string) $request->input('catatan_admin')); return back()->with('success', 'Pesanan ditolak dan unit dilepas.'); } catch (\Illuminate\Auth\Access\AuthorizationException $e) { throw $e; } catch (Throwable $e) { return back()->withErrors($e->getMessage()); }
     }
     public function schedule(Request $request, PesananMobilMember $pesanan_mobil, MemberVehiclePurchaseService $service) { $data = $request->validate(['jadwal_pengambilan' => ['required', 'date'], 'lokasi_pengambilan' => ['required', 'string', 'max:180'], 'catatan_pengambilan' => ['nullable', 'string', 'max:1000']]); try { $service->schedule($pesanan_mobil, $data['jadwal_pengambilan'], $data['lokasi_pengambilan'], $data['catatan_pengambilan'] ?? null); return back()->with('success', 'Jadwal pengambilan disimpan.'); } catch (\Illuminate\Auth\Access\AuthorizationException $e) { throw $e; } catch (Throwable $e) { return back()->withErrors($e->getMessage()); } }
-    public function startPdi(Request $request, PesananMobilMember $pesanan_mobil, MemberVehiclePurchaseService $service, InventoryService $inventory) { try { $service->startPdi($pesanan_mobil, (int) $inventory->actorPetugasId($request->user()->id_user)); return back()->with('success', 'PDI dimulai.'); } catch (\Illuminate\Auth\Access\AuthorizationException $e) { throw $e; } catch (Throwable $e) { return back()->withErrors($e->getMessage()); } }
-    public function pdi(Request $request, PesananMobilMember $pesanan_mobil, MemberVehiclePurchaseService $service, InventoryService $inventory) { try { if ($request->has('checklist')) $service->completePdi($pesanan_mobil, (int) $inventory->actorPetugasId($request->user()->id_user), $request->all()); else $service->savePdi($pesanan_mobil, (int) $inventory->actorPetugasId($request->user()->id_user), $request->all()); return back()->with('success', 'Hasil PDI disimpan.'); } catch (\Illuminate\Auth\Access\AuthorizationException $e) { throw $e; } catch (Throwable $e) { return back()->withErrors($e->getMessage()); } }
+    public function startPdi(Request $request, PesananMobilMember $pesanan_mobil, MemberVehiclePurchaseService $service, InventoryService $inventory)
+    {
+        try {
+            $service->startPdi($pesanan_mobil, (int) $inventory->actorPetugasId($request->user()->id_user));
+            return back()->with('success', 'Sesi pemeriksaan PDI unit '.$pesanan_mobil->nomor_pesanan.' dimulai.')->with('open_pdi', $pesanan_mobil->id_pesanan);
+        } catch (\Illuminate\Auth\Access\AuthorizationException $e) {
+            throw $e;
+        } catch (Throwable $e) {
+            return back()->withErrors($e->getMessage());
+        }
+    }
+
+    public function pdi(Request $request, PesananMobilMember $pesanan_mobil, MemberVehiclePurchaseService $service, InventoryService $inventory)
+    {
+        try {
+            $pdi = $request->has('checklist')
+                ? $service->completePdi($pesanan_mobil, (int) $inventory->actorPetugasId($request->user()->id_user), $request->all())
+                : $service->savePdi($pesanan_mobil, (int) $inventory->actorPetugasId($request->user()->id_user), $request->all());
+
+            if ($pdi->status === 'lulus') {
+                return back()->with('pdi_handover_success', 'Unit '.$pesanan_mobil->nomor_pesanan.' lulus pemeriksaan PDI dan berhasil dikirim serah terima ke Finance / Kasir.');
+            }
+
+            if ($pdi->status === 'perlu_perbaikan') {
+                return back()->with('warning', 'Hasil PDI unit '.$pesanan_mobil->nomor_pesanan.' dicatat dengan temuan yang perlu diperbaiki.');
+            }
+
+            return back()->with('success', 'Hasil PDI disimpan.');
+        } catch (\Illuminate\Auth\Access\AuthorizationException $e) {
+            throw $e;
+        } catch (Throwable $e) {
+            return back()->withInput()->with('open_pdi', $pesanan_mobil->id_pesanan)->withErrors($e->getMessage());
+        }
+    }
     public function handover(Request $request, PesananMobilMember $pesanan_mobil, MemberVehiclePurchaseService $service, InventoryService $inventory) { $request->validate(['nama_penerima' => ['required', 'string', 'max:120'], 'nomor_identitas' => ['nullable', 'string', 'max:80']]); try { $service->handover($pesanan_mobil, (int) $inventory->actorPetugasId($request->user()->id_user), $request->all()); return back()->with('success', 'Serah-terima selesai; kendaraan masuk My Garage pelanggan.'); } catch (\Illuminate\Auth\Access\AuthorizationException $e) { throw $e; } catch (Throwable $e) { return back()->withErrors($e->getMessage()); } }
 }

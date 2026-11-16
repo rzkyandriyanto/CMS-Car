@@ -19,8 +19,8 @@ class ServiceCatalogSeeder extends Seeder
             ],
             [
                 'nama_servis' => 'Ganti Oli',
-                'deskripsi' => 'Penggantian oli mesin dan filter oli berkala',
-                'estimasi_harga' => 150000,
+                'deskripsi' => 'Jasa penggantian oli mesin dan filter oli berkala (belum termasuk oli/sparepart)',
+                'estimasi_harga' => 50000,
                 'duration_minutes' => 60,
             ],
             [

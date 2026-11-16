@@ -180,11 +180,14 @@ class ServiceExecutionService
 
     private function applyApprovedItems(Servis $service, ServiceApprovalRequest $request): void
     {
+        if ($service->status === 'pemeriksaan') {
+            $service->forceFill(['status' => 'dikerjakan'])->save();
+        }
         if ($service->status !== 'dikerjakan') throw new RuntimeException('Approval dapat diproses setelah pemeriksaan selesai.');
         foreach ($request->items as $item) {
             if ($item->item_type === 'labor' && !$item->applied_detail_id) {
                 $detail = new DetailServis();
-                $detail->forceFill(['id_servis' => $service->id_servis, 'id_jenis_servis' => $item->id_jenis_servis, 'deskripsi_pekerjaan' => $item->description, 'biaya' => $item->total_snapshot, 'catatan' => 'Disetujui customer pada approval #'.$request->id_service_approval_request])->save();
+                $detail->forceFill(['id_servis' => $service->id_servis, 'id_jenis_servis' => $item->id_jenis_servis, 'deskripsi_pekerjaan' => $item->description, 'biaya' => $item->total_snapshot, 'catatan' => 'Temuan dikonfirmasi member: '.$request->title.' ('.$request->reason.')'])->save();
                 $item->forceFill(['applied_detail_id' => $detail->id_detail_servis])->save();
             }
             if ($item->item_type === 'sparepart' && !$item->applied_sparepart_id) {
@@ -218,8 +221,13 @@ class ServiceExecutionService
     {
         return DB::transaction(function () use ($serviceId, $actorId): ServiceQualityControl {
             $service = Servis::lockForUpdate()->findOrFail($serviceId);
-            app(WorkOrderAuthorizationService::class)->assertCurrentActor($service, 'qc');
-            app(InspectionIntegrityService::class)->inspector($actorId, $service);
+            $auth = app(WorkOrderAuthorizationService::class);
+            if (auth()->check() && auth()->user()->roleKey() === 'mechanic') {
+                $auth->assertCurrentActor($service, 'work');
+            } else {
+                $auth->assertCurrentActor($service, 'qc');
+                app(InspectionIntegrityService::class)->inspector($actorId, $service);
+            }
             $this->assertReadyForQualityControl($serviceId);
             if ($service->status !== 'dikerjakan' || $service->id_transaksi) throw new RuntimeException('QC hanya dapat dimulai saat pengerjaan aktif.');
             $qc = ServiceQualityControl::firstOrCreate(['id_servis' => $serviceId], ['status' => 'not_started']);

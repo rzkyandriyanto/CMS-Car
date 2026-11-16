@@ -33,19 +33,9 @@ class AuthController extends Controller
             ->header('Expires', 'Sun, 02 Jan 1990 00:00:00 GMT');
     }
 
-    public function createPetugas(Request $request): \Illuminate\Http\Response|RedirectResponse
+    public function createPetugas(Request $request): RedirectResponse
     {
-        if (Auth::check()) {
-            Auth::logout();
-            $request->session()->invalidate();
-            $request->session()->regenerateToken();
-        }
-
-        return response()
-            ->view('auth.login-petugas')
-            ->header('Cache-Control', 'no-cache, no-store, max-age=0, must-revalidate')
-            ->header('Pragma', 'no-cache')
-            ->header('Expires', 'Sun, 02 Jan 1990 00:00:00 GMT');
+        return redirect()->route('login');
     }
 
     public function store(Request $request, MemberAccessService $access): RedirectResponse

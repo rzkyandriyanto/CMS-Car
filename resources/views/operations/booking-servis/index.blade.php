@@ -3,506 +3,170 @@
 @section('title', 'Antrean Booking Servis · Service Advisor · YZA Automotive')
 
 @section('content')
-<div class="advisor-booking-page">
-    <style>
-        .advisor-booking-page {
-            max-width: 1520px;
-            margin: 0 auto;
-            padding: 8px 16px 56px;
-            font-family: inherit;
-            color: #0f172a;
-        }
+@php
+    $isAdminPrefix = request()->is('admin/*');
+    $indexRoute = route($isAdminPrefix ? 'admin.booking-servis.index' : 'petugas.booking-servis.index');
+    $activeStatus = (string) request('status', '');
+    $searchQuery = trim((string) request('q', ''));
+    $hasFilter = $activeStatus !== '' || $searchQuery !== '';
 
-        /* Hero Section */
-        .adv-hero {
-            background: linear-gradient(135deg, #090a0f 0%, #151821 55%, #1e2330 100%);
-            color: #ffffff;
-            border-radius: 20px;
-            padding: 28px 32px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            flex-wrap: wrap;
-            gap: 20px;
-            box-shadow: 0 10px 30px rgba(15, 23, 42, 0.16);
-            border: 1px solid rgba(255, 255, 255, 0.08);
-            margin-bottom: 24px;
-            position: relative;
-            overflow: hidden;
-        }
-        .adv-hero::before {
-            content: '';
-            position: absolute;
-            top: -60px;
-            right: -60px;
-            width: 220px;
-            height: 220px;
-            background: radial-gradient(circle, rgba(239, 27, 45, 0.2) 0%, rgba(239, 27, 45, 0) 70%);
-            border-radius: 50%;
-            pointer-events: none;
-        }
-        .adv-hero-eyebrow {
-            color: #ef1b2d;
-            font-size: 11px;
-            font-weight: 800;
-            text-transform: uppercase;
-            letter-spacing: 0.14em;
-            margin-bottom: 6px;
-            display: inline-flex;
-            align-items: center;
-            gap: 8px;
-        }
-        .adv-hero-eyebrow::before {
-            content: '';
-            width: 6px;
-            height: 6px;
-            background: #ef1b2d;
-            border-radius: 50%;
-        }
-        .adv-hero h1 {
-            font-size: clamp(24px, 3.2vw, 34px);
-            font-weight: 800;
-            letter-spacing: -0.03em;
-            margin: 0 0 6px;
-            color: #ffffff;
-            line-height: 1.2;
-        }
-        .adv-hero p {
-            color: #94a3b8;
-            font-size: 14px;
-            margin: 0;
-            max-width: 640px;
-            line-height: 1.5;
-        }
+    $totalAll = (int) ($stats['total'] ?? $rows->total());
+    $pendingCount = (int) ($stats['menunggu'] ?? 0);
+    $confirmedCount = (int) ($stats['diterima'] ?? 0);
+    $activeWoCount = (int) ($stats['diproses'] ?? 0);
+@endphp
 
-        /* KPI Callout Grid */
-        .adv-kpi-grid {
-            display: grid;
-            grid-template-columns: repeat(4, 1fr);
-            gap: 16px;
-            margin-bottom: 24px;
-        }
-        .adv-kpi-card {
-            background: #ffffff;
-            border: 1px solid rgba(226, 232, 240, 0.85);
-            border-radius: 16px;
-            padding: 18px 20px;
-            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.02);
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            transition: all 0.2s ease;
-        }
-        .adv-kpi-card:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 8px 20px rgba(15, 23, 42, 0.06);
-            border-color: #cbd5e1;
-        }
-        .adv-kpi-label {
-            font-size: 11px;
-            font-weight: 700;
-            text-transform: uppercase;
-            letter-spacing: 0.06em;
-            color: #64748b;
-            margin-bottom: 6px;
-        }
-        .adv-kpi-value {
-            font-size: 28px;
-            font-weight: 800;
-            letter-spacing: -0.03em;
-            color: #0f172a;
-            line-height: 1;
-        }
-        .adv-kpi-icon {
-            width: 44px;
-            height: 44px;
-            border-radius: 12px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 20px;
-        }
-
-        /* Workspace Card */
-        .adv-card {
-            background: #ffffff;
-            border: 1px solid rgba(226, 232, 240, 0.85);
-            border-radius: 18px;
-            padding: 24px;
-            margin-bottom: 24px;
-            box-shadow: 0 2px 8px rgba(15, 23, 42, 0.03);
-        }
-
-        /* Toolbar */
-        .adv-toolbar {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            flex-wrap: wrap;
-            gap: 16px;
-            margin-bottom: 22px;
-            padding-bottom: 18px;
-            border-bottom: 1px solid #f1f5f9;
-        }
-        .adv-filter-form {
-            display: flex;
-            gap: 10px;
-            flex-wrap: wrap;
-            align-items: center;
-            flex: 1;
-        }
-        .adv-input, .adv-select {
-            padding: 10px 14px;
-            border: 1px solid #cbd5e1;
-            border-radius: 10px;
-            font-size: 13px;
-            outline: none;
-            color: #0f172a;
-            background: #ffffff;
-            transition: all 0.15s ease;
-        }
-        .adv-input:focus, .adv-select:focus {
-            border-color: #ef1b2d;
-            box-shadow: 0 0 0 3px rgba(239, 27, 45, 0.12);
-        }
-        .adv-input {
-            min-width: 280px;
-            flex: 1;
-        }
-
-        /* View Toggle Buttons */
-        .adv-view-switcher {
-            display: inline-flex;
-            background: #f1f5f9;
-            padding: 4px;
-            border-radius: 10px;
-            gap: 4px;
-        }
-        .adv-view-btn {
-            border: none;
-            background: transparent;
-            padding: 6px 12px;
-            border-radius: 8px;
-            font-size: 12px;
-            font-weight: 700;
-            color: #64748b;
-            cursor: pointer;
-            transition: all 0.15s ease;
-            display: inline-flex;
-            align-items: center;
-            gap: 6px;
-        }
-        .adv-view-btn.is-active {
-            background: #ffffff;
-            color: #0f172a;
-            box-shadow: 0 2px 6px rgba(15, 23, 42, 0.08);
-        }
-
-        /* Minimalist Table */
-        .adv-table-wrap {
-            overflow-x: auto;
-            border: 1px solid rgba(226, 232, 240, 0.85);
-            border-radius: 14px;
-            background: #ffffff;
-        }
-        .adv-table {
-            width: 100%;
-            border-collapse: collapse;
-            font-size: 13px;
-            text-align: left;
-            min-width: 920px;
-        }
-        .adv-table th {
-            background: #f8fafc;
-            color: #475569;
-            padding: 13px 16px;
-            font-size: 11px;
-            font-weight: 700;
-            text-transform: uppercase;
-            letter-spacing: 0.06em;
-            border-bottom: 1px solid #e2e8f0;
-            white-space: nowrap;
-        }
-        .adv-table td {
-            padding: 14px 16px;
-            border-bottom: 1px solid #f1f5f9;
-            vertical-align: middle;
-        }
-        .adv-table tbody tr {
-            transition: background 0.15s ease;
-        }
-        .adv-table tbody tr:hover {
-            background: #f8fafc;
-        }
-        .adv-table tbody tr:last-child td {
-            border-bottom: none;
-        }
-
-        /* Monospace Identifiers */
-        .adv-mono-code {
-            font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
-            font-size: 12px;
-            font-weight: 700;
-            color: #0f172a;
-            letter-spacing: -0.01em;
-        }
-        .adv-plat-pill {
-            font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
-            display: inline-block;
-            background: #0f172a;
-            color: #ffffff;
-            font-size: 11.5px;
-            font-weight: 700;
-            padding: 3px 8px;
-            border-radius: 6px;
-            letter-spacing: 0.05em;
-        }
-
-        /* Semi-transparent Status Badges */
-        .adv-badge {
-            display: inline-flex;
-            align-items: center;
-            gap: 6px;
-            font-size: 11px;
-            font-weight: 700;
-            padding: 4px 10px;
-            border-radius: 999px;
-            white-space: nowrap;
-        }
-        .adv-badge-dot {
-            width: 6px;
-            height: 6px;
-            border-radius: 50%;
-        }
-        .badge-pending {
-            background: rgba(245, 158, 11, 0.1);
-            color: #d97706;
-            border: 1px solid rgba(245, 158, 11, 0.25);
-        }
-        .badge-pending .adv-badge-dot { background: #f59e0b; }
-        
-        .badge-confirmed {
-            background: rgba(59, 130, 246, 0.1);
-            color: #2563eb;
-            border: 1px solid rgba(59, 130, 246, 0.25);
-        }
-        .badge-confirmed .adv-badge-dot { background: #3b82f6; }
-
-        .badge-processing {
-            background: rgba(139, 92, 246, 0.1);
-            color: #7c3aed;
-            border: 1px solid rgba(139, 92, 246, 0.25);
-        }
-        .badge-processing .adv-badge-dot { background: #8b5cf6; }
-
-        .badge-completed {
-            background: rgba(16, 185, 129, 0.1);
-            color: #059669;
-            border: 1px solid rgba(16, 185, 129, 0.25);
-        }
-        .badge-completed .adv-badge-dot { background: #10b981; }
-
-        .badge-cancelled {
-            background: rgba(239, 68, 68, 0.1);
-            color: #dc2626;
-            border: 1px solid rgba(239, 68, 68, 0.25);
-        }
-        .badge-cancelled .adv-badge-dot { background: #ef4444; }
-
-        /* Interactive Queue Cards View */
-        .adv-queue-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(360px, 1fr));
-            gap: 18px;
-        }
-        .adv-queue-card {
-            background: #ffffff;
-            border: 1px solid rgba(226, 232, 240, 0.9);
-            border-radius: 16px;
-            padding: 20px;
-            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.02);
-            display: flex;
-            flex-direction: column;
-            justify-content: space-between;
-            transition: all 0.2s ease;
-        }
-        .adv-queue-card:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 10px 24px rgba(15, 23, 42, 0.07);
-            border-color: #cbd5e1;
-        }
-        .adv-queue-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: flex-start;
-            margin-bottom: 14px;
-            padding-bottom: 12px;
-            border-bottom: 1px solid #f1f5f9;
-        }
-        .adv-queue-body {
-            margin-bottom: 16px;
-        }
-        .adv-queue-info-row {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            font-size: 12.5px;
-            padding: 4px 0;
-        }
-        .adv-queue-complaint {
-            background: #f8fafc;
-            border-left: 3px solid #ef1b2d;
-            border-radius: 0 8px 8px 0;
-            padding: 10px 12px;
-            font-size: 12px;
-            color: #334155;
-            margin-top: 10px;
-            line-height: 1.4;
-        }
-        .adv-queue-footer {
-            display: flex;
-            gap: 8px;
-            justify-content: flex-end;
-            padding-top: 12px;
-            border-top: 1px solid #f1f5f9;
-        }
-
-        /* Buttons */
-        .adv-btn {
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            gap: 6px;
-            padding: 8px 14px;
-            border-radius: 10px;
-            font-size: 12px;
-            font-weight: 700;
-            border: 1px solid transparent;
-            cursor: pointer;
-            text-decoration: none;
-            transition: all 0.15s ease;
-            white-space: nowrap;
-        }
-        .adv-btn-primary { background: #ef1b2d; color: #fff; }
-        .adv-btn-primary:hover { background: #dc1829; box-shadow: 0 2px 8px rgba(239, 27, 45, 0.3); }
-        .adv-btn-dark { background: #0f172a; color: #fff; }
-        .adv-btn-dark:hover { background: #1e293b; }
-        .adv-btn-outline { background: #fff; color: #0f172a; border-color: #cbd5e1; }
-        .adv-btn-outline:hover { background: #f8fafc; border-color: #94a3b8; }
-        .adv-btn-success { background: #059669; color: #fff; }
-        .adv-btn-success:hover { background: #047857; }
-        .adv-btn-danger-outline { background: #fff; color: #ef1b2d; border-color: #fecaca; }
-        .adv-btn-danger-outline:hover { background: #fef2f2; }
-
-        @media (max-width: 1024px) {
-            .adv-kpi-grid { grid-template-columns: repeat(2, 1fr); }
-        }
-        @media (max-width: 640px) {
-            .adv-kpi-grid { grid-template-columns: 1fr; }
-            .adv-hero { padding: 22px; }
-            .adv-queue-grid { grid-template-columns: 1fr; }
-        }
-    </style>
-
-    <!-- Header Section -->
-    <header class="adv-hero">
-        <div>
-            <div class="adv-hero-eyebrow">Service Advisor Command Hub</div>
-            <h1>Antrean Booking Servis</h1>
-            <p>Kelola seluruh agenda reservasi servis berkala & perbaikan, konfirmasi slot kedatangan customer, serta lakukan check-in fisik kendaraan.</p>
+<div class="bsa-page">
+    <header class="bsa-header">
+        <div class="bsa-header-copy">
+            <div class="bsa-eyebrow">
+                <span class="bsa-eyebrow-dot" aria-hidden="true"></span>
+                <span>Service Advisor · Antrean Booking</span>
+            </div>
+            <h1 class="bsa-title">Antrean Booking Servis</h1>
+            <p class="bsa-subtitle">Kelola reservasi servis berkala, konfirmasi slot kedatangan pelanggan, dan lakukan check-in unit.</p>
         </div>
-        <div style="display:flex; gap:10px; align-items:center;">
-            <a href="{{ route('petugas.dashboard') }}?tab=advisor" class="adv-btn adv-btn-outline" style="border-color:rgba(255,255,255,0.25); color:#fff; background:rgba(255,255,255,0.06);">
-                ← Kembali ke Command Center
+        <div class="bsa-header-actions">
+            <a href="{{ route('staff.dashboard') }}" class="bsa-btn bsa-btn-ghost">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                    <path d="m15 18-6-6 6-6"/>
+                </svg>
+                <span>Kembali ke Dashboard</span>
             </a>
         </div>
     </header>
 
     @if(session('success'))
-        <div style="background:#ecfdf5; border:1px solid #a7f3d0; color:#065f46; border-radius:14px; padding:14px 18px; margin-bottom:20px; font-weight:600; font-size:13.5px; display:flex; align-items:center; gap:8px;">
-            <span>✓</span> {{ session('success') }}
+        <div class="bsa-alert is-success" role="status">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/>
+            </svg>
+            <span>{{ session('success') }}</span>
         </div>
     @endif
 
-    <!-- KPI Metric Cards Grid -->
-    @php
-        $totalAll = $rows->total();
-        $pendingCount = \App\Models\BookingServis::where('status', 'menunggu')->count();
-        $confirmedCount = \App\Models\BookingServis::where('status', 'diterima')->count();
-        $activeWoCount = \App\Models\BookingServis::where('status', 'diproses')->count();
-    @endphp
-    <div class="adv-kpi-grid">
-        <div class="adv-kpi-card">
-            <div>
-                <div class="adv-kpi-label">Total Booking Masuk</div>
-                <div class="adv-kpi-value">{{ number_format($totalAll) }}</div>
-            </div>
-            <div class="adv-kpi-icon" style="background:#f1f5f9; color:#0f172a;">📋</div>
+    @if($errors->any())
+        <div class="bsa-alert is-error" role="alert">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>
+            </svg>
+            <span>{{ $errors->first() }}</span>
         </div>
-        <div class="adv-kpi-card">
-            <div>
-                <div class="adv-kpi-label">Menunggu Konfirmasi</div>
-                <div class="adv-kpi-value" style="color:#d97706;">{{ number_format($pendingCount) }}</div>
-            </div>
-            <div class="adv-kpi-icon" style="background:rgba(245, 158, 11, 0.1); color:#d97706;">⏳</div>
-        </div>
-        <div class="adv-kpi-card">
-            <div>
-                <div class="adv-kpi-label">Siap Check-in / Diterima</div>
-                <div class="adv-kpi-value" style="color:#2563eb;">{{ number_format($confirmedCount) }}</div>
-            </div>
-            <div class="adv-kpi-icon" style="background:rgba(59, 130, 246, 0.1); color:#2563eb;">🚗</div>
-        </div>
-        <div class="adv-kpi-card">
-            <div>
-                <div class="adv-kpi-label">Work Order Aktif</div>
-                <div class="adv-kpi-value" style="color:#7c3aed;">{{ number_format($activeWoCount) }}</div>
-            </div>
-            <div class="adv-kpi-icon" style="background:rgba(139, 92, 246, 0.1); color:#7c3aed;">🔧</div>
-        </div>
-    </div>
+    @endif
 
-    <!-- Main Workspace -->
-    <div class="adv-card">
-        <!-- Toolbar: Search, Filters & View Toggle -->
-        <div class="adv-toolbar">
-            <form class="adv-filter-form" method="GET">
-                <input class="adv-input" name="q" value="{{ request('q') }}" placeholder="Cari kode booking, nama customer, no. polisi, atau model...">
-                <select class="adv-select" name="status">
-                    <option value="">Semua Status Reservasi</option>
-                    @foreach(['menunggu' => 'Pending (Menunggu)', 'diterima' => 'Dikonfirmasi (Siap Check-in)', 'diproses' => 'Diproses (Work Order)', 'selesai' => 'Selesai', 'ditolak' => 'Ditolak', 'dibatalkan' => 'Dibatalkan'] as $val => $lbl)
-                        <option value="{{ $val }}" @selected(request('status') === $val)>{{ $lbl }}</option>
-                    @endforeach
-                </select>
-                <button type="submit" class="adv-btn adv-btn-dark">Filter</button>
-                @if(request('q') || request('status'))
-                    <a href="{{ route('petugas.booking-servis.index') }}" class="adv-btn adv-btn-outline">Reset</a>
+    <section class="bsa-kpis" aria-label="Ringkasan antrean booking servis">
+        <a href="{{ $indexRoute }}" class="bsa-kpi {{ $activeStatus === '' ? 'is-active' : '' }}">
+            <div class="bsa-kpi-body">
+                <span class="bsa-kpi-label">Total Booking Masuk</span>
+                <strong class="bsa-kpi-value">{{ number_format($totalAll) }}</strong>
+            </div>
+            <span class="bsa-kpi-icon is-neutral" aria-hidden="true">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">
+                    <rect x="8" y="2" width="8" height="4" rx="1"/><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><path d="M12 11h4"/><path d="M12 16h4"/><path d="M8 11h.01"/><path d="M8 16h.01"/>
+                </svg>
+            </span>
+        </a>
+
+        <a href="{{ $indexRoute }}?status=menunggu" class="bsa-kpi {{ $activeStatus === 'menunggu' ? 'is-active' : '' }}">
+            <div class="bsa-kpi-body">
+                <span class="bsa-kpi-label">Menunggu Konfirmasi</span>
+                <strong class="bsa-kpi-value is-amber">{{ number_format($pendingCount) }}</strong>
+            </div>
+            <span class="bsa-kpi-icon is-amber" aria-hidden="true">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">
+                    <circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>
+                </svg>
+            </span>
+        </a>
+
+        <a href="{{ $indexRoute }}?status=diterima" class="bsa-kpi {{ $activeStatus === 'diterima' ? 'is-active' : '' }}">
+            <div class="bsa-kpi-body">
+                <span class="bsa-kpi-label">Siap Check-in</span>
+                <strong class="bsa-kpi-value is-blue">{{ number_format($confirmedCount) }}</strong>
+            </div>
+            <span class="bsa-kpi-icon is-blue" aria-hidden="true">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/>
+                </svg>
+            </span>
+        </a>
+
+        <a href="{{ $indexRoute }}?status=diproses" class="bsa-kpi {{ $activeStatus === 'diproses' ? 'is-active' : '' }}">
+            <div class="bsa-kpi-body">
+                <span class="bsa-kpi-label">Work Order Aktif</span>
+                <strong class="bsa-kpi-value is-violet">{{ number_format($activeWoCount) }}</strong>
+            </div>
+            <span class="bsa-kpi-icon is-violet" aria-hidden="true">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/>
+                </svg>
+            </span>
+        </a>
+    </section>
+
+    <section class="bsa-panel">
+        <div class="bsa-toolbar">
+            <form method="GET" action="{{ $indexRoute }}" class="bsa-filter-form" data-bsa-filter-form>
+                <div class="bsa-search-box">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                        <circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/>
+                    </svg>
+                    <input
+                        type="search"
+                        name="q"
+                        value="{{ $searchQuery }}"
+                        placeholder="Cari kode booking, customer, nopol, atau model..."
+                        aria-label="Cari booking servis"
+                    >
+                </div>
+
+                <div class="bsa-select-wrap">
+                    <select name="status" aria-label="Filter status reservasi" data-bsa-auto-submit>
+                        <option value="">Semua Status</option>
+                        @foreach(['menunggu' => 'Menunggu', 'diterima' => 'Dikonfirmasi (Siap Check-in)', 'diproses' => 'WO Aktif', 'selesai' => 'Selesai', 'ditolak' => 'Ditolak', 'dibatalkan' => 'Dibatalkan'] as $val => $lbl)
+                            <option value="{{ $val }}" @selected($activeStatus === $val)>{{ $lbl }}</option>
+                        @endforeach
+                    </select>
+                    <svg class="bsa-select-chevron" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                        <path d="m6 9 6 6 6-6"/>
+                    </svg>
+                </div>
+
+                <button type="submit" class="bsa-btn bsa-btn-primary">Filter</button>
+                @if($hasFilter)
+                    <a href="{{ $indexRoute }}" class="bsa-btn bsa-btn-ghost">Reset</a>
                 @endif
             </form>
 
-            <div class="adv-view-switcher" role="tablist">
-                <button type="button" class="adv-view-btn is-active" id="btn-view-table" onclick="setViewMode('table')">
-                    ☰ Tabel Interaktif
+            <div class="bsa-view-switcher" role="tablist" aria-label="Mode tampilan">
+                <button type="button" class="bsa-view-btn is-active" id="btn-view-table" onclick="setViewMode('table')">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                        <line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/>
+                    </svg>
+                    <span>Tabel</span>
                 </button>
-                <button type="button" class="adv-view-btn" id="btn-view-cards" onclick="setViewMode('cards')">
-                    ▦ Kartu Antrean
+                <button type="button" class="bsa-view-btn" id="btn-view-cards" onclick="setViewMode('cards')">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                        <rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/>
+                    </svg>
+                    <span>Kartu</span>
                 </button>
             </div>
         </div>
 
         <!-- 1. Table View -->
         <div id="view-table-container">
-            <div class="adv-table-wrap">
-                <table class="adv-table">
+            <div class="bsa-table-wrap">
+                <table class="bsa-table">
                     <thead>
                         <tr>
-                            <th style="width:40px;">No</th>
-                            <th>Kode Booking</th>
-                            <th>Customer & Kontak</th>
-                            <th>Kendaraan Unit</th>
-                            <th>Layanan & Catatan Keluhan</th>
-                            <th>Jadwal Kedatangan</th>
-                            <th>Status Reservasi</th>
+                            <th style="width:42px;">No</th>
+                            <th>Booking</th>
+                            <th>Customer</th>
+                            <th>Unit</th>
+                            <th>Layanan &amp; Keluhan</th>
+                            <th>Jadwal</th>
+                            <th>Status</th>
                             <th style="text-align:right;">Aksi</th>
                         </tr>
                     </thead>
@@ -510,69 +174,105 @@
                         @forelse($rows as $b)
                             @php
                                 $badge = match($b->status) {
-                                    'menunggu' => ['cls' => 'badge-pending', 'lbl' => 'Pending'],
-                                    'diterima' => ['cls' => 'badge-confirmed', 'lbl' => 'Dikonfirmasi'],
-                                    'diproses' => ['cls' => 'badge-processing', 'lbl' => 'WO Aktif'],
-                                    'selesai' => ['cls' => 'badge-completed', 'lbl' => 'Selesai'],
-                                    'ditolak' => ['cls' => 'badge-cancelled', 'lbl' => 'Ditolak'],
-                                    'dibatalkan' => ['cls' => 'badge-cancelled', 'lbl' => 'Dibatalkan'],
-                                    default => ['cls' => 'badge-pending', 'lbl' => ucfirst($b->status)],
+                                    'menunggu' => ['cls' => 'is-amber', 'lbl' => 'Pending'],
+                                    'diterima' => ['cls' => 'is-blue', 'lbl' => 'Dikonfirmasi'],
+                                    'diproses' => ['cls' => 'is-violet', 'lbl' => 'WO Aktif'],
+                                    'selesai' => ['cls' => 'is-emerald', 'lbl' => 'Selesai'],
+                                    'ditolak' => ['cls' => 'is-crimson', 'lbl' => 'Ditolak'],
+                                    'dibatalkan' => ['cls' => 'is-crimson', 'lbl' => 'Dibatalkan'],
+                                    default => ['cls' => 'is-slate', 'lbl' => ucfirst($b->status)],
                                 };
-                                $detailRoute = $role === 'admin' ? route('admin.booking-servis.show', $b) : route('petugas.booking-servis.show', $b);
+                                $detailRoute = route($isAdminPrefix ? 'admin.booking-servis.show' : 'petugas.booking-servis.show', $b);
+                                $actionRoute = route($isAdminPrefix ? 'admin.booking-servis.action' : 'petugas.booking-servis.action', [$b, 'confirm']);
                             @endphp
                             <tr>
-                                <td style="color:#64748b; font-size:12px;">{{ $loop->iteration + ($rows->currentPage() - 1) * $rows->perPage() }}</td>
+                                <td class="bsa-cell-num">{{ $loop->iteration + ($rows->currentPage() - 1) * $rows->perPage() }}</td>
                                 <td>
-                                    <div class="adv-mono-code">{{ $b->kode_booking }}</div>
-                                    <small style="color:#64748b; font-size:11px;">Dibuat: {{ $b->created_at?->format('d/m/Y H:i') }}</small>
+                                    <a href="{{ $detailRoute }}" class="bsa-mono-code">{{ $b->kode_booking }}</a>
+                                    <span class="bsa-subtext">{{ $b->created_at?->format('d/m/Y H:i') }}</span>
                                 </td>
                                 <td>
-                                    <strong style="color:#0f172a; display:block;">{{ $b->pelanggan?->nama_lengkap ?: 'Customer Umum' }}</strong>
-                                    <small style="color:#64748b; font-size:11px;">📞 {{ $b->pelanggan?->no_telepon ?: '—' }}</small>
+                                    <span class="bsa-primary-text">{{ $b->pelanggan?->nama_lengkap ?: 'Customer Umum' }}</span>
+                                    <span class="bsa-subtext">{{ $b->pelanggan?->no_telepon ?: '—' }}</span>
                                 </td>
                                 <td>
-                                    <span class="adv-plat-pill">{{ $b->kendaraan?->nomor_polisi ?: 'Plat —' }}</span>
-                                    <div style="font-size:12px; color:#475569; margin-top:3px;">
-                                        {{ $b->kendaraan?->merk }} {{ $b->kendaraan?->model }}
-                                        <span style="color:#94a3b8;">· {{ number_format((int)($b->kendaraan?->kilometer ?? 0)) }} km</span>
-                                    </div>
+                                    <span class="bsa-plate">{{ $b->kendaraan?->nomor_polisi ?: 'Plat —' }}</span>
+                                    <span class="bsa-subtext">{{ trim(($b->kendaraan?->merk ?? '').' '.($b->kendaraan?->model ?? '')) ?: 'Unit' }} · {{ number_format((int)($b->kendaraan?->kilometer ?? 0)) }} km</span>
                                 </td>
                                 <td>
-                                    <strong style="color:#0f172a; font-size:12.5px;">{{ $b->jenisServis?->nama_servis ?: 'General Service' }}</strong>
-                                    <div style="color:#64748b; font-size:11.5px; max-width:260px; line-height:1.3; margin-top:2px;" title="{{ $b->keluhan }}">
-                                        {{ Str::limit($b->keluhan ?: 'Tidak ada keluhan khusus', 36) }}
-                                    </div>
+                                    <span class="bsa-primary-text">{{ $b->jenisServis?->nama_servis ?: 'General Service' }}</span>
+                                    <span class="bsa-subtext" title="{{ $b->keluhan }}">{{ Str::limit($b->keluhan ?: 'Tidak ada keluhan khusus', 38) }}</span>
+                                    <span class="bsa-mech-tag {{ $b->preferredPetugas ? 'is-chosen' : 'is-unassigned' }}">
+                                        @if($b->servis?->petugas)
+                                            Mekanik WO: {{ $b->servis->petugas->nama_lengkap }}
+                                        @elseif($b->preferredPetugas)
+                                            Pilihan Member: {{ $b->preferredPetugas->nama_lengkap }}
+                                        @else
+                                            Mekanik: Belum dipilih (SA tentukan)
+                                        @endif
+                                    </span>
                                 </td>
                                 <td>
-                                    <strong style="color:#0f172a;">{{ \Carbon\Carbon::parse($b->tanggal)->translatedFormat('d M Y') }}</strong>
-                                    <div style="color:#64748b; font-size:11.5px;">⏰ {{ substr((string)$b->jam, 0, 5) }} WIB</div>
+                                    <span class="bsa-primary-text">{{ \Carbon\Carbon::parse($b->tanggal)->translatedFormat('d M Y') }}</span>
+                                    <span class="bsa-subtext">{{ substr((string)$b->jam, 0, 5) }} WIB</span>
                                 </td>
                                 <td>
-                                    <span class="adv-badge {{ $badge['cls'] }}">
-                                        <span class="adv-badge-dot"></span>
+                                    <span class="bsa-status {{ $badge['cls'] }}">
+                                        <i class="bsa-status-dot" aria-hidden="true"></i>
                                         {{ $badge['lbl'] }}
                                     </span>
                                 </td>
                                 <td style="text-align:right;">
-                                    <div style="display:inline-flex; gap:6px; justify-content:flex-end; align-items:center;">
+                                    <div class="bsa-row-actions">
                                         @if($b->status === 'menunggu')
-                                            <form method="POST" action="{{ route($role==='admin'?'admin.booking-servis.action':'petugas.booking-servis.action', [$b, 'confirm']) }}" onsubmit="return confirm('Konfirmasi booking {{ $b->kode_booking }}?')">
+                                            <form method="POST" action="{{ $actionRoute }}" onsubmit="return confirm('Konfirmasi booking {{ $b->kode_booking }}?')">
                                                 @csrf
-                                                <button type="submit" class="adv-btn adv-btn-success" title="Terima Reservasi">✓ Terima</button>
+                                                <button type="submit" class="bsa-btn-sm is-success" title="Terima Reservasi">Terima</button>
                                             </form>
                                         @elseif($b->status === 'diterima' && !$b->servis)
-                                            <a class="adv-btn adv-btn-primary" href="{{ $detailRoute }}" title="Mobil Tiba - Check-in Sekarang">Check-in 🚗</a>
+                                            @php
+                                                $checkinUrl = route($isAdminPrefix ? 'admin.servis.from-booking' : 'petugas.servis.from-booking', $b);
+                                                $unitLabel = trim(($b->kendaraan?->nomor_polisi ?: 'Plat —').' · '.($b->kendaraan?->merk ?? '').' '.($b->kendaraan?->model ?? ''));
+                                            @endphp
+                                            <button
+                                                type="button"
+                                                class="bsa-btn-sm is-accent"
+                                                title="Mobil Tiba - Check-in Sekarang"
+                                                data-bsa-checkin
+                                                data-action="{{ $checkinUrl }}"
+                                                data-kode="{{ $b->kode_booking }}"
+                                                data-customer="{{ $b->pelanggan?->nama_lengkap ?: 'Customer Umum' }}"
+                                                data-unit="{{ $unitLabel }}"
+                                                data-km="{{ (int)($b->kendaraan?->kilometer ?? 0) }}"
+                                                data-catatan="{{ $b->catatan }}"
+                                                data-preferred-mechanic="{{ $b->preferred_id_petugas }}"
+                                                data-preferred-mechanic-name="{{ $b->preferredPetugas?->nama_lengkap }}"
+                                            >Check-in</button>
                                         @endif
-                                        <a class="adv-btn adv-btn-outline" href="{{ $detailRoute }}">Detail →</a>
+                                        <a class="bsa-btn-sm is-outline" href="{{ $detailRoute }}">
+                                            <span>Detail</span>
+                                            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                                                <path d="M5 12h14"/><path d="m13 6 6 6-6 6"/>
+                                            </svg>
+                                        </a>
                                     </div>
                                 </td>
                             </tr>
                         @empty
                             <tr>
-                                <td colspan="8" style="text-align:center; padding:44px 20px; color:#64748b;">
-                                    <div style="font-size:32px; margin-bottom:8px;">🚗</div>
-                                    <strong style="display:block; font-size:15px; color:#0f172a; margin-bottom:4px;">Tidak Ada Antrean Booking</strong>
-                                    <p style="font-size:13px; margin:0;">Tidak ditemukan jadwal reservasi servis dengan kriteria filter saat ini.</p>
+                                <td colspan="8" class="bsa-empty-cell">
+                                    <div class="bsa-empty">
+                                        <span class="bsa-empty-icon" aria-hidden="true">
+                                            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                                                <rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/>
+                                            </svg>
+                                        </span>
+                                        <h3>Tidak Ada Antrean Booking</h3>
+                                        <p>Tidak ditemukan jadwal reservasi servis dengan kriteria filter saat ini.</p>
+                                        @if($hasFilter)
+                                            <a href="{{ $indexRoute }}" class="bsa-btn bsa-btn-ghost">Reset Filter</a>
+                                        @endif
+                                    </div>
                                 </td>
                             </tr>
                         @endforelse
@@ -581,117 +281,1198 @@
             </div>
         </div>
 
-        <!-- 2. Queue Cards View (Kanban / Cards) -->
-        <div id="view-cards-container" style="display:none;">
-            <div class="adv-queue-grid">
+        <!-- 2. Queue Cards View -->
+        <div id="view-cards-container" style="display:none; padding: 18px;">
+            <div class="bsa-queue-grid">
                 @forelse($rows as $b)
                     @php
                         $badge = match($b->status) {
-                            'menunggu' => ['cls' => 'badge-pending', 'lbl' => 'Pending'],
-                            'diterima' => ['cls' => 'badge-confirmed', 'lbl' => 'Siap Check-in'],
-                            'diproses' => ['cls' => 'badge-processing', 'lbl' => 'WO Aktif'],
-                            'selesai' => ['cls' => 'badge-completed', 'lbl' => 'Selesai'],
-                            'ditolak' => ['cls' => 'badge-cancelled', 'lbl' => 'Ditolak'],
-                            'dibatalkan' => ['cls' => 'badge-cancelled', 'lbl' => 'Dibatalkan'],
-                            default => ['cls' => 'badge-pending', 'lbl' => ucfirst($b->status)],
+                            'menunggu' => ['cls' => 'is-amber', 'lbl' => 'Pending'],
+                            'diterima' => ['cls' => 'is-blue', 'lbl' => 'Siap Check-in'],
+                            'diproses' => ['cls' => 'is-violet', 'lbl' => 'WO Aktif'],
+                            'selesai' => ['cls' => 'is-emerald', 'lbl' => 'Selesai'],
+                            'ditolak' => ['cls' => 'is-crimson', 'lbl' => 'Ditolak'],
+                            'dibatalkan' => ['cls' => 'is-crimson', 'lbl' => 'Dibatalkan'],
+                            default => ['cls' => 'is-slate', 'lbl' => ucfirst($b->status)],
                         };
-                        $detailRoute = $role === 'admin' ? route('admin.booking-servis.show', $b) : route('petugas.booking-servis.show', $b);
+                        $detailRoute = route($isAdminPrefix ? 'admin.booking-servis.show' : 'petugas.booking-servis.show', $b);
+                        $actionRoute = route($isAdminPrefix ? 'admin.booking-servis.action' : 'petugas.booking-servis.action', [$b, 'confirm']);
                     @endphp
-                    <div class="adv-queue-card">
+                    <article class="bsa-queue-card">
                         <div>
-                            <div class="adv-queue-header">
+                            <div class="bsa-queue-head">
                                 <div>
-                                    <span class="adv-mono-code">{{ $b->kode_booking }}</span>
-                                    <div style="font-size:11px; color:#64748b; margin-top:2px;">{{ \Carbon\Carbon::parse($b->tanggal)->translatedFormat('d M Y') }} · {{ substr((string)$b->jam, 0, 5) }} WIB</div>
+                                    <a href="{{ $detailRoute }}" class="bsa-mono-code">{{ $b->kode_booking }}</a>
+                                    <span class="bsa-subtext">{{ \Carbon\Carbon::parse($b->tanggal)->translatedFormat('d M Y') }} · {{ substr((string)$b->jam, 0, 5) }} WIB</span>
                                 </div>
-                                <span class="adv-badge {{ $badge['cls'] }}">
-                                    <span class="adv-badge-dot"></span>
+                                <span class="bsa-status {{ $badge['cls'] }}">
+                                    <i class="bsa-status-dot" aria-hidden="true"></i>
                                     {{ $badge['lbl'] }}
                                 </span>
                             </div>
 
-                            <div class="adv-queue-body">
-                                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
-                                    <span class="adv-plat-pill">{{ $b->kendaraan?->nomor_polisi ?: 'Plat —' }}</span>
-                                    <span style="font-size:12px; font-weight:700; color:#0f172a;">{{ $b->kendaraan?->merk }} {{ $b->kendaraan?->model }}</span>
+                            <div class="bsa-queue-body">
+                                <div class="bsa-queue-unit">
+                                    <span class="bsa-plate">{{ $b->kendaraan?->nomor_polisi ?: 'Plat —' }}</span>
+                                    <strong>{{ $b->kendaraan?->merk }} {{ $b->kendaraan?->model }}</strong>
                                 </div>
 
-                                <div class="adv-queue-info-row">
-                                    <span style="color:#64748b;">Customer:</span>
+                                <div class="bsa-queue-row">
+                                    <span>Customer</span>
                                     <strong>{{ $b->pelanggan?->nama_lengkap ?: 'Customer Umum' }}</strong>
                                 </div>
-                                <div class="adv-queue-info-row">
-                                    <span style="color:#64748b;">Layanan:</span>
-                                    <span style="color:#0f172a; font-weight:600;">{{ $b->jenisServis?->nama_servis ?: 'General Service' }}</span>
+                                <div class="bsa-queue-row">
+                                    <span>Layanan</span>
+                                    <strong>{{ $b->jenisServis?->nama_servis ?: 'General Service' }}</strong>
                                 </div>
-                                <div class="adv-queue-info-row">
-                                    <span style="color:#64748b;">Odometer:</span>
+                                <div class="bsa-queue-row">
+                                    <span>Odometer</span>
                                     <span>{{ number_format((int)($b->kendaraan?->kilometer ?? 0)) }} km</span>
+                                </div>
+                                <div class="bsa-queue-row">
+                                    <span>Mekanik</span>
+                                    <strong>
+                                        @if($b->servis?->petugas)
+                                            {{ $b->servis->petugas->nama_lengkap }}
+                                        @elseif($b->preferredPetugas)
+                                            {{ $b->preferredPetugas->nama_lengkap }} (Pilihan Member)
+                                        @else
+                                            Belum dipilih (SA tentukan)
+                                        @endif
+                                    </strong>
                                 </div>
 
                                 @if($b->keluhan)
-                                    <div class="adv-queue-complaint">
-                                        <strong>Keluhan:</strong> "{{ Str::limit($b->keluhan, 70) }}"
+                                    <div class="bsa-queue-complaint">
+                                        <strong>Keluhan:</strong> {{ Str::limit($b->keluhan, 90) }}
                                     </div>
                                 @endif
                             </div>
                         </div>
 
-                        <div class="adv-queue-footer">
+                        <div class="bsa-queue-footer">
                             @if($b->status === 'menunggu')
-                                <form method="POST" action="{{ route($role==='admin'?'admin.booking-servis.action':'petugas.booking-servis.action', [$b, 'confirm']) }}">
+                                <form method="POST" action="{{ $actionRoute }}">
                                     @csrf
-                                    <button type="submit" class="adv-btn adv-btn-success">✓ Terima</button>
+                                    <button type="submit" class="bsa-btn-sm is-success">Terima</button>
                                 </form>
                             @elseif($b->status === 'diterima' && !$b->servis)
-                                <a href="{{ $detailRoute }}" class="adv-btn adv-btn-primary">Check-in Fisik 🚗</a>
+                                @php
+                                    $checkinUrl = route($isAdminPrefix ? 'admin.servis.from-booking' : 'petugas.servis.from-booking', $b);
+                                    $unitLabel = trim(($b->kendaraan?->nomor_polisi ?: 'Plat —').' · '.($b->kendaraan?->merk ?? '').' '.($b->kendaraan?->model ?? ''));
+                                @endphp
+                                <button
+                                    type="button"
+                                    class="bsa-btn-sm is-accent"
+                                    data-bsa-checkin
+                                    data-action="{{ $checkinUrl }}"
+                                    data-kode="{{ $b->kode_booking }}"
+                                    data-customer="{{ $b->pelanggan?->nama_lengkap ?: 'Customer Umum' }}"
+                                    data-unit="{{ $unitLabel }}"
+                                    data-km="{{ (int)($b->kendaraan?->kilometer ?? 0) }}"
+                                    data-catatan="{{ $b->catatan }}"
+                                    data-preferred-mechanic="{{ $b->preferred_id_petugas }}"
+                                    data-preferred-mechanic-name="{{ $b->preferredPetugas?->nama_lengkap }}"
+                                >Check-in Fisik</button>
                             @endif
-                            <a href="{{ $detailRoute }}" class="adv-btn adv-btn-outline">Detail →</a>
+                            <a href="{{ $detailRoute }}" class="bsa-btn-sm is-outline">
+                                <span>Detail</span>
+                                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                                    <path d="M5 12h14"/><path d="m13 6 6 6-6 6"/>
+                                </svg>
+                            </a>
                         </div>
-                    </div>
+                    </article>
                 @empty
-                    <div style="grid-column: 1 / -1; text-align:center; padding:44px 20px; color:#64748b;">
-                        <strong style="display:block; font-size:15px; color:#0f172a; margin-bottom:4px;">Tidak Ada Antrean Booking</strong>
-                        <p style="font-size:13px; margin:0;">Tidak ditemukan jadwal reservasi servis dengan kriteria filter saat ini.</p>
+                    <div class="bsa-empty" style="grid-column: 1 / -1; padding: 36px 20px;">
+                        <h3>Tidak Ada Antrean Booking</h3>
+                        <p>Tidak ditemukan jadwal reservasi servis dengan kriteria filter saat ini.</p>
                     </div>
                 @endforelse
             </div>
         </div>
 
-        <div style="margin-top:24px; padding-top:16px; border-top:1px solid #f1f5f9;">
-            {{ $rows->links() }}
-        </div>
-    </div>
+        @if($rows->hasPages())
+            <div class="bsa-pagination">
+                {{ $rows->links() }}
+            </div>
+        @endif
+    </section>
 </div>
 
-<script>
-    function setViewMode(mode) {
-        const table = document.getElementById('view-table-container');
-        const cards = document.getElementById('view-cards-container');
-        const btnTable = document.getElementById('btn-view-table');
-        const btnCards = document.getElementById('btn-view-cards');
+<!-- Check-in Modal -->
+<div class="bsa-modal-backdrop" id="bsa-checkin-modal" hidden aria-hidden="true" role="dialog" aria-modal="true" aria-labelledby="bsa-modal-title">
+    <div class="bsa-modal-dialog" role="document">
+        <div class="bsa-modal-head">
+            <div>
+                <span class="bsa-modal-eyebrow" id="bsa-modal-kode">BOOKING</span>
+                <h2 class="bsa-modal-title" id="bsa-modal-title">Check-in Kendaraan</h2>
+                <p class="bsa-modal-sub" id="bsa-modal-meta">—</p>
+            </div>
+            <button type="button" class="bsa-modal-close" data-bsa-modal-close aria-label="Tutup modal">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                    <path d="M18 6 6 18"/><path d="m6 6 12 12"/>
+                </svg>
+            </button>
+        </div>
 
-        if (mode === 'cards') {
-            table.style.display = 'none';
-            cards.style.display = 'block';
-            btnCards.classList.add('is-active');
-            btnTable.classList.remove('is-active');
-            localStorage.setItem('yza_adv_booking_view', 'cards');
-        } else {
-            table.style.display = 'block';
-            cards.style.display = 'none';
-            btnTable.classList.add('is-active');
-            btnCards.classList.remove('is-active');
-            localStorage.setItem('yza_adv_booking_view', 'table');
-        }
+        <form method="POST" action="" id="bsa-checkin-form" class="bsa-modal-body">
+            @csrf
+
+            <div class="bsa-modal-field">
+                <label for="bsa-modal-km">Odometer Saat Masuk Bengkel (KM) <span style="color:#ef233c;">*</span></label>
+                <div class="bsa-km-input-wrap">
+                    <input type="number" id="bsa-modal-km" name="kilometer" min="0" required placeholder="Contoh: 45000">
+                    <span>KM</span>
+                </div>
+                <small class="bsa-modal-hint">Odometer tercatat sebelumnya: <strong id="bsa-modal-prev-km">0 km</strong></small>
+            </div>
+
+            <div class="bsa-modal-field">
+                <label for="bsa-modal-mechanic">Mekanik Pelaksana <span style="color:#ef233c;">*</span></label>
+                <div class="bsa-modal-select-wrap">
+                    <select id="bsa-modal-mechanic" name="id_petugas" required>
+                        <option value="">— Pilih Mekanik Pelaksana —</option>
+                        @foreach($technicians ?? [] as $tech)
+                            <option value="{{ $tech->id_petugas }}">{{ $tech->nama_lengkap }}{{ $tech->jabatan ? ' · '.$tech->jabatan : '' }}</option>
+                        @endforeach
+                    </select>
+                </div>
+                <small class="bsa-modal-hint" id="bsa-modal-mechanic-hint">Tentukan mekanik yang akan mengerjakan unit ini.</small>
+            </div>
+
+            <div class="bsa-modal-field">
+                <span class="bsa-modal-label">Checklist Kondisi Awal Unit</span>
+                <div class="bsa-checklist-grid">
+                    @foreach([
+                        'Bahan bakar 1/2 tangki atau lebih' => 'Bahan Bakar Aman (≥ 1/2)',
+                        'Ban serep & toolkit lengkap' => 'Ban Serep & Toolkit Lengkap',
+                        'Barang berharga telah dikosongkan dari kabin' => 'Barang Berharga Dikosongkan',
+                        'STNK asli terlampir bersama kunci' => 'STNK Terlampir',
+                        'Kondisi bodi eksterior mulus tanpa baret signifikan' => 'Bodi Eksterior Mulus',
+                        'Terdapat baret/lecet pemakaian pada bodi kendaraan' => 'Ada Baret / Lecet Halus',
+                    ] as $val => $label)
+                        <label class="bsa-check-pill">
+                            <input type="checkbox" value="{{ $val }}" data-bsa-checklist>
+                            <span>{{ $label }}</span>
+                        </label>
+                    @endforeach
+                </div>
+            </div>
+
+            <div class="bsa-modal-field">
+                <label for="bsa-modal-catatan">Catatan Serah Terima</label>
+                <textarea id="bsa-modal-catatan" name="catatan" rows="3" placeholder="Catat kondisi fisik unit saat diterima dari pelanggan..."></textarea>
+            </div>
+
+            <div class="bsa-modal-foot">
+                <button type="button" class="bsa-btn bsa-btn-ghost" data-bsa-modal-close>Batal</button>
+                <button type="submit" class="bsa-btn bsa-btn-primary">Simpan Check-in &amp; Terbitkan WO</button>
+            </div>
+        </form>
+    </div>
+</div>
+@endsection
+
+@push('styles')
+<style>
+.admin-main-content:has(.bsa-page),
+.admin-content:has(.bsa-page),
+main:has(.bsa-page) {
+    padding-top: 10px !important;
+}
+
+.bsa-page {
+    --bsa-ink: #0f172a;
+    --bsa-muted: #64748b;
+    --bsa-subtle: #94a3b8;
+    --bsa-line: #e2e8f0;
+    --bsa-line-soft: #f1f5f9;
+    --bsa-surface: #ffffff;
+    --bsa-bg-soft: #f8fafc;
+    --bsa-accent: #ef233c;
+
+    max-width: 1480px;
+    margin: 0 auto;
+    padding: 0 clamp(14px, 2.5vw, 28px) 48px;
+    color: var(--bsa-ink);
+}
+
+/* 1. EDITORIAL HEADER */
+.bsa-header {
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 18px;
+    flex-wrap: wrap;
+    padding-bottom: 16px;
+    margin-bottom: 18px;
+    border-bottom: 1px solid var(--bsa-line);
+}
+
+.bsa-eyebrow {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--bsa-muted);
+    margin-bottom: 6px;
+}
+
+.bsa-eyebrow-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 999px;
+    background: var(--bsa-accent);
+}
+
+.bsa-title {
+    margin: 0 0 6px;
+    font-size: clamp(1.5rem, 2.4vw, 1.95rem);
+    font-weight: 800;
+    letter-spacing: -0.03em;
+    line-height: 1.1;
+}
+
+.bsa-subtitle {
+    margin: 0;
+    font-size: 13.5px;
+    color: var(--bsa-muted);
+    line-height: 1.5;
+}
+
+/* 2. BUTTONS & ALERTS */
+.bsa-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 7px;
+    height: 38px;
+    padding: 0 14px;
+    border-radius: 10px;
+    font: inherit;
+    font-size: 13px;
+    font-weight: 600;
+    text-decoration: none;
+    cursor: pointer;
+    border: 1px solid transparent;
+    transition: background 0.16s ease, border-color 0.16s ease, color 0.16s ease;
+    white-space: nowrap;
+}
+
+.bsa-btn-primary {
+    background: var(--bsa-ink);
+    color: #ffffff;
+}
+
+.bsa-btn-primary:hover {
+    background: var(--bsa-accent);
+}
+
+.bsa-btn-ghost {
+    background: var(--bsa-surface);
+    border-color: var(--bsa-line);
+    color: var(--bsa-ink);
+}
+
+.bsa-btn-ghost:hover {
+    background: var(--bsa-bg-soft);
+    border-color: #cbd5e1;
+}
+
+.bsa-alert {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 12px 16px;
+    margin-bottom: 18px;
+    border-radius: 12px;
+    font-size: 13.5px;
+    font-weight: 600;
+}
+
+.bsa-alert.is-success {
+    background: #ecfdf5;
+    border: 1px solid #a7f3d0;
+    color: #065f46;
+}
+
+.bsa-alert.is-error {
+    background: #fef2f2;
+    border: 1px solid #fecaca;
+    color: #991b1b;
+}
+
+/* 3. KPI STRIP */
+.bsa-kpis {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 14px;
+    margin-bottom: 18px;
+}
+
+.bsa-kpi {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 15px 18px;
+    background: var(--bsa-surface);
+    border: 1px solid var(--bsa-line);
+    border-radius: 14px;
+    text-decoration: none;
+    color: inherit;
+    transition: border-color 0.18s ease, transform 0.18s ease, box-shadow 0.18s ease;
+}
+
+.bsa-kpi:hover {
+    transform: translateY(-2px);
+    border-color: #cbd5e1;
+    box-shadow: 0 8px 20px rgba(15, 23, 42, 0.04);
+}
+
+.bsa-kpi.is-active {
+    border-color: var(--bsa-ink);
+    box-shadow: 0 0 0 1px var(--bsa-ink);
+}
+
+.bsa-kpi-body {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+    min-width: 0;
+}
+
+.bsa-kpi-label {
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--bsa-muted);
+}
+
+.bsa-kpi-value {
+    font-size: 25px;
+    font-weight: 800;
+    letter-spacing: -0.03em;
+    line-height: 1;
+}
+
+.bsa-kpi-value.is-amber { color: #d97706; }
+.bsa-kpi-value.is-blue { color: #2563eb; }
+.bsa-kpi-value.is-violet { color: #7c3aed; }
+
+.bsa-kpi-icon {
+    flex: 0 0 40px;
+    width: 40px;
+    height: 40px;
+    border-radius: 10px;
+    display: grid;
+    place-items: center;
+}
+
+.bsa-kpi-icon.is-neutral { background: #f1f5f9; color: #334155; }
+.bsa-kpi-icon.is-amber { background: #fffbeb; color: #d97706; }
+.bsa-kpi-icon.is-blue { background: #eff6ff; color: #2563eb; }
+.bsa-kpi-icon.is-violet { background: #f5f3ff; color: #7c3aed; }
+
+/* 4. MAIN WORKSPACE PANEL */
+.bsa-panel {
+    background: var(--bsa-surface);
+    border: 1px solid var(--bsa-line);
+    border-radius: 16px;
+    overflow: hidden;
+}
+
+.bsa-toolbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    flex-wrap: wrap;
+    padding: 14px 18px;
+    border-bottom: 1px solid var(--bsa-line);
+}
+
+.bsa-filter-form {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex: 1 1 420px;
+    flex-wrap: wrap;
+}
+
+.bsa-search-box {
+    position: relative;
+    flex: 1 1 240px;
+    display: flex;
+    align-items: center;
+}
+
+.bsa-search-box svg {
+    position: absolute;
+    left: 12px;
+    color: var(--bsa-subtle);
+    pointer-events: none;
+}
+
+.bsa-search-box input {
+    width: 100%;
+    height: 38px;
+    padding: 0 12px 0 36px;
+    border: 1px solid var(--bsa-line);
+    border-radius: 10px;
+    background: var(--bsa-bg-soft);
+    color: var(--bsa-ink);
+    font: inherit;
+    font-size: 13px;
+    outline: none;
+}
+
+.bsa-search-box input:focus {
+    background: var(--bsa-surface);
+    border-color: var(--bsa-ink);
+}
+
+.bsa-select-wrap {
+    position: relative;
+    display: flex;
+    align-items: center;
+}
+
+.bsa-select-wrap select {
+    height: 38px;
+    padding: 0 32px 0 12px;
+    border: 1px solid var(--bsa-line);
+    border-radius: 10px;
+    background: var(--bsa-bg-soft);
+    color: var(--bsa-ink);
+    font: inherit;
+    font-size: 13px;
+    font-weight: 600;
+    appearance: none;
+    -webkit-appearance: none;
+    cursor: pointer;
+    outline: none;
+}
+
+.bsa-select-wrap select:focus {
+    background: var(--bsa-surface);
+    border-color: var(--bsa-ink);
+}
+
+.bsa-select-chevron {
+    position: absolute;
+    right: 10px;
+    color: var(--bsa-muted);
+    pointer-events: none;
+}
+
+.bsa-view-switcher {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 4px;
+    background: var(--bsa-line-soft);
+    border-radius: 10px;
+}
+
+.bsa-view-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 11px;
+    border: 0;
+    border-radius: 7px;
+    background: transparent;
+    color: var(--bsa-muted);
+    font: inherit;
+    font-size: 12.5px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.15s ease, color 0.15s ease;
+}
+
+.bsa-view-btn.is-active {
+    background: var(--bsa-surface);
+    color: var(--bsa-ink);
+    box-shadow: 0 1px 2px rgba(15, 23, 42, 0.08);
+}
+
+/* 5. TABLE (COMPACT, NO CLIPPING) */
+.bsa-table-wrap {
+    overflow-x: auto;
+}
+
+.bsa-table {
+    width: 100%;
+    border-collapse: collapse;
+    text-align: left;
+    font-size: 13px;
+}
+
+.bsa-table th {
+    padding: 12px 14px;
+    background: var(--bsa-bg-soft);
+    border-bottom: 1px solid var(--bsa-line);
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--bsa-muted);
+    white-space: nowrap;
+}
+
+.bsa-table td {
+    padding: 13px 14px;
+    border-bottom: 1px solid var(--bsa-line-soft);
+    vertical-align: middle;
+}
+
+.bsa-table tbody tr:hover {
+    background: #fafbfc;
+}
+
+.bsa-table tbody tr:last-child td {
+    border-bottom: none;
+}
+
+.bsa-cell-num {
+    color: var(--bsa-subtle);
+    font-size: 12px;
+    font-weight: 600;
+}
+
+.bsa-mono-code {
+    display: inline-block;
+    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    font-size: 12.5px;
+    font-weight: 700;
+    color: var(--bsa-ink);
+    text-decoration: none;
+}
+
+.bsa-mono-code:hover {
+    color: var(--bsa-accent);
+}
+
+.bsa-primary-text {
+    display: block;
+    font-weight: 600;
+    color: var(--bsa-ink);
+}
+
+.bsa-subtext {
+    display: block;
+    margin-top: 2px;
+    font-size: 11.5px;
+    color: var(--bsa-muted);
+}
+
+.bsa-plate {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 6px;
+    background: var(--bsa-ink);
+    color: #ffffff;
+    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+}
+
+.bsa-status {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 9px;
+    border-radius: 999px;
+    font-size: 11px;
+    font-weight: 700;
+    white-space: nowrap;
+}
+
+.bsa-status-dot { width: 6px; height: 6px; border-radius: 999px; }
+.bsa-status.is-amber { background: #fffbeb; color: #b45309; border: 1px solid #fde68a; }
+.bsa-status.is-amber .bsa-status-dot { background: #f59e0b; }
+.bsa-status.is-blue { background: #eff6ff; color: #1d4ed8; border: 1px solid #bfdbfe; }
+.bsa-status.is-blue .bsa-status-dot { background: #3b82f6; }
+.bsa-status.is-violet { background: #f5f3ff; color: #6d28d9; border: 1px solid #ddd6fe; }
+.bsa-status.is-violet .bsa-status-dot { background: #8b5cf6; }
+.bsa-status.is-emerald { background: #ecfdf5; color: #047857; border: 1px solid #a7f3d0; }
+.bsa-status.is-emerald .bsa-status-dot { background: #10b981; }
+.bsa-status.is-crimson { background: #fef2f2; color: #b91c1c; border: 1px solid #fecaca; }
+.bsa-status.is-crimson .bsa-status-dot { background: #ef4444; }
+.bsa-status.is-slate { background: #f1f5f9; color: #475569; border: 1px solid #e2e8f0; }
+.bsa-status.is-slate .bsa-status-dot { background: #94a3b8; }
+
+.bsa-row-actions {
+    display: inline-flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 6px;
+}
+
+.bsa-btn-sm {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 5px;
+    height: 32px;
+    padding: 0 11px;
+    border-radius: 8px;
+    font: inherit;
+    font-size: 12px;
+    font-weight: 600;
+    text-decoration: none;
+    cursor: pointer;
+    border: 1px solid transparent;
+    white-space: nowrap;
+    transition: background 0.15s ease, border-color 0.15s ease, color 0.15s ease;
+}
+
+.bsa-btn-sm.is-accent {
+    background: var(--bsa-accent);
+    color: #ffffff;
+}
+
+.bsa-btn-sm.is-accent:hover {
+    background: #d81b32;
+}
+
+.bsa-btn-sm.is-success {
+    background: #059669;
+    color: #ffffff;
+}
+
+.bsa-btn-sm.is-success:hover {
+    background: #047857;
+}
+
+.bsa-btn-sm.is-outline {
+    background: #ffffff;
+    border-color: var(--bsa-line);
+    color: var(--bsa-ink);
+}
+
+.bsa-btn-sm.is-outline:hover {
+    background: var(--bsa-bg-soft);
+    border-color: #cbd5e1;
+}
+
+/* 6. QUEUE CARDS VIEW */
+.bsa-queue-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(330px, 1fr));
+    gap: 16px;
+}
+
+.bsa-queue-card {
+    background: var(--bsa-surface);
+    border: 1px solid var(--bsa-line);
+    border-radius: 14px;
+    padding: 16px 18px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    gap: 14px;
+    transition: border-color 0.18s ease, box-shadow 0.18s ease;
+}
+
+.bsa-queue-card:hover {
+    border-color: #cbd5e1;
+    box-shadow: 0 10px 24px rgba(15, 23, 42, 0.05);
+}
+
+.bsa-queue-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 10px;
+    padding-bottom: 12px;
+    border-bottom: 1px solid var(--bsa-line-soft);
+    margin-bottom: 12px;
+}
+
+.bsa-queue-unit {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    margin-bottom: 10px;
+    font-size: 13px;
+}
+
+.bsa-queue-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 12.5px;
+    padding: 3px 0;
+    color: var(--bsa-muted);
+}
+
+.bsa-queue-row strong {
+    color: var(--bsa-ink);
+}
+
+.bsa-queue-complaint {
+    margin-top: 10px;
+    padding: 9px 11px;
+    background: var(--bsa-bg-soft);
+    border-left: 3px solid var(--bsa-accent);
+    border-radius: 0 8px 8px 0;
+    font-size: 12px;
+    color: #334155;
+    line-height: 1.45;
+}
+
+.bsa-queue-footer {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 8px;
+    padding-top: 12px;
+    border-top: 1px solid var(--bsa-line-soft);
+}
+
+/* 7. EMPTY STATE & PAGINATION */
+.bsa-empty-cell {
+    padding: 52px 20px !important;
+    text-align: center;
+}
+
+.bsa-empty {
+    max-width: 380px;
+    margin: 0 auto;
+}
+
+.bsa-empty-icon {
+    width: 48px;
+    height: 48px;
+    margin: 0 auto 14px;
+    border-radius: 999px;
+    background: var(--bsa-line-soft);
+    color: var(--bsa-muted);
+    display: grid;
+    place-items: center;
+}
+
+.bsa-empty h3 {
+    margin: 0 0 6px;
+    font-size: 15.5px;
+    font-weight: 700;
+}
+
+.bsa-empty p {
+    margin: 0 0 16px;
+    font-size: 13px;
+    color: var(--bsa-muted);
+    line-height: 1.5;
+}
+
+.bsa-pagination {
+    padding: 14px 18px;
+    border-top: 1px solid var(--bsa-line-soft);
+}
+
+@media (max-width: 1024px) {
+    .bsa-kpis {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+}
+
+@media (max-width: 640px) {
+    .bsa-kpis,
+    .bsa-queue-grid {
+        grid-template-columns: 1fr;
     }
 
-    // Persist user view preference
-    document.addEventListener('DOMContentLoaded', () => {
-        const pref = localStorage.getItem('yza_adv_booking_view');
-        if (pref === 'cards') {
-            setViewMode('cards');
+    .bsa-checklist-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+/* 8. CHECK-IN MODAL */
+.bsa-modal-backdrop[hidden] {
+    display: none !important;
+}
+
+.bsa-modal-backdrop {
+    --bsa-ink: #0f172a;
+    --bsa-muted: #64748b;
+    --bsa-subtle: #94a3b8;
+    --bsa-line: #e2e8f0;
+    --bsa-line-soft: #f1f5f9;
+    --bsa-surface: #ffffff;
+    --bsa-bg-soft: #f8fafc;
+    --bsa-accent: #ef233c;
+
+    position: fixed;
+    inset: 0;
+    z-index: 999;
+    background: rgba(15, 23, 42, 0.58);
+    backdrop-filter: blur(5px);
+    -webkit-backdrop-filter: blur(5px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 16px;
+}
+
+.bsa-modal-dialog {
+    width: 100%;
+    max-width: 560px;
+    max-height: calc(100dvh - 32px);
+    overflow-y: auto;
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 18px;
+    box-shadow: 0 24px 60px rgba(15, 23, 42, 0.25);
+    color: #0f172a;
+}
+
+.bsa-modal-head {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 14px;
+    padding: 18px 22px;
+    border-bottom: 1px solid var(--bsa-line);
+    background: var(--bsa-bg-soft);
+}
+
+.bsa-modal-eyebrow {
+    display: inline-block;
+    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--bsa-accent);
+    letter-spacing: 0.04em;
+    margin-bottom: 4px;
+}
+
+.bsa-modal-title {
+    margin: 0 0 3px;
+    font-size: 17.5px;
+    font-weight: 800;
+    letter-spacing: -0.02em;
+    color: var(--bsa-ink);
+}
+
+.bsa-modal-sub {
+    margin: 0;
+    font-size: 12.5px;
+    color: var(--bsa-muted);
+}
+
+.bsa-modal-close {
+    width: 34px;
+    height: 34px;
+    border-radius: 9px;
+    border: 1px solid var(--bsa-line);
+    background: #ffffff;
+    color: var(--bsa-muted);
+    display: grid;
+    place-items: center;
+    cursor: pointer;
+    padding: 0;
+    flex: 0 0 auto;
+}
+
+.bsa-modal-close:hover {
+    color: var(--bsa-ink);
+    border-color: #cbd5e1;
+}
+
+.bsa-modal-body {
+    padding: 20px 22px;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.bsa-modal-field label,
+.bsa-modal-label {
+    display: block;
+    font-size: 12.5px;
+    font-weight: 700;
+    color: var(--bsa-ink);
+    margin-bottom: 7px;
+}
+
+.bsa-km-input-wrap {
+    display: flex;
+    align-items: center;
+    border: 1px solid var(--bsa-line);
+    border-radius: 10px;
+    background: var(--bsa-bg-soft);
+    overflow: hidden;
+}
+
+.bsa-km-input-wrap:focus-within {
+    background: #ffffff;
+    border-color: var(--bsa-ink);
+}
+
+.bsa-km-input-wrap input {
+    flex: 1;
+    height: 42px;
+    padding: 0 14px;
+    border: 0;
+    background: transparent;
+    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    font-size: 15px;
+    font-weight: 700;
+    color: var(--bsa-ink);
+    outline: none;
+}
+
+.bsa-km-input-wrap span {
+    padding: 0 14px;
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--bsa-muted);
+}
+
+.bsa-modal-hint {
+    display: block;
+    margin-top: 5px;
+    font-size: 11.5px;
+    color: var(--bsa-muted);
+}
+
+.bsa-checklist-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px;
+}
+
+.bsa-check-pill {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 10px;
+    border: 1px solid var(--bsa-line);
+    border-radius: 9px;
+    background: var(--bsa-bg-soft);
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--bsa-ink);
+    cursor: pointer;
+    margin: 0 !important;
+    transition: border-color 0.15s ease, background 0.15s ease;
+}
+
+.bsa-check-pill:has(input:checked) {
+    background: #fff1f2;
+    border-color: rgba(239, 35, 60, 0.35);
+    color: #9f1239;
+}
+
+.bsa-check-pill input {
+    accent-color: var(--bsa-accent);
+    margin: 0;
+}
+
+.bsa-modal-field textarea {
+    width: 100%;
+    padding: 10px 12px;
+    border: 1px solid var(--bsa-line);
+    border-radius: 10px;
+    background: var(--bsa-bg-soft);
+    color: var(--bsa-ink);
+    font: inherit;
+    font-size: 13px;
+    resize: vertical;
+    outline: none;
+}
+
+.bsa-modal-field textarea:focus {
+    background: #ffffff;
+    border-color: var(--bsa-ink);
+}
+
+.bsa-modal-foot {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 10px;
+    padding-top: 14px;
+    margin-top: 4px;
+    border-top: 1px solid #e2e8f0;
+}
+
+.bsa-modal-foot .bsa-btn-primary {
+    background: #0f172a;
+    color: #ffffff;
+    padding: 0 18px;
+}
+
+.bsa-modal-foot .bsa-btn-primary:hover {
+    background: #ef233c;
+    color: #ffffff;
+}
+
+.bsa-mech-tag {
+    display: inline-block;
+    margin-top: 4px;
+    padding: 2px 7px;
+    border-radius: 6px;
+    font-size: 11px;
+    font-weight: 600;
+}
+
+.bsa-mech-tag.is-chosen {
+    background: #eff6ff;
+    color: #1d4ed8;
+    border: 1px solid #bfdbfe;
+}
+
+.bsa-mech-tag.is-unassigned {
+    background: #f8fafc;
+    color: #64748b;
+    border: 1px solid #e2e8f0;
+}
+
+.bsa-modal-select-wrap select {
+    width: 100%;
+    height: 42px;
+    padding: 0 12px;
+    border: 1px solid #cbd5e1;
+    border-radius: 10px;
+    background: #f8fafc;
+    color: #0f172a;
+    font: inherit;
+    font-size: 13px;
+    font-weight: 600;
+    outline: none;
+}
+
+.bsa-modal-select-wrap select:focus {
+    background: #ffffff;
+    border-color: #0f172a;
+}
+</style>
+@endpush
+
+@push('scripts')
+<script>
+function setViewMode(mode) {
+    const table = document.getElementById('view-table-container');
+    const cards = document.getElementById('view-cards-container');
+    const btnTable = document.getElementById('btn-view-table');
+    const btnCards = document.getElementById('btn-view-cards');
+    if (!table || !cards) return;
+
+    if (mode === 'cards') {
+        table.style.display = 'none';
+        cards.style.display = 'block';
+        btnCards.classList.add('is-active');
+        btnTable.classList.remove('is-active');
+        localStorage.setItem('yza_adv_booking_view', 'cards');
+    } else {
+        table.style.display = 'block';
+        cards.style.display = 'none';
+        btnTable.classList.add('is-active');
+        btnCards.classList.remove('is-active');
+        localStorage.setItem('yza_adv_booking_view', 'table');
+    }
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+    if (localStorage.getItem('yza_adv_booking_view') === 'cards') {
+        setViewMode('cards');
+    }
+
+    const filterForm = document.querySelector('[data-bsa-filter-form]');
+    if (filterForm) {
+        filterForm.querySelectorAll('[data-bsa-auto-submit]').forEach(select => {
+            select.addEventListener('change', () => filterForm.submit());
+        });
+    }
+
+    const modal = document.getElementById('bsa-checkin-modal');
+    const form = document.getElementById('bsa-checkin-form');
+    const kodeEl = document.getElementById('bsa-modal-kode');
+    const metaEl = document.getElementById('bsa-modal-meta');
+    const kmInput = document.getElementById('bsa-modal-km');
+    const prevKmEl = document.getElementById('bsa-modal-prev-km');
+    const mechanicSelect = document.getElementById('bsa-modal-mechanic');
+    const mechanicHint = document.getElementById('bsa-modal-mechanic-hint');
+    const catatanInput = document.getElementById('bsa-modal-catatan');
+    const checklistInputs = modal ? modal.querySelectorAll('[data-bsa-checklist]') : [];
+
+    const closeModal = () => {
+        if (!modal) return;
+        modal.hidden = true;
+        modal.setAttribute('aria-hidden', 'true');
+        document.body.style.overflow = '';
+    };
+
+    const openModal = trigger => {
+        if (!modal || !form) return;
+        const km = parseInt(trigger.dataset.km || '0', 10);
+        const prefId = trigger.dataset.preferredMechanic || '';
+        const prefName = trigger.dataset.preferredMechanicName || '';
+        form.action = trigger.dataset.action || '';
+        kodeEl.textContent = trigger.dataset.kode || 'BOOKING';
+        metaEl.textContent = (trigger.dataset.customer || 'Pelanggan') + ' · ' + (trigger.dataset.unit || 'Unit');
+        kmInput.min = String(km);
+        kmInput.value = String(km);
+        prevKmEl.textContent = km.toLocaleString('id-ID') + ' km';
+        if (mechanicSelect) {
+            mechanicSelect.value = prefId;
+        }
+        if (mechanicHint) {
+            mechanicHint.textContent = prefName
+                ? 'Pilihan member: ' + prefName + '. Anda tetap dapat menggantinya jika mekanik sedang sibuk.'
+                : 'Member belum memilih mekanik. Silakan tentukan mekanik pelaksana.';
+        }
+        catatanInput.value = trigger.dataset.catatan || '';
+        checklistInputs.forEach(cb => { cb.checked = false; });
+
+        modal.hidden = false;
+        modal.setAttribute('aria-hidden', 'false');
+        document.body.style.overflow = 'hidden';
+        setTimeout(() => kmInput.focus(), 50);
+    };
+
+    document.querySelectorAll('[data-bsa-checkin]').forEach(btn => {
+        btn.addEventListener('click', () => openModal(btn));
+    });
+
+    if (modal) {
+        modal.querySelectorAll('[data-bsa-modal-close]').forEach(btn => {
+            btn.addEventListener('click', closeModal);
+        });
+        modal.addEventListener('click', event => {
+            if (event.target === modal) closeModal();
+        });
+    }
+
+    document.addEventListener('keydown', event => {
+        if (event.key === 'Escape' && modal && !modal.hidden) {
+            closeModal();
         }
     });
+
+    checklistInputs.forEach(cb => {
+        cb.addEventListener('change', () => {
+            const text = cb.value;
+            let lines = catatanInput.value.split('\n').map(l => l.trim()).filter(Boolean);
+            const item = '- ' + text;
+            if (cb.checked) {
+                if (!lines.includes(item)) lines.push(item);
+            } else {
+                lines = lines.filter(l => l !== item);
+            }
+            catatanInput.value = lines.join('\n');
+        });
+    });
+});
 </script>
-@endsection
+@endpush

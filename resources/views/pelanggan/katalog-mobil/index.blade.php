@@ -1,558 +1,978 @@
 @extends('layouts.app')
-@section('title','Katalog Mobil Member · YZA Automotive')
+@section('title', 'Katalog Mobil Member · YZA Automotive')
 @section('body-class', 'member-catalog-page-shell')
+
 @section('content')
-<div class="member-catalog-page">
-    <div class="member-catalog-top">
-    <section class="member-catalog-hero"><span class="eyebrow">YZA AUTOMOTIVE SHOWROOM</span><h1>Temukan Mobil <b>Pilihan Terbaik YZA</b></h1><p>Temukan kendaraan baru, bekas, premium, hingga performance car pilihan YZA Automotive.</p></section>
-    <section class="member-catalog-controls" aria-label="Filter katalog mobil">
-        <form method="get" action="{{ route('pelanggan.katalog-mobil.index') }}" class="member-catalog-filter">
-            <input name="q" value="{{ request('q') }}" placeholder="Cari merk, model, tipe..." aria-label="Cari mobil">
-            <select name="kondisi" aria-label="Filter kondisi"><option value="">Semua kondisi</option><option value="baru" @selected(request('kondisi') === 'baru')>Baru</option><option value="bekas" @selected(request('kondisi') === 'bekas')>Bekas</option></select>
-            <select name="merk" aria-label="Filter merek"><option value="">Semua merek</option>@foreach($brands as $brand)<option value="{{ $brand }}" @selected(request('merk') === $brand)>{{ $brand }}</option>@endforeach</select>
-            <select name="sort" aria-label="Urutkan"><option value="terbaru" @selected(request('sort','terbaru') === 'terbaru')>Terbaru</option><option value="harga_termurah" @selected(request('sort') === 'harga_termurah')>Harga termurah</option><option value="harga_tertinggi" @selected(request('sort') === 'harga_tertinggi')>Harga tertinggi</option><option value="tahun_terbaru" @selected(request('sort') === 'tahun_terbaru')>Tahun terbaru</option></select>
-            <button type="submit" class="yza-button">Filter</button>
+@php
+    $hasActiveFilter = request()->hasAny(['q', 'kondisi', 'merk', 'sort', 'sport'])
+        && (filled(request('q')) || filled(request('kondisi')) || filled(request('merk')) || request('sport') || (request('sort', 'terbaru') !== 'terbaru'));
+
+    $headerBg = asset('assets/images/hero/hero-slide-2.png');
+@endphp
+
+<div class="mc-page">
+    <header class="mc-header" style="--mc-header-bg: url('{{ $headerBg }}');">
+        <div class="mc-header-inner">
+            <div class="mc-header-copy">
+                <div class="mc-eyebrow">
+                    <span class="mc-eyebrow-dot" aria-hidden="true"></span>
+                    <span>YZA Automotive · Member Showroom</span>
+                </div>
+                <h1 class="mc-title">Katalog Kendaraan</h1>
+                <p class="mc-subtitle">Koleksi unit baru, bekas tersertifikasi, dan lini performa pilihan khusus member YZA.</p>
+            </div>
+            <div class="mc-header-meta">
+                <div class="mc-stat-pill">
+                    <span class="mc-stat-value">{{ $allTotalCars }}</span>
+                    <span class="mc-stat-label">Unit Tersedia</span>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <section class="mc-controls" aria-label="Filter dan pencarian katalog mobil">
+        <div class="mc-toolbar-top">
+            <nav class="mc-tabs" aria-label="Kategori kendaraan">
+                <a class="mc-tab {{ !request('kondisi') && !request('sport') ? 'is-active' : '' }}" href="{{ route('pelanggan.katalog-mobil.index') }}">
+                    <span>Semua</span>
+                    <small>{{ $allTotalCars }}</small>
+                </a>
+                <a class="mc-tab {{ request('kondisi') === 'baru' ? 'is-active' : '' }}" href="{{ route('pelanggan.katalog-mobil.index', ['kondisi' => 'baru']) }}">
+                    <span>Baru</span>
+                    <small>{{ $newCars }}</small>
+                </a>
+                <a class="mc-tab {{ request('kondisi') === 'bekas' ? 'is-active' : '' }}" href="{{ route('pelanggan.katalog-mobil.index', ['kondisi' => 'bekas']) }}">
+                    <span>Bekas</span>
+                    <small>{{ $usedCars }}</small>
+                </a>
+                <a class="mc-tab {{ request('sport') ? 'is-active' : '' }}" href="{{ route('pelanggan.katalog-mobil.index', ['sport' => 1]) }}">
+                    <span>Sport</span>
+                    <small>{{ $sportCars }}</small>
+                </a>
+            </nav>
+
+            <div class="mc-results-info">
+                <span class="mc-count">Menampilkan <strong>{{ $visibleCars }}</strong> dari <strong>{{ $totalCars }}</strong> unit</span>
+                @if($hasActiveFilter)
+                    <a class="mc-reset-link" href="{{ route('pelanggan.katalog-mobil.index') }}">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                            <path d="M18 6 6 18"/><path d="m6 6 12 12"/>
+                        </svg>
+                        <span>Reset</span>
+                    </a>
+                @endif
+            </div>
+        </div>
+
+        <form method="get" action="{{ route('pelanggan.katalog-mobil.index') }}" class="mc-filter-bar" data-mc-filter-form>
+            @if(request('sport'))
+                <input type="hidden" name="sport" value="1">
+            @endif
+
+            <div class="mc-field mc-field-search">
+                <svg class="mc-field-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                    <circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/>
+                </svg>
+                <input
+                    type="search"
+                    name="q"
+                    value="{{ request('q') }}"
+                    placeholder="Cari merek, model, atau tipe..."
+                    aria-label="Cari mobil"
+                    autocomplete="off"
+                >
+            </div>
+
+            <div class="mc-field mc-field-select">
+                <select name="kondisi" aria-label="Filter kondisi" data-mc-auto-submit>
+                    <option value="">Semua Kondisi</option>
+                    <option value="baru" @selected(request('kondisi') === 'baru')>Baru</option>
+                    <option value="bekas" @selected(request('kondisi') === 'bekas')>Bekas</option>
+                </select>
+                <svg class="mc-select-chevron" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                    <path d="m6 9 6 6 6-6"/>
+                </svg>
+            </div>
+
+            <div class="mc-field mc-field-select">
+                <select name="merk" aria-label="Filter merek" data-mc-auto-submit>
+                    <option value="">Semua Merek</option>
+                    @foreach($brands as $brand)
+                        <option value="{{ $brand }}" @selected(request('merk') === $brand)>{{ $brand }}</option>
+                    @endforeach
+                </select>
+                <svg class="mc-select-chevron" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                    <path d="m6 9 6 6 6-6"/>
+                </svg>
+            </div>
+
+            <div class="mc-field mc-field-select">
+                <select name="sort" aria-label="Urutkan" data-mc-auto-submit>
+                    <option value="terbaru" @selected(request('sort', 'terbaru') === 'terbaru')>Urutkan: Terbaru</option>
+                    <option value="harga_termurah" @selected(request('sort') === 'harga_termurah')>Harga Terendah</option>
+                    <option value="harga_tertinggi" @selected(request('sort') === 'harga_tertinggi')>Harga Tertinggi</option>
+                    <option value="tahun_terbaru" @selected(request('sort') === 'tahun_terbaru')>Tahun Terbaru</option>
+                </select>
+                <svg class="mc-select-chevron" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                    <path d="m6 9 6 6 6-6"/>
+                </svg>
+            </div>
+
+            <button type="submit" class="mc-submit-btn">Terapkan</button>
         </form>
-        <div class="member-catalog-chips"><a class="{{ !request('kondisi') && !request('sport') ? 'is-active' : '' }}" href="{{ route('pelanggan.katalog-mobil.index') }}">▣ &nbsp; Semua Mobil ({{ $allTotalCars }})</a><a class="{{ request('kondisi') === 'baru' ? 'is-active' : '' }}" href="{{ route('pelanggan.katalog-mobil.index',['kondisi'=>'baru']) }}">▤ &nbsp; Baru ({{ $newCars }})</a><a class="{{ request('kondisi') === 'bekas' ? 'is-active' : '' }}" href="{{ route('pelanggan.katalog-mobil.index',['kondisi'=>'bekas']) }}">♢ &nbsp; Bekas ({{ $usedCars }})</a><a class="{{ request('sport') ? 'is-active' : '' }}" href="{{ route('pelanggan.katalog-mobil.index',['sport'=>1]) }}">✦ &nbsp; Sport ({{ $sportCars }})</a><span>Menampilkan {{ $visibleCars }} dari {{ $totalCars }} kendaraan</span></div>
     </section>
-    </div>
-    <section class="member-catalog-results"><div class="member-catalog-heading"><div><span class="eyebrow">YZA AUTOMOTIVE COLLECTION</span><h2>TEMUKAN MOBIL PILIHAN ANDA</h2><p>Jelajahi koleksi kendaraan baru, bekas, premium, dan performance YZA Automotive.</p></div>@if(request()->hasAny(['q','kondisi','merk','sort','sport']))<a href="{{ route('pelanggan.katalog-mobil.index') }}">Reset Filter</a>@endif</div>@if($cars->isEmpty())<div class="member-empty"><strong>Belum ada kendaraan yang sesuai</strong><span>Silakan ubah filter atau kata pencarian Anda.</span></div>@else<div class="member-catalog-grid">@foreach($cars as $mobil) @include('mobil._card',['mobil'=>$mobil,'variant'=>$mobil->showcase_slug?'performance':'default']) @endforeach</div>@if($lastPage>1)<nav class="member-catalog-pagination" aria-label="Pagination">@for($page=1;$page<=$lastPage;$page++)<a class="{{ $page===$currentPage?'is-active':'' }}" href="{{ request()->fullUrlWithQuery(['page'=>$page]) }}">{{ $page }}</a>@endfor</nav>@endif @endif</section>
+
+    <section class="mc-results" aria-label="Daftar kendaraan">
+        @if($cars->isEmpty())
+            <div class="mc-empty">
+                <div class="mc-empty-icon" aria-hidden="true">
+                    <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+                        <circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/>
+                    </svg>
+                </div>
+                <h2>Kendaraan tidak ditemukan</h2>
+                <p>Tidak ada unit yang sesuai dengan kata kunci atau kombinasi filter yang Anda pilih.</p>
+                <a class="mc-empty-btn" href="{{ route('pelanggan.katalog-mobil.index') }}">Tampilkan Semua Unit</a>
+            </div>
+        @else
+            <div class="mc-grid">
+                @foreach($cars as $mobil)
+                    @include('pelanggan.katalog-mobil._card', [
+                        'mobil' => $mobil,
+                        'variant' => $mobil->showcase_slug ? 'performance' : 'default',
+                    ])
+                @endforeach
+            </div>
+
+            @if($lastPage > 1)
+                <nav class="mc-pagination" aria-label="Navigasi halaman katalog">
+                    @for($page = 1; $page <= $lastPage; $page++)
+                        <a class="mc-page-link {{ $page === $currentPage ? 'is-active' : '' }}" href="{{ request()->fullUrlWithQuery(['page' => $page]) }}" @if($page === $currentPage) aria-current="page" @endif>
+                            {{ $page }}
+                        </a>
+                    @endfor
+                </nav>
+            @endif
+        @endif
+    </section>
 </div>
 @endsection
+
 @push('styles')
 <style>
-/* 1. MEMBER CATALOG HERO & FILTERS */
-.member-catalog-page {
-    max-width: 1740px;
+/* =========================================================
+   MEMBER CATALOG — DARK MINIMALIST SHOWROOM
+   ========================================================= */
+body.member-catalog-page-shell .member-main-content {
+    background: #090a0d !important;
+    padding-bottom: 72px !important;
+}
+
+.mc-page {
+    --mc-bg: #090a0d;
+    --mc-surface: #111318;
+    --mc-surface-soft: #181b22;
+    --mc-surface-hover: #1e222b;
+    --mc-ink: #f4f5f7;
+    --mc-ink-muted: #98a0ad;
+    --mc-ink-subtle: #666e7a;
+    --mc-line: rgba(255, 255, 255, 0.08);
+    --mc-line-strong: rgba(255, 255, 255, 0.16);
+    --mc-accent: #ef233c;
+    --mc-accent-hover: #d81b32;
+
+    max-width: 1440px;
     margin: 0 auto;
+    padding: clamp(22px, 3vw, 36px) clamp(18px, 3.5vw, 44px) 0;
+    color: var(--mc-ink);
+    font-family: 'Plus Jakarta Sans', 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
 }
-.member-catalog-hero {
-    padding: 24px;
+
+/* 1. DARK HEADER WITH RANDOM BACKGROUND IMAGE */
+.mc-header {
+    position: relative;
+    padding: clamp(28px, 4vw, 46px) clamp(22px, 3.5vw, 40px);
+    margin-bottom: 24px;
     border-radius: 20px;
-    background: linear-gradient(110deg, #121419e8, #12141955), url('{{ asset('assets/images/lower-landing/showroom-premium.png') }}') center/cover;
-    color: #fff;
+    border: 1px solid rgba(255, 255, 255, 0.09);
+    background-image:
+        linear-gradient(105deg, rgba(9, 10, 13, 0.92) 0%, rgba(9, 10, 13, 0.72) 56%, rgba(9, 10, 13, 0.42) 100%),
+        var(--mc-header-bg);
+    background-size: cover;
+    background-position: center;
+    overflow: hidden;
 }
-.member-catalog-hero h1 {
-    margin: 12px 0;
-    font-size: clamp(1.875rem, 3.2vw, 2.75rem);
-    letter-spacing: -0.06em;
+
+.mc-header::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(circle at 88% 18%, rgba(239, 35, 60, 0.14), transparent 42%);
+    pointer-events: none;
 }
-.member-catalog-hero p {
-    max-width: 720px;
-    color: #e4e7eb;
-    font-size: 15px;
-    line-height: 1.55;
+
+.mc-header-inner {
+    position: relative;
+    z-index: 1;
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 24px;
+    flex-wrap: wrap;
 }
-.member-catalog-status {
+
+.mc-eyebrow {
     display: inline-flex;
-    gap: 12px;
-    margin-top: 18px;
-    padding: 10px 16px;
+    align-items: center;
+    gap: 8px;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: rgba(255, 255, 255, 0.72);
+    margin-bottom: 10px;
+}
+
+.mc-eyebrow-dot {
+    width: 6px;
+    height: 6px;
     border-radius: 999px;
-    background: #ffffff20;
-    font-size: 13px;
+    background: var(--mc-accent);
+    box-shadow: 0 0 10px rgba(239, 35, 60, 0.7);
 }
-.member-catalog-controls {
-    margin: 22px 0;
+
+.mc-title {
+    margin: 0 0 8px;
+    font-size: clamp(1.8rem, 2.9vw, 2.55rem);
+    font-weight: 800;
+    letter-spacing: -0.035em;
+    line-height: 1.08;
+    color: #ffffff;
 }
-.member-catalog-filter {
-    display: grid;
-    grid-template-columns: 2fr 1fr 1fr 1.2fr auto;
-    gap: 12px;
-    padding: 14px;
-    background: #fff;
-    border: 1px solid var(--member-line);
-    border-radius: 16px;
+
+.mc-subtitle {
+    margin: 0;
+    max-width: 580px;
+    font-size: 14.5px;
+    line-height: 1.55;
+    color: rgba(255, 255, 255, 0.74);
 }
-.member-catalog-filter input,
-.member-catalog-filter select {
-    min-height: 54px;
-    padding: 0 15px;
-    border: 1px solid var(--member-line);
-    border-radius: 9px;
-    background: #fff;
-    color: var(--member-ink);
-    font: inherit;
-}
-.member-catalog-filter .yza-button {
-    min-height: 54px;
-    padding-inline: 22px;
-}
-.member-catalog-chips {
+
+.mc-header-meta {
     display: flex;
     align-items: center;
-    gap: 10px;
-    flex-wrap: wrap;
-    margin-top: 14px;
+    gap: 12px;
 }
-.member-catalog-chips a {
-    padding: 9px 15px;
-    border: 1px solid var(--member-line);
+
+.mc-stat-pill {
+    display: inline-flex;
+    align-items: baseline;
+    gap: 8px;
+    padding: 10px 18px;
+    background: rgba(17, 19, 24, 0.68);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1px solid rgba(255, 255, 255, 0.14);
     border-radius: 999px;
-    color: var(--member-ink);
+}
+
+.mc-stat-value {
+    font-size: 17px;
+    font-weight: 800;
+    letter-spacing: -0.02em;
+    color: #ffffff;
+}
+
+.mc-stat-label {
+    font-size: 12.5px;
+    font-weight: 600;
+    color: rgba(255, 255, 255, 0.7);
+}
+
+/* 2. CONTROLS & FILTER BAR */
+.mc-controls {
+    margin-bottom: 28px;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+}
+
+.mc-toolbar-top {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    flex-wrap: wrap;
+}
+
+.mc-tabs {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 4px;
+    background: var(--mc-surface);
+    border: 1px solid var(--mc-line);
+    border-radius: 12px;
+    flex-wrap: wrap;
+}
+
+.mc-tab {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    padding: 8px 14px;
+    border-radius: 8px;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--mc-ink-muted);
+    text-decoration: none;
+    transition: background 0.18s ease, color 0.18s ease, border-color 0.18s ease;
+    border: 1px solid transparent;
+}
+
+.mc-tab small {
+    font-size: 11px;
+    font-weight: 700;
+    padding: 1px 6px;
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.06);
+    color: var(--mc-ink-muted);
+}
+
+.mc-tab:hover {
+    color: #ffffff;
+}
+
+.mc-tab.is-active {
+    background: var(--mc-surface-hover);
+    border-color: rgba(255, 255, 255, 0.12);
+    color: #ffffff;
+}
+
+.mc-tab.is-active small {
+    background: var(--mc-accent);
+    color: #ffffff;
+}
+
+.mc-results-info {
+    display: inline-flex;
+    align-items: center;
+    gap: 12px;
+    margin-left: auto;
+}
+
+.mc-count {
+    font-size: 13px;
+    color: var(--mc-ink-muted);
+}
+
+.mc-count strong {
+    color: #ffffff;
     font-weight: 700;
 }
-.member-catalog-chips span {
-    margin-left: auto;
-    color: var(--member-muted);
+
+.mc-reset-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 6px 12px;
+    border-radius: 999px;
+    border: 1px solid rgba(239, 35, 60, 0.35);
+    background: rgba(239, 35, 60, 0.1);
+    color: #ff5c6f;
+    font-size: 12.5px;
+    font-weight: 700;
+    text-decoration: none;
+    transition: background 0.18s ease, color 0.18s ease, border-color 0.18s ease;
 }
 
-/* 2. MEMBER PAGE SHELL & CANVAS */
-body.member-catalog-page-shell .member-main-content {
-    padding-bottom: 0 !important;
-    background: #090a0c !important;
+.mc-reset-link:hover {
+    background: var(--mc-accent);
+    border-color: var(--mc-accent);
+    color: #ffffff;
 }
-body.member-catalog-page-shell .member-catalog-page {
-    max-width: none !important;
-    margin: 0 !important;
-    padding: 0 28px !important;
-    background: #090a0c !important;
+
+.mc-filter-bar {
+    display: grid;
+    grid-template-columns: minmax(240px, 2.2fr) repeat(3, minmax(145px, 1fr)) auto;
+    align-items: center;
+    gap: 0;
+    padding: 6px;
+    background: var(--mc-surface);
+    border: 1px solid var(--mc-line);
+    border-radius: 14px;
 }
-body.member-catalog-page-shell .member-catalog-top {
-    margin: 0 -28px !important;
-    padding: 16px 28px 38px !important;
-    background: #f5f6f7 !important;
+
+.mc-field {
+    position: relative;
+    display: flex;
+    align-items: center;
+    min-width: 0;
 }
-body.member-catalog-page-shell .member-catalog-results {
-    margin: 0 -28px !important;
-    padding: 28px clamp(28px, 5vw, 86px) 84px !important;
-    border: 0 !important;
-    border-radius: 0 !important;
-    background: radial-gradient(circle at 82% 0%, rgba(229, 29, 42, 0.14), transparent 34%), #090a0c !important;
+
+.mc-field + .mc-field::before {
+    content: "";
+    position: absolute;
+    left: 0;
+    top: 22%;
+    bottom: 22%;
+    width: 1px;
+    background: var(--mc-line);
+}
+
+.mc-field-icon {
+    position: absolute;
+    left: 14px;
+    color: var(--mc-ink-subtle);
+    pointer-events: none;
+}
+
+.mc-field-search input {
+    width: 100%;
+    height: 44px;
+    padding: 0 14px 0 42px;
+    border: 0;
+    background: transparent;
+    color: var(--mc-ink);
+    font: inherit;
+    font-size: 13.5px;
+    font-weight: 500;
+    outline: none;
+}
+
+.mc-field-search input::placeholder {
+    color: var(--mc-ink-subtle);
+}
+
+.mc-field-select select {
+    width: 100%;
+    height: 44px;
+    padding: 0 36px 0 14px;
+    border: 0;
+    background: transparent;
+    color: var(--mc-ink);
+    color-scheme: dark;
+    font: inherit;
+    font-size: 13.5px;
+    font-weight: 600;
+    appearance: none;
+    -webkit-appearance: none;
+    cursor: pointer;
+    outline: none;
+    text-overflow: ellipsis;
+}
+
+.mc-field-select select option {
+    background: #14171e;
+    color: #f4f5f7;
+}
+
+.mc-select-chevron {
+    position: absolute;
+    right: 12px;
+    color: var(--mc-ink-muted);
+    pointer-events: none;
+}
+
+.mc-submit-btn {
+    height: 44px;
+    padding: 0 22px;
+    margin-left: 6px;
+    border: 0;
+    border-radius: 10px;
+    background: #ffffff;
+    color: #0b0d10;
+    font: inherit;
+    font-size: 13.5px;
+    font-weight: 700;
+    letter-spacing: -0.01em;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: background 0.18s ease, color 0.18s ease, transform 0.14s ease;
+}
+
+.mc-submit-btn:hover {
+    background: var(--mc-accent);
+    color: #ffffff;
+}
+
+.mc-submit-btn:active {
+    transform: scale(0.98);
+}
+
+/* 3. VEHICLE GRID */
+.mc-grid {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 22px;
+    align-items: stretch;
+}
+
+/* 4. MODEL CARD (DARK MINIMALIST) */
+.mc-card {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+    background: var(--mc-surface);
+    border: 1px solid var(--mc-line);
+    border-radius: 16px;
+    overflow: hidden;
+    transition: transform 0.22s ease, border-color 0.22s ease, box-shadow 0.22s ease;
+}
+
+.mc-card:hover {
+    transform: translateY(-3px);
+    border-color: var(--mc-line-strong);
+    box-shadow: 0 18px 40px rgba(0, 0, 0, 0.45);
+}
+
+.mc-card-media {
+    position: relative;
+    aspect-ratio: 16 / 10;
+    background: #161920;
+    overflow: hidden;
+}
+
+.mc-card-image-link {
+    display: block;
+    width: 100%;
+    height: 100%;
+}
+
+.mc-card-image-link img {
+    display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: center;
+    transition: transform 0.4s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.mc-card:hover .mc-card-image-link img {
+    transform: scale(1.035);
+}
+
+.mc-card-badges {
+    position: absolute;
+    top: 12px;
+    left: 12px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    flex-wrap: wrap;
+    z-index: 2;
+    pointer-events: none;
+}
+
+.mc-badge {
+    display: inline-flex;
+    align-items: center;
+    height: 24px;
+    padding: 0 9px;
+    border-radius: 6px;
+    font-size: 10.5px;
+    font-weight: 700;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+}
+
+.mc-badge-new {
+    background: var(--mc-accent);
+    color: #ffffff;
+}
+
+.mc-badge-used {
+    background: rgba(17, 19, 24, 0.82);
+    color: #f4f5f7;
+    border: 1px solid rgba(255, 255, 255, 0.14);
+}
+
+.mc-badge-sport {
+    background: rgba(255, 255, 255, 0.92);
+    color: #0b0d10;
+}
+
+.mc-fav-btn {
+    position: absolute;
+    top: 12px;
+    right: 12px;
+    z-index: 3;
+    width: 36px;
+    height: 36px;
+    padding: 0;
+    display: grid;
+    place-items: center;
+    border-radius: 999px;
+    border: 1px solid rgba(255, 255, 255, 0.18);
+    background: rgba(9, 10, 13, 0.65);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    color: #ffffff;
+    cursor: pointer;
+    transition: transform 0.16s ease, background 0.16s ease, color 0.16s ease, border-color 0.16s ease;
+}
+
+.mc-fav-btn svg {
+    width: 17px;
+    height: 17px;
+}
+
+.mc-fav-btn:hover {
+    transform: scale(1.06);
+    background: rgba(9, 10, 13, 0.88);
+    border-color: rgba(255, 255, 255, 0.34);
+}
+
+.mc-fav-btn.is-favorited {
+    background: var(--mc-accent);
+    border-color: var(--mc-accent);
+    color: #ffffff;
+}
+
+.mc-fav-btn.is-favorited svg {
+    fill: currentColor;
+}
+
+.mc-card-body {
+    display: flex;
+    flex-direction: column;
+    flex: 1 1 auto;
+    padding: 16px 18px 18px;
+}
+
+.mc-card-top {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    min-height: 26px;
+    margin-bottom: 12px;
+}
+
+.mc-brand-mark {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    height: 26px;
+    padding: 3px 8px;
+    border-radius: 7px;
+    background: rgba(255, 255, 255, 0.94);
+    max-width: 76px;
+}
+
+.mc-brand-mark img {
+    display: block;
+    height: 100%;
+    max-height: 18px;
+    width: auto;
+    max-width: 60px;
+    object-fit: contain;
+    object-position: center;
+}
+
+.mc-spec-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    height: 24px;
+    padding: 0 9px;
+    border-radius: 6px;
+    background: var(--mc-surface-soft);
+    border: 1px solid var(--mc-line);
+    font-size: 10.5px;
+    font-weight: 700;
+    letter-spacing: 0.03em;
+    text-transform: uppercase;
+    white-space: nowrap;
+}
+
+.mc-spec-pill-label {
+    color: var(--mc-ink-muted);
+}
+
+.mc-spec-pill-dot {
+    width: 3px;
+    height: 3px;
+    border-radius: 999px;
+    background: var(--mc-ink-subtle);
+}
+
+.mc-spec-pill-val {
+    color: var(--mc-ink);
+}
+
+.mc-card-title-link {
+    text-decoration: none;
+    color: inherit;
+}
+
+.mc-card-title {
+    margin: 0 0 6px;
+    font-size: 17.5px;
+    font-weight: 750;
+    line-height: 1.3;
+    letter-spacing: -0.02em;
+    color: var(--mc-ink);
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    min-height: 45px;
+    transition: color 0.16s ease;
+}
+
+.mc-card-title-link:hover .mc-card-title {
+    color: var(--mc-accent);
+}
+
+.mc-card-meta {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin: 0 0 16px;
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--mc-ink-muted);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.mc-card-meta i {
+    font-style: normal;
+    color: var(--mc-ink-subtle);
+}
+
+.mc-card-footer {
+    margin-top: auto;
+    padding-top: 14px;
+    border-top: 1px solid var(--mc-line);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+}
+
+.mc-price-block {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    min-width: 0;
+}
+
+.mc-price-label {
+    font-size: 10.5px;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--mc-ink-subtle);
+}
+
+.mc-price {
+    font-size: 18px;
+    font-weight: 800;
+    letter-spacing: -0.025em;
+    color: #ffffff;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.mc-detail-btn {
+    flex: 0 0 40px;
+    width: 40px;
+    height: 40px;
+    border-radius: 999px;
+    background: var(--mc-surface-soft);
+    border: 1px solid var(--mc-line);
+    color: #ffffff;
+    display: grid;
+    place-items: center;
+    text-decoration: none;
+    transition: background 0.18s ease, border-color 0.18s ease, transform 0.18s ease;
+}
+
+.mc-card:hover .mc-detail-btn {
+    background: #ffffff;
+    border-color: #ffffff;
+    color: #0b0d10;
+}
+
+.mc-detail-btn:hover {
+    background: var(--mc-accent) !important;
+    border-color: var(--mc-accent) !important;
     color: #ffffff !important;
+    transform: translateX(2px);
 }
 
-/* 3. SECTION HEADING (MATCH GAMBAR 1 & 2) */
-.member-catalog-heading {
-    width: min(1640px, calc(100% - 64px)) !important;
-    max-width: 1640px !important;
-    margin: 0 auto 20px !important;
-    display: flex !important;
-    align-items: flex-end !important;
-    justify-content: space-between !important;
-    gap: 20px !important;
-}
-.member-catalog-heading .eyebrow {
-    display: block !important;
-    color: #ef233c !important;
-    font-size: 12px !important;
-    font-weight: 850 !important;
-    letter-spacing: 0.22em !important;
-    text-transform: uppercase !important;
-    margin-bottom: 5px !important;
-}
-.member-catalog-heading h2 {
-    margin: 0 0 6px !important;
-    color: #ffffff !important;
-    font-size: clamp(30px, 2.3vw, 42px) !important;
-    font-weight: 850 !important;
-    letter-spacing: -0.03em !important;
-    line-height: 1.1 !important;
-}
-.member-catalog-heading p {
-    margin: 0 !important;
-    color: rgba(255, 255, 255, 0.68) !important;
-    font-size: 15px !important;
-    line-height: 1.4 !important;
-}
-.member-catalog-heading a {
-    color: #ef233c !important;
-    font-size: 14px !important;
-    font-weight: 800 !important;
-    text-decoration: none !important;
-    white-space: nowrap !important;
-    padding: 8px 16px !important;
-    border: 1px solid rgba(239, 35, 60, 0.4) !important;
-    border-radius: 999px !important;
-    transition: all 0.2s ease !important;
-}
-.member-catalog-heading a:hover {
-    background: #ef233c !important;
-    color: #ffffff !important;
+/* 5. EMPTY STATE & PAGINATION */
+.mc-empty {
+    padding: 56px 24px;
+    text-align: center;
+    background: var(--mc-surface);
+    border: 1px solid var(--mc-line);
+    border-radius: 16px;
 }
 
-/* 4. FOUR-COLUMN GRID (MATCH GAMBAR 1 & 2) */
-.member-catalog-grid {
-    display: grid !important;
-    grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
-    gap: 26px !important;
-    width: min(1640px, calc(100% - 64px)) !important;
-    max-width: 1640px !important;
-    margin: 0 auto !important;
-    align-items: stretch !important;
+.mc-empty-icon {
+    width: 56px;
+    height: 56px;
+    margin: 0 auto 16px;
+    border-radius: 999px;
+    background: var(--mc-surface-soft);
+    border: 1px solid var(--mc-line);
+    color: var(--mc-ink-muted);
+    display: grid;
+    place-items: center;
 }
 
-/* 5. CARD GEOMETRY & ELEVATION */
-.member-catalog-page .catalog-card {
-    position: relative !important;
-    display: flex !important;
-    flex-direction: column !important;
-    min-width: 0 !important;
-    width: 100% !important;
-    min-height: 495px !important;
-    background: #ffffff !important;
-    border-radius: 18px !important;
-    border: 1px solid rgba(255, 255, 255, 0.08) !important;
-    box-shadow: 0 16px 40px rgba(0, 0, 0, 0.32) !important;
-    overflow: hidden !important;
-    transition: transform 0.22s ease, box-shadow 0.22s ease, border-color 0.22s ease !important;
-}
-.member-catalog-page .catalog-card:hover {
-    transform: translateY(-6px) !important;
-    box-shadow: 0 24px 54px rgba(0, 0, 0, 0.45) !important;
-    border-color: rgba(239, 35, 60, 0.3) !important;
+.mc-empty h2 {
+    margin: 0 0 6px;
+    font-size: 18px;
+    font-weight: 700;
+    color: var(--mc-ink);
 }
 
-/* 6. CARD IMAGE AREA */
-.member-catalog-page .catalog-card-image {
-    position: relative !important;
-    display: block !important;
-    width: 100% !important;
-    height: 242px !important;
-    min-height: 242px !important;
-    max-height: 242px !important;
-    background: #e9edf0 !important;
-    overflow: hidden !important;
-    flex: 0 0 242px !important;
-}
-.member-catalog-page .catalog-card-image img {
-    display: block !important;
-    width: 100% !important;
-    height: 100% !important;
-    object-fit: cover !important;
-    object-position: center !important;
-    transition: transform 0.35s ease !important;
-}
-.member-catalog-page .catalog-card:hover .catalog-card-image img {
-    transform: scale(1.035) !important;
+.mc-empty p {
+    margin: 0 auto 20px;
+    max-width: 420px;
+    font-size: 14px;
+    color: var(--mc-ink-muted);
 }
 
-/* 7. BADGES ON PHOTO */
-.member-catalog-page .catalog-card-badges {
-    position: absolute !important;
-    top: 14px !important;
-    left: 14px !important;
-    display: flex !important;
-    flex-direction: column !important;
-    gap: 6px !important;
-    z-index: 2 !important;
-    max-width: calc(100% - 64px) !important;
-    pointer-events: none !important;
-}
-.member-catalog-page .catalog-condition {
-    display: inline-flex !important;
-    align-items: center !important;
-    justify-content: center !important;
-    padding: 5px 11px !important;
-    border-radius: 5px !important;
-    background: #ef233c !important;
-    color: #ffffff !important;
-    font-size: 11px !important;
-    font-weight: 850 !important;
-    letter-spacing: 0.04em !important;
-    line-height: 1.1 !important;
-    box-shadow: 0 4px 10px rgba(239, 35, 60, 0.3) !important;
-    width: fit-content !important;
-}
-.member-catalog-page .catalog-sport-badge {
-    display: inline-flex !important;
-    align-items: center !important;
-    justify-content: center !important;
-    padding: 5px 11px !important;
-    border-radius: 5px !important;
-    background: #111315 !important;
-    color: #ffffff !important;
-    font-size: 11px !important;
-    font-weight: 850 !important;
-    letter-spacing: 0.04em !important;
-    line-height: 1.1 !important;
-    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.28) !important;
-    width: fit-content !important;
+.mc-empty-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    height: 40px;
+    padding: 0 18px;
+    border-radius: 10px;
+    background: #ffffff;
+    color: #0b0d10;
+    font-size: 13.5px;
+    font-weight: 700;
+    text-decoration: none;
+    transition: background 0.18s ease, color 0.18s ease;
 }
 
-/* 8. FAVORITE BUTTON (TOP RIGHT) */
-.member-catalog-page .catalog-heart {
-    position: absolute !important;
-    top: 14px !important;
-    right: 14px !important;
-    z-index: 3 !important;
-    width: 44px !important;
-    height: 44px !important;
-    display: flex !important;
-    align-items: center !important;
-    justify-content: center !important;
-    border: 1px solid rgba(255, 255, 255, 0.85) !important;
-    border-radius: 50% !important;
-    background: rgba(10, 12, 15, 0.72) !important;
-    backdrop-filter: blur(4px) !important;
-    -webkit-backdrop-filter: blur(4px) !important;
-    color: #ffffff !important;
-    font-size: 26px !important;
-    line-height: 1 !important;
-    cursor: pointer !important;
-    transition: transform 0.18s ease, background 0.18s ease, border-color 0.18s ease !important;
-    padding: 0 !important;
-}
-.member-catalog-page .catalog-heart:hover,
-.member-catalog-page .catalog-heart.is-favorited {
-    background: #ef233c !important;
-    border-color: #ef233c !important;
-    color: #ffffff !important;
-    transform: scale(1.08) !important;
+.mc-empty-btn:hover {
+    background: var(--mc-accent);
+    color: #ffffff;
 }
 
-/* 9. CARD BODY */
-.member-catalog-page .catalog-card-body {
-    padding: 20px 22px 22px !important;
-    display: flex !important;
-    flex-direction: column !important;
-    flex: 1 1 auto !important;
-    min-width: 0 !important;
-    background: #ffffff !important;
+.mc-pagination {
+    margin-top: 36px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 6px;
+    flex-wrap: wrap;
 }
 
-/* 10. BRAND ROW & SPLIT TECH BADGE */
-.member-catalog-page .catalog-brand-row {
-    display: flex !important;
-    align-items: center !important;
-    justify-content: space-between !important;
-    gap: 12px !important;
-    min-height: 38px !important;
-    margin-bottom: 12px !important;
-    flex-wrap: nowrap !important;
-}
-.member-catalog-page .catalog-brand-logo {
-    display: flex !important;
-    align-items: center !important;
-    justify-content: flex-start !important;
-    height: 36px !important;
-    max-width: 80px !important;
-    flex: 0 0 auto !important;
-    background: transparent !important;
-    border: none !important;
-    padding: 0 !important;
-}
-.member-catalog-page .catalog-brand-logo img {
-    display: block !important;
-    height: 100% !important;
-    max-height: 36px !important;
-    width: auto !important;
-    max-width: 80px !important;
-    object-fit: contain !important;
-    object-position: left center !important;
-}
-.member-catalog-page .vehicle-tech-badge {
-    display: inline-flex !important;
-    align-items: stretch !important;
-    height: 32px !important;
-    border-radius: 7px !important;
-    overflow: hidden !important;
-    background: #17191d !important;
-    box-shadow: 0 3px 10px rgba(0, 0, 0, 0.12) !important;
-    flex: 0 0 auto !important;
-}
-.member-catalog-page .vehicle-tech-badge__label {
-    background: #e51d2a !important;
-    color: #ffffff !important;
-    padding: 0 11px !important;
-    font-size: 11px !important;
-    font-weight: 850 !important;
-    letter-spacing: 0.06em !important;
-    display: flex !important;
-    align-items: center !important;
-    justify-content: center !important;
-    text-transform: uppercase !important;
-    white-space: nowrap !important;
-    line-height: 1 !important;
-}
-.member-catalog-page .vehicle-tech-badge__value {
-    background: #17191d !important;
-    color: #ffffff !important;
-    padding: 0 12px !important;
-    font-size: 10.5px !important;
-    font-weight: 850 !important;
-    letter-spacing: 0.06em !important;
-    display: flex !important;
-    align-items: center !important;
-    justify-content: center !important;
-    text-transform: uppercase !important;
-    overflow: visible !important;
-    text-overflow: clip !important;
-    line-height: 1 !important;
+.mc-page-link {
+    display: grid;
+    place-items: center;
+    min-width: 38px;
+    height: 38px;
+    padding: 0 12px;
+    border-radius: 10px;
+    border: 1px solid var(--mc-line);
+    background: var(--mc-surface);
+    color: var(--mc-ink-muted);
+    font-size: 13.5px;
+    font-weight: 700;
+    text-decoration: none;
+    transition: border-color 0.18s ease, color 0.18s ease, background 0.18s ease;
 }
 
-/* 11. VEHICLE NAME (H3) */
-.member-catalog-page .catalog-card-body h3 {
-    font-size: 23px !important;
-    font-weight: 850 !important;
-    color: #101113 !important;
-    line-height: 1.25 !important;
-    letter-spacing: -0.015em !important;
-    margin: 0 0 8px !important;
-    display: -webkit-box !important;
-    -webkit-line-clamp: 2 !important;
-    -webkit-box-orient: vertical !important;
-    overflow: hidden !important;
-    min-height: 56px !important;
-    height: auto !important;
-}
-.member-catalog-page .catalog-card-body > a {
-    text-decoration: none !important;
-    color: inherit !important;
+.mc-page-link:hover {
+    border-color: var(--mc-line-strong);
+    color: #ffffff;
 }
 
-/* 12. METADATA */
-.member-catalog-page .catalog-meta {
-    font-size: 14.5px !important;
-    color: #8c949e !important;
-    margin: 0 0 16px !important;
-    white-space: nowrap !important;
-    overflow: hidden !important;
-    text-overflow: ellipsis !important;
-    min-height: 20px !important;
-    display: flex !important;
-    align-items: center !important;
-    gap: 4px !important;
-}
-.member-catalog-page .catalog-meta i {
-    font-style: normal !important;
-    color: #c4c8ce !important;
-    margin: 0 4px !important;
+.mc-page-link.is-active {
+    background: var(--mc-accent);
+    border-color: var(--mc-accent);
+    color: #ffffff;
 }
 
-/* 13. CARD FOOTER: PRICE & BIG CIRCULAR DETAIL BUTTON */
-.member-catalog-page .catalog-card-footer {
-    display: flex !important;
-    align-items: center !important;
-    justify-content: space-between !important;
-    gap: 12px !important;
-    margin-top: auto !important;
-    padding-top: 12px !important;
-    border-top: none !important;
-}
-.member-catalog-page .catalog-price {
-    color: #e51d2a !important;
-    font-size: 26px !important;
-    font-weight: 900 !important;
-    line-height: 1 !important;
-    letter-spacing: -0.02em !important;
-    margin: 0 !important;
-    white-space: nowrap !important;
-    overflow: visible !important;
-    text-overflow: unset !important;
-    flex: 1 1 auto !important;
-}
-.member-catalog-page .catalog-detail-button {
-    width: 66px !important;
-    height: 66px !important;
-    min-width: 66px !important;
-    min-height: 66px !important;
-    flex: 0 0 66px !important;
-    border-radius: 50% !important;
-    background: #111315 !important;
-    color: #ffffff !important;
-    display: flex !important;
-    align-items: center !important;
-    justify-content: center !important;
-    text-decoration: none !important;
-    transition: background 0.2s ease, transform 0.2s ease !important;
-    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.22) !important;
-    padding: 0 !important;
-    overflow: hidden !important;
-}
-.member-catalog-page .catalog-detail-button:hover {
-    background: #ef233c !important;
-    transform: scale(1.05) translateY(-2px) !important;
-    box-shadow: 0 8px 20px rgba(239, 35, 60, 0.35) !important;
-}
-.member-catalog-page .catalog-detail-button span {
-    display: none !important;
-}
-.member-catalog-page .catalog-detail-button b {
-    display: flex !important;
-    align-items: center !important;
-    justify-content: center !important;
-    color: #ffffff !important;
-    font-size: 26px !important;
-    font-weight: 400 !important;
-    background: transparent !important;
-    width: 100% !important;
-    height: 100% !important;
-    line-height: 1 !important;
-}
-
-/* 14. PAGINATION IN SHOWROOM VIEW */
-.member-catalog-pagination {
-    width: min(1640px, calc(100% - 64px)) !important;
-    max-width: 1640px !important;
-    margin: 48px auto 0 !important;
-    display: flex !important;
-    justify-content: center !important;
-    gap: 8px !important;
-}
-.member-catalog-pagination a {
-    display: grid !important;
-    place-items: center !important;
-    min-width: 44px !important;
-    height: 44px !important;
-    padding: 0 14px !important;
-    border: 1px solid rgba(255, 255, 255, 0.22) !important;
-    border-radius: 999px !important;
-    color: rgba(255, 255, 255, 0.85) !important;
-    font-size: 14px !important;
-    font-weight: 800 !important;
-    text-decoration: none !important;
-    transition: all 0.2s ease !important;
-}
-.member-catalog-pagination a:hover,
-.member-catalog-pagination a.is-active {
-    border-color: #ef233c !important;
-    background: #ef233c !important;
-    color: #ffffff !important;
-}
-
-/* 15. RESPONSIVE BREAKPOINTS */
-@media (max-width: 1280px) and (min-width: 901px) {
-    .member-catalog-grid {
-        grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
-        gap: 20px !important;
+/* 6. RESPONSIVE BREAKPOINTS */
+@media (max-width: 1240px) {
+    .mc-grid {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
     }
-    .member-catalog-page .catalog-card { min-height: 480px !important; }
-    .member-catalog-page .catalog-price { font-size: 23px !important; }
-    .member-catalog-page .catalog-detail-button { width: 58px !important; height: 58px !important; flex-basis: 58px !important; }
-    .member-catalog-page .catalog-detail-button b { font-size: 22px !important; }
 }
-@media (max-width: 900px) and (min-width: 561px) {
-    .member-catalog-filter { grid-template-columns: 1fr 1fr; }
-    .member-catalog-filter input, .member-catalog-filter .yza-button { grid-column: 1/-1; }
-    .member-catalog-grid {
-        grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
-        gap: 16px !important;
+
+@media (max-width: 960px) {
+    .mc-filter-bar {
+        grid-template-columns: 1fr 1fr;
+        gap: 8px;
+        padding: 10px;
     }
-    .member-catalog-page .catalog-card-image { height: 210px !important; min-height: 210px !important; max-height: 210px !important; flex-basis: 210px !important; }
-    .member-catalog-page .catalog-card { min-height: 460px !important; }
-    .member-catalog-page .catalog-card-body { padding: 18px 20px 20px !important; }
-    .member-catalog-page .catalog-card-body h3 { font-size: 19px !important; min-height: 48px !important; }
-    .member-catalog-page .catalog-price { font-size: 21px !important; }
-    .member-catalog-page .catalog-detail-button { width: 52px !important; height: 52px !important; flex-basis: 52px !important; }
-    .member-catalog-page .catalog-detail-button b { font-size: 20px !important; }
+
+    .mc-field + .mc-field::before {
+        display: none;
+    }
+
+    .mc-field-search {
+        grid-column: 1 / -1;
+        border-bottom: 1px solid var(--mc-line);
+        padding-bottom: 4px;
+    }
+
+    .mc-field-select {
+        border: 1px solid var(--mc-line);
+        border-radius: 10px;
+        background: var(--mc-bg);
+    }
+
+    .mc-submit-btn {
+        grid-column: 1 / -1;
+        margin-left: 0;
+        width: 100%;
+    }
+
+    .mc-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 16px;
+    }
 }
-@media (max-width: 560px) {
-    body.member-catalog-page-shell .member-catalog-results { padding: 28px 0 64px !important; margin: 0 -13px !important; }
-    .member-catalog-heading { width: calc(100% - 24px) !important; margin-bottom: 24px !important; display: block !important; }
-    .member-catalog-heading h2 { font-size: 28px !important; }
-    .member-catalog-grid {
-        grid-template-columns: 1fr !important;
-        gap: 16px !important;
-        width: calc(100% - 24px) !important;
+
+@media (max-width: 580px) {
+    .mc-header {
+        padding: 22px 18px;
+        margin-bottom: 18px;
+        border-radius: 16px;
     }
-    .member-catalog-page .catalog-card-image { height: 220px !important; min-height: 220px !important; max-height: 220px !important; flex-basis: 220px !important; }
-    .member-catalog-page .catalog-card { min-height: 440px !important; }
-    .member-catalog-page .catalog-card-body { padding: 18px !important; }
-    .member-catalog-page .catalog-card-body h3 { font-size: 18px !important; min-height: auto !important; }
-    .member-catalog-page .catalog-price { font-size: 20px !important; }
-    .member-catalog-page .catalog-detail-button { width: 48px !important; height: 48px !important; flex-basis: 48px !important; }
-    .member-catalog-page .catalog-detail-button b { font-size: 18px !important; }
+
+    .mc-tabs {
+        width: 100%;
+        justify-content: space-between;
+    }
+
+    .mc-tab {
+        flex: 1 1 auto;
+        justify-content: center;
+        padding: 8px 10px;
+        font-size: 12.5px;
+    }
+
+    .mc-results-info {
+        width: 100%;
+        justify-content: space-between;
+        margin-left: 0;
+    }
+
+    .mc-filter-bar {
+        grid-template-columns: 1fr;
+    }
+
+    .mc-grid {
+        grid-template-columns: 1fr;
+    }
 }
 </style>
 @endpush
@@ -561,14 +981,45 @@ body.member-catalog-page-shell .member-catalog-results {
 <script>
 (() => {
     const key = 'yza_favorite_cars';
-    const read = () => { try { const value = JSON.parse(localStorage.getItem(key) || '[]'); return Array.isArray(value) ? value.map(String) : []; } catch (error) { return []; } };
-    const write = value => { try { localStorage.setItem(key, JSON.stringify(value)); } catch (error) {} };
+    const read = () => {
+        try {
+            const value = JSON.parse(localStorage.getItem(key) || '[]');
+            return Array.isArray(value) ? value.map(String) : [];
+        } catch (error) {
+            return [];
+        }
+    };
+    const write = value => {
+        try {
+            localStorage.setItem(key, JSON.stringify(value));
+        } catch (error) {}
+    };
+
     document.querySelectorAll('[data-favorite-id]').forEach(button => {
         const id = String(button.dataset.favoriteId);
-        const render = active => { button.textContent = active ? '♥' : '♡'; button.classList.toggle('is-favorited', active); button.setAttribute('aria-pressed', String(active)); };
+        const render = active => {
+            button.classList.toggle('is-favorited', active);
+            button.setAttribute('aria-pressed', String(active));
+        };
         render(read().includes(id));
-        button.addEventListener('click', event => { event.preventDefault(); event.stopPropagation(); const favorites = read(); const active = !favorites.includes(id); write(active ? [...favorites, id] : favorites.filter(item => item !== id)); render(active); });
+        button.addEventListener('click', event => {
+            event.preventDefault();
+            event.stopPropagation();
+            const favorites = read();
+            const active = !favorites.includes(id);
+            write(active ? [...favorites, id] : favorites.filter(item => item !== id));
+            render(active);
+        });
     });
+
+    const filterForm = document.querySelector('[data-mc-filter-form]');
+    if (filterForm) {
+        filterForm.querySelectorAll('[data-mc-auto-submit]').forEach(select => {
+            select.addEventListener('change', () => {
+                filterForm.submit();
+            });
+        });
+    }
 })();
 </script>
 @endpush

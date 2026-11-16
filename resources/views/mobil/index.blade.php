@@ -39,8 +39,8 @@
     <strong class="catalog-total">Menampilkan {{ $visibleCars }} dari {{ $totalCars }} kendaraan</strong>
     </div>
     </section>
-    <section class="catalog-inventory" aria-labelledby="collection-title">
-        <div class="catalog-section-heading"><div><span>YZA AUTOMOTIVE COLLECTION</span><h2 id="collection-title">TEMUKAN MOBIL PILIHAN ANDA</h2><p>Jelajahi koleksi kendaraan baru, bekas, premium, dan performance YZA Automotive.</p></div>@if(request()->hasAny(['q','kondisi','merk','sort','sport']))<a class="catalog-reset" href="{{ route('mobil.index') }}">Reset Filter</a>@endif</div>
+    <section class="catalog-inventory" aria-label="Daftar Kendaraan">
+        @if(request()->hasAny(['q','kondisi','merk','sort','sport']))<div style="display:flex; justify-content:flex-end; margin-bottom:14px;"><a class="catalog-reset" href="{{ route('mobil.index') }}">Reset Filter</a></div>@endif
         @if($cars->isEmpty())
             <div class="catalog-empty"><div>⌕</div><h2>Belum ada kendaraan yang sesuai</h2><p>Silakan ubah filter atau kata pencarian Anda.</p><a class="catalog-reset-button" href="{{ route('mobil.index') }}">Reset Filter</a></div>
         @else
@@ -799,4 +799,205 @@
 
 @push('styles')
 <link rel="stylesheet" href="{{ asset('assets/css/pages/public-catalog-cards.css') }}?v={{ filemtime(public_path('assets/css/pages/public-catalog-cards.css')) }}">
+<style>
+/* Modern Minimalist Black Showroom Catalog Redesign */
+.yza-body-full,
+.yza-body-full .yza-content,
+.catalog-page {
+    background: #08090c !important;
+    color: #f8fafc !important;
+}
+
+.catalog-hero {
+    border: 1px solid rgba(255, 255, 255, 0.08) !important;
+    box-shadow: 0 24px 60px rgba(0, 0, 0, 0.45) !important;
+}
+
+/* Minimalist Dark Filter Panel */
+.catalog-filter-panel {
+    background: rgba(16, 18, 24, 0.94) !important;
+    border: 1px solid rgba(255, 255, 255, 0.09) !important;
+    border-radius: 18px !important;
+    padding: 16px 18px !important;
+    box-shadow: 0 18px 40px rgba(0, 0, 0, 0.4) !important;
+    backdrop-filter: blur(14px);
+    margin-bottom: 24px !important;
+}
+
+.catalog-filter-panel .catalog-filter input,
+.catalog-filter-panel .catalog-filter select {
+    background: #14171f !important;
+    border: 1px solid rgba(255, 255, 255, 0.1) !important;
+    color: #f1f5f9 !important;
+    border-radius: 11px !important;
+    height: 46px !important;
+    font-size: 13px !important;
+}
+
+.catalog-filter-panel .catalog-filter input::placeholder {
+    color: #64748b !important;
+}
+
+.catalog-filter-panel .catalog-filter input:focus,
+.catalog-filter-panel .catalog-filter select:focus {
+    border-color: #ef233c !important;
+    box-shadow: 0 0 0 3px rgba(239, 35, 60, 0.18) !important;
+    background: #181c26 !important;
+}
+
+.catalog-filter-panel .catalog-search span {
+    color: #94a3b8 !important;
+}
+
+.catalog-filter-panel .catalog-filter-button {
+    height: 46px !important;
+    border-radius: 11px !important;
+    background: #ef233c !important;
+    font-weight: 700 !important;
+    letter-spacing: 0.02em;
+}
+
+.catalog-filter-panel .catalog-filter-button:hover {
+    background: #dc1b33 !important;
+}
+
+.catalog-filter-panel .catalog-chips a {
+    background: rgba(255, 255, 255, 0.04) !important;
+    border: 1px solid rgba(255, 255, 255, 0.1) !important;
+    color: #cbd5e1 !important;
+    min-height: 36px !important;
+    padding: 0 15px !important;
+    font-size: 12.5px !important;
+    font-weight: 600 !important;
+}
+
+.catalog-filter-panel .catalog-chips a:not(.is-active):hover {
+    border-color: rgba(239, 35, 60, 0.6) !important;
+    color: #ffffff !important;
+    background: rgba(239, 35, 60, 0.12) !important;
+}
+
+.catalog-filter-panel .catalog-chips a.is-active {
+    background: #ef233c !important;
+    border-color: #ef233c !important;
+    color: #ffffff !important;
+    box-shadow: 0 6px 18px rgba(239, 35, 60, 0.28) !important;
+}
+
+.catalog-filter-panel .catalog-total {
+    color: #94a3b8 !important;
+    font-size: 12.5px !important;
+    font-weight: 600 !important;
+}
+
+/* Unified Dark Inventory Section */
+.catalog-inventory {
+    background: transparent !important;
+    padding-top: 12px !important;
+}
+
+.catalog-inventory .catalog-section-heading {
+    margin-bottom: 24px !important;
+}
+
+/* Modern Minimalist White Cards on Black Showroom */
+.catalog-inventory .catalog-card,
+.catalog-inventory .catalog-card-performance {
+    background: #ffffff !important;
+    border: 1px solid rgba(255, 255, 255, 0.14) !important;
+    border-radius: 18px !important;
+    box-shadow: 0 18px 40px rgba(0, 0, 0, 0.4) !important;
+    color: #0f172a !important;
+    overflow: hidden !important;
+    transition: transform 0.22s ease, border-color 0.22s ease, box-shadow 0.22s ease !important;
+}
+
+.catalog-inventory .catalog-card:hover,
+.catalog-inventory .catalog-card-performance:hover {
+    transform: translateY(-4px) !important;
+    border-color: rgba(239, 35, 60, 0.55) !important;
+    box-shadow: 0 24px 52px rgba(0, 0, 0, 0.55) !important;
+}
+
+.catalog-inventory .catalog-card-image {
+    background: #f1f5f9 !important;
+}
+
+.catalog-inventory .catalog-card-body,
+.catalog-inventory .catalog-card-performance .catalog-card-body {
+    background: #ffffff !important;
+    padding: 16px 18px 18px !important;
+}
+
+.catalog-inventory .catalog-brand-logo {
+    background: #f8fafc !important;
+    border-color: #e2e8f0 !important;
+    height: 44px !important;
+    border-radius: 10px !important;
+}
+
+.catalog-inventory .catalog-variant-pill {
+    background: #f1f5f9 !important;
+    border: 1px solid #e2e8f0 !important;
+    color: #475569 !important;
+    box-shadow: none !important;
+}
+
+.catalog-inventory .catalog-card-body h3,
+.catalog-inventory .catalog-card-performance .catalog-card-body h3 {
+    color: #0f172a !important;
+    font-weight: 800 !important;
+    letter-spacing: -0.015em !important;
+}
+
+.catalog-inventory .catalog-meta,
+.catalog-inventory .catalog-card-performance .catalog-meta {
+    color: #64748b !important;
+}
+
+.catalog-inventory .catalog-meta i {
+    color: #cbd5e1 !important;
+}
+
+.catalog-inventory .catalog-card-footer {
+    border-top: 1px solid #f1f5f9 !important;
+    padding-top: 14px !important;
+}
+
+.catalog-inventory .catalog-price {
+    color: #ef233c !important;
+    font-weight: 850 !important;
+}
+
+.catalog-inventory .catalog-detail-button {
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    background: #0f172a !important;
+    border: 0 !important;
+    color: #ffffff !important;
+}
+
+.catalog-inventory .catalog-detail-button b {
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    line-height: 1 !important;
+}
+
+.catalog-inventory .catalog-card:hover .catalog-detail-button {
+    background: #ef233c !important;
+}
+
+/* Dark Empty State */
+.catalog-inventory .catalog-empty {
+    background: #111319 !important;
+    border: 1px solid rgba(255, 255, 255, 0.08) !important;
+    color: #f8fafc !important;
+}
+
+.catalog-inventory .catalog-empty p {
+    color: #94a3b8 !important;
+}
+</style>
 @endpush

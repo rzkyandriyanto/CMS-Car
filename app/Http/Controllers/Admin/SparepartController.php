@@ -7,6 +7,7 @@ use App\Http\Requests\StoreSparepartRequest;
 use App\Http\Requests\StoreSparepartFitmentRequest;
 use App\Http\Requests\UpdateSparepartRequest;
 use App\Models\KategoriSparepart;
+use App\Models\MechanicSparepartRequest;
 use App\Models\Sparepart;
 use App\Models\SparepartFitment;
 use App\Models\Supplier;
@@ -14,6 +15,7 @@ use App\Models\KendaraanPelanggan;
 use App\Models\Servis;
 use App\Services\InventoryService;
 use App\Services\MasterAuditService;
+use App\Services\WorkOrderAuthorizationService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Http\JsonResponse;
@@ -23,7 +25,10 @@ use Illuminate\View\View;
 
 class SparepartController extends Controller
 {
-    public function index(): View {
+    public function index(Request $request): View {
+        if ($request->user()?->roleKey() === 'mechanic') {
+            return $this->mechanicIndex($request);
+        }
         $stats = [
             'total_jenis' => Sparepart::count(),
             'total_stok' => (int) Sparepart::sum('stok'),
@@ -57,6 +62,7 @@ class SparepartController extends Controller
                 ->when(request('compatibility') === 'with_fitment', fn($q) => $q->whereHas('fitments'))
                 ->when(request('compatibility') === 'without_fitment', fn($q) => $q->whereDoesntHave('fitments'))
                 ->orderByDesc('created_at')
+                ->orderByDesc('id_sparepart')
                 ->paginate(10)
                 ->withQueryString(),
             'categories' => KategoriSparepart::where('status', 'aktif')->orderBy('nama_kategori')->get(),
@@ -86,7 +92,18 @@ class SparepartController extends Controller
         return view('admin.sparepart.show', compact('sparepart', 'stockHistory', 'workOrder', 'vehicleContext', 'vehicleCatalog') + ['item' => $sparepart]);
     }
     public function edit(Sparepart $sparepart): View { return view('admin.sparepart.edit', ['item' => $sparepart, 'categories' => KategoriSparepart::where('status','aktif')->orWhere('id_kategori',$sparepart->id_kategori)->orderBy('nama_kategori')->get(), 'suppliers' => Supplier::where('status','aktif')->orWhere('id_supplier',$sparepart->id_supplier)->orderBy('nama_supplier')->get()]); }
-    public function update(UpdateSparepartRequest $request, Sparepart $sparepart, MasterAuditService $audit): RedirectResponse { $data = $request->validated(); unset($data['foto']); $data['harga_diperbarui_at'] = now(); $sparepart->update($data); $this->storePhoto($sparepart, $request->file('foto')); $audit->record('update', 'sparepart', $sparepart->id_sparepart, 'Mengubah master tanpa mengubah stok'); return redirect()->route('admin.sparepart.show', $sparepart)->with('success', 'Spare part berhasil diperbarui.'); }
+    public function update(UpdateSparepartRequest $request, Sparepart $sparepart, MasterAuditService $audit): RedirectResponse|JsonResponse {
+        $data = $request->validated();
+        unset($data['foto']);
+        $data['harga_diperbarui_at'] = now();
+        $sparepart->update($data);
+        $this->storePhoto($sparepart, $request->file('foto'));
+        $audit->record('update', 'sparepart', $sparepart->id_sparepart, 'Mengubah master tanpa mengubah stok');
+        if ($request->wantsJson() || $request->ajax()) {
+            return response()->json(['success' => true, 'message' => 'Spare part berhasil diperbarui.']);
+        }
+        return redirect()->route('admin.sparepart.show', $sparepart)->with('success', 'Spare part berhasil diperbarui.');
+    }
     public function storeFitment(StoreSparepartFitmentRequest $request, Sparepart $sparepart, MasterAuditService $audit, InventoryService $inventory): RedirectResponse {
         $data = $request->validated();
         $vehicle = null;
@@ -113,8 +130,107 @@ class SparepartController extends Controller
         $audit->record('create', 'sparepart_fitment', $fitment->id_sparepart_fitment, 'Menambahkan verifikasi kompatibilitas sparepart');
         return back()->with('success', 'Data kompatibilitas sparepart berhasil disimpan.');
     }
-    public function search(Request $request, \App\Models\Servis $servis): JsonResponse { $term = trim((string) $request->query('q', '')); if (mb_strlen($term) < 2) return response()->json(['vehicle' => $servis->kendaraan?->only(['merk','model','tahun']), 'results' => []]); $parts = Sparepart::with('fitments')->where('status','aktif')->where(function($query) use ($term) { $query->where('nama_sparepart','like','%'.$term.'%')->orWhere('kode_sparepart','like','%'.$term.'%')->orWhere('merk','like','%'.$term.'%'); })->limit(30)->get(); $fitment = app(\App\Services\SparepartFitmentService::class); $results = $parts->map(function($part) use ($fitment, $servis) { $state = $fitment->statusFor($part, $servis->kendaraan); return ['id' => $part->id_sparepart, 'name' => $part->nama_sparepart, 'sku' => $part->kode_sparepart, 'stock' => (int) $part->stok, 'price' => (float) $part->harga_jual, 'status' => $state['status'], 'label' => $state['status'] === 'verified_fit' ? 'KOMPATIBEL TERVERIFIKASI' : ($state['status'] === 'verified_not_fit' ? 'TIDAK KOMPATIBEL' : 'KOMPATIBILITAS BELUM TERVERIFIKASI'), 'can_select' => $state['status'] === 'verified_fit' && (int) $part->stok > 0, 'manage_url' => request()->is('admin/*') ? route('admin.sparepart.show', $part).'?work_order='.$servis->id_servis : null]; })->sortBy(fn($part) => match($part['status']) { 'verified_fit' => 0, 'unverified' => 1, default => 2 })->values(); return response()->json(['vehicle' => $servis->kendaraan?->only(['merk','model','tahun']), 'results' => $results]); }
+    public function search(Request $request, \App\Models\Servis $servis): JsonResponse { $term = trim((string) $request->query('q', '')); if (mb_strlen($term) < 2) return response()->json(['vehicle' => $servis->kendaraan?->only(['merk','model','tahun']), 'results' => []]); $pattern = '%'.mb_strtolower($term).'%'; $parts = Sparepart::with('fitments')->where('status','aktif')->where(function($query) use ($pattern) { $query->whereRaw('LOWER(nama_sparepart) LIKE ?', [$pattern])->orWhereRaw('LOWER(kode_sparepart) LIKE ?', [$pattern])->orWhereRaw('LOWER(COALESCE(merk, \'\')) LIKE ?', [$pattern]); })->limit(30)->get(); $fitment = app(\App\Services\SparepartFitmentService::class); $results = $parts->map(function($part) use ($fitment, $servis) { $state = $fitment->statusFor($part, $servis->kendaraan); return ['id' => $part->id_sparepart, 'name' => $part->nama_sparepart, 'sku' => $part->kode_sparepart, 'stock' => (int) $part->stok, 'price' => (float) $part->harga_jual, 'status' => $state['status'], 'label' => $state['status'] === 'verified_fit' ? 'KOMPATIBEL TERVERIFIKASI' : ($state['status'] === 'verified_not_fit' ? 'TIDAK KOMPATIBEL' : 'KOMPATIBILITAS BELUM TERVERIFIKASI'), 'can_select' => $state['status'] === 'verified_fit' && (int) $part->stok > 0, 'manage_url' => request()->is('admin/*') ? route('admin.sparepart.show', $part).'?work_order='.$servis->id_servis : null]; })->sortBy(fn($part) => match($part['status']) { 'verified_fit' => 0, 'unverified' => 1, default => 2 })->values(); return response()->json(['vehicle' => $servis->kendaraan?->only(['merk','model','tahun']), 'results' => $results]); }
     public function destroyFitment(Sparepart $sparepart, SparepartFitment $fitment, MasterAuditService $audit): RedirectResponse { abort_unless((int) $fitment->id_sparepart === (int) $sparepart->id_sparepart, 404); $fitment->delete(); $audit->record('delete', 'sparepart_fitment', $fitment->id_sparepart_fitment, 'Menghapus verifikasi kompatibilitas sparepart'); return back()->with('success', 'Data kompatibilitas dihapus.'); }
     public function toggle(Sparepart $sparepart, MasterAuditService $audit): RedirectResponse { $target = $sparepart->status === 'aktif' ? 'nonaktif' : 'aktif'; $sparepart->update(['status' => $target]); $audit->record('status', 'sparepart', $sparepart->id_sparepart, 'Status spare part menjadi '.$target); return back()->with('success', 'Status spare part diperbarui.'); }
+
+    private function mechanicIndex(Request $request): View
+    {
+        $mechanicId = $request->user()?->petugas?->id_petugas;
+        $baseQuery = Servis::query()->whereHas('assignments', fn ($assigned) => $assigned
+            ->where('id_petugas', $mechanicId)
+            ->whereIn('assignment_role', ['primary', 'assistant'])
+            ->where('assigned_at', '<=', now())
+            ->whereNull('unassigned_at'));
+
+        $isMechanicDone = fn ($q) => $q->where(function ($sub): void {
+            $sub->where('status', 'selesai')
+                ->orWhereHas('qualityControl', fn ($qc) => $qc->whereIn('status', ['in_progress', 'passed']));
+        });
+        $isMechanicInProgress = fn ($q) => $q->whereIn('status', ['pemeriksaan', 'dikerjakan'])
+            ->whereDoesntHave('qualityControl', fn ($qc) => $qc->whereIn('status', ['in_progress', 'passed']));
+
+        $stats = [
+            'total' => (clone $baseQuery)->count(),
+            'proses' => $isMechanicInProgress(clone $baseQuery)->count(),
+            'selesai' => $isMechanicDone(clone $baseQuery)->count(),
+        ];
+
+        $search = trim((string) $request->query('q', ''));
+        $status = (string) $request->query('status', '');
+
+        $workOrders = (clone $baseQuery)
+            ->with([
+                'pelanggan',
+                'kendaraan',
+                'bookingServis.jenisServis',
+                'qualityControl',
+                'details',
+                'sparepartItems.sparepart',
+            ])
+            ->when($status !== '', function ($q) use ($status, $isMechanicDone, $isMechanicInProgress): void {
+                if ($status === 'proses') {
+                    $isMechanicInProgress($q);
+                } elseif ($status === 'selesai') {
+                    $isMechanicDone($q);
+                } else {
+                    $q->where('status', $status);
+                }
+            })
+            ->when($search !== '', function ($q) use ($search): void {
+                $term = '%'.$search.'%';
+                $q->where(function ($sub) use ($term): void {
+                    $sub->where('kode_servis', 'like', $term)
+                        ->orWhere('keluhan', 'like', $term)
+                        ->orWhereHas('pelanggan', fn ($p) => $p->where('nama_lengkap', 'like', $term)->orWhere('no_telepon', 'like', $term))
+                        ->orWhereHas('kendaraan', fn ($k) => $k->where('nomor_polisi', 'like', $term)->orWhere('merk', 'like', $term)->orWhere('model', 'like', $term));
+                });
+            })
+            ->latest('id_servis')
+            ->paginate(15)
+            ->withQueryString();
+
+        return view('admin.sparepart.mechanic', compact('workOrders', 'stats', 'search', 'status'));
+    }
+
+    public function storeCustomRequest(Request $request, WorkOrderAuthorizationService $auth): RedirectResponse
+    {
+        $data = $request->validate([
+            'id_servis' => ['required', 'integer', 'exists:servis,id_servis'],
+            'nama_sparepart' => ['required', 'string', 'max:160'],
+            'spesifikasi' => ['nullable', 'string', 'max:160'],
+            'jumlah' => ['required', 'integer', 'min:1', 'max:999'],
+            'satuan' => ['required', 'string', 'max:30'],
+            'catatan_kebutuhan' => ['nullable', 'string', 'max:500'],
+        ]);
+
+        $servis = Servis::findOrFail((int) $data['id_servis']);
+        $auth->authorize($request->user(), $servis, 'work');
+
+        MechanicSparepartRequest::create([
+            'id_servis' => $servis->id_servis,
+            'id_petugas' => $request->user()?->petugas?->id_petugas,
+            'nama_sparepart' => trim($data['nama_sparepart']),
+            'spesifikasi' => filled($data['spesifikasi'] ?? null) ? trim((string) $data['spesifikasi']) : null,
+            'jumlah' => (int) $data['jumlah'],
+            'satuan' => trim($data['satuan']),
+            'catatan_kebutuhan' => filled($data['catatan_kebutuhan'] ?? null) ? trim((string) $data['catatan_kebutuhan']) : null,
+            'status' => 'menunggu_gudang',
+        ]);
+
+        return back()->with('success', 'Kebutuhan sparepart kustom berhasil dicatat untuk konsumen '.$servis->pelanggan?->nama_lengkap.'.');
+    }
+
+    public function destroyCustomRequest(Request $request, MechanicSparepartRequest $custom_request, WorkOrderAuthorizationService $auth): RedirectResponse
+    {
+        $servis = $custom_request->servis;
+        abort_unless($servis, 404);
+        $auth->authorize($request->user(), $servis, 'work');
+
+        $custom_request->delete();
+
+        return back()->with('success', 'Permintaan sparepart kustom berhasil dihapus.');
+    }
+
     private function storePhoto(Sparepart $item, ?UploadedFile $file): void { if (!$file) return; $name = bin2hex(random_bytes(16)).'.'.strtolower($file->extension()); $file->storeAs('uploads/sparepart', $name, 'public'); $item->update(['foto' => $name]); }
 }

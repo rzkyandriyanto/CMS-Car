@@ -8,7 +8,14 @@ use Illuminate\Validation\Rule;
 
 class StoreMobilRequest extends FormRequest
 {
-    public function authorize(): bool { return $this->user()?->roleName() === 'admin'; }
+    public function authorize(): bool
+    {
+        $user = $this->user();
+
+        return $user?->status === 'aktif'
+            && $user->roleKey() !== 'owner'
+            && ($user->roleName() === 'admin' || $user->hasPermission('inventory.manage'));
+    }
     protected function prepareForValidation(): void
     {
         $this->merge(['nomor_rangka' => strtoupper(trim((string) $this->input('nomor_rangka'))),

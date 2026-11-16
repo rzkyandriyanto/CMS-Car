@@ -306,7 +306,7 @@
                         <td style="color:#64748b;">{{ $no++ }}</td>
                         <td>
                             <strong style="color:#0f172a;">{{ $d->deskripsi_pekerjaan }}</strong>
-                            <small style="color:#64748b; display:block;">Jasa Layanan & Inspeksi Teknisi Bengkel</small>
+                            <small style="color:#64748b; display:block;">{{ $d->catatan ?: 'Jasa Layanan & Inspeksi Teknisi Bengkel' }}</small>
                         </td>
                         <td style="text-align:center; font-weight:700;">1</td>
                         <td style="text-align:right; font-family:ui-monospace, monospace;">{{ number_format((float)$d->biaya, 0, ',', '.') }}</td>

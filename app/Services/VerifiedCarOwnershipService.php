@@ -4,10 +4,11 @@ namespace App\Services;
 
 use App\Models\{KendaraanPelanggan, Mobil, PenjualanMobil, SerahTerimaPesananMobil};
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Collection as EloquentCollection;
 
 class VerifiedCarOwnershipService
 {
-    public function verifiedVehiclesFor(int $customerId)
+    public function verifiedVehiclesFor(int $customerId): EloquentCollection
     {
         $sales = $this->completedSalesFor($customerId)->with('mobil')->get();
         $identifiers = $sales->flatMap(function ($sale): array {
@@ -18,7 +19,7 @@ class VerifiedCarOwnershipService
                 $car->nomor_mesin ? ['nomor_mesin', $car->nomor_mesin] : null,
             ]));
         });
-        if ($identifiers->isEmpty()) return collect();
+        if ($identifiers->isEmpty()) return new EloquentCollection();
         return KendaraanPelanggan::query()
             ->where('id_pelanggan', $customerId)
             ->where('status', 'aktif')

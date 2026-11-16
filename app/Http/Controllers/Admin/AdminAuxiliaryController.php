@@ -3,7 +3,8 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
-use App\Models\{BookingServis, KendaraanPelanggan, Permission, Role, Transaksi, User};
+use App\Models\{BookingServis, KendaraanPelanggan, Permission, PesananMobilMember, Role, Transaksi, User};
+use App\Services\{MemberVehiclePurchaseService, VehicleGalleryService, VehicleInventoryService};
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Pagination\LengthAwarePaginator;
@@ -273,13 +274,93 @@ class AdminAuxiliaryController extends Controller
 
     public function ordersWorkflow(Request $request, string $workflow): View
     {
+        if ($workflow === 'pdi') {
+            return $this->pdiWorkspace($request);
+        }
+
         $status = match ($workflow) {
-            'pdi' => 'proses',
             'pengambilan' => 'proses',
             'serah-terima' => 'siap_diambil',
             default => 'proses',
         };
         $request->merge(['status' => $status]);
         return app(MemberVehiclePurchaseController::class)->index($request);
+    }
+
+    private function pdiWorkspace(Request $request): View
+    {
+        $gallery = app(VehicleGalleryService::class);
+        $inventoryService = app(VehicleInventoryService::class);
+        $keyword = trim((string) $request->input('q'));
+        $pdiFilter = (string) $request->input('pdi_status');
+
+        $baseQuery = PesananMobilMember::query()
+            ->whereIn('status', ['lunas', 'pdi_lulus', 'pdi_gagal', 'siap_diambil', 'diserahkan']);
+
+        $stats = [
+            'total' => (clone $baseQuery)->count(),
+            'pending' => (clone $baseQuery)->where(function ($q): void {
+                $q->whereDoesntHave('pdi')
+                    ->orWhereHas('pdi', fn ($p) => $p->where('status', 'sedang_diperiksa'));
+            })->count(),
+            'lulus' => (clone $baseQuery)->whereHas('pdi', fn ($p) => $p->where('status', 'lulus'))->count(),
+            'perlu_perbaikan' => (clone $baseQuery)->whereHas('pdi', fn ($p) => $p->where('status', 'perlu_perbaikan'))->count(),
+        ];
+
+        $orders = (clone $baseQuery)
+            ->with(['pelanggan', 'mobil.foto', 'pdi', 'transaksi'])
+            ->when($keyword !== '', function ($builder) use ($keyword): void {
+                $builder->where(function ($search) use ($keyword): void {
+                    $search->where('nomor_pesanan', 'like', "%{$keyword}%")
+                        ->orWhere('nama_pembeli', 'like', "%{$keyword}%")
+                        ->orWhere('snapshot_merk', 'like', "%{$keyword}%")
+                        ->orWhere('snapshot_model', 'like', "%{$keyword}%")
+                        ->orWhereHas('mobil', fn ($m) => $m->where('kode_mobil', 'like', "%{$keyword}%")->orWhere('nomor_rangka', 'like', "%{$keyword}%"))
+                        ->orWhereHas('pdi', fn ($p) => $p->where('nomor_rangka_snapshot', 'like', "%{$keyword}%")->orWhere('nomor_mesin_snapshot', 'like', "%{$keyword}%"));
+                });
+            })
+            ->when($pdiFilter !== '', function ($builder) use ($pdiFilter): void {
+                if ($pdiFilter === 'pending') {
+                    $builder->where(function ($q): void {
+                        $q->whereDoesntHave('pdi')
+                            ->orWhereHas('pdi', fn ($p) => $p->where('status', 'sedang_diperiksa'));
+                    });
+                } elseif (in_array($pdiFilter, ['lulus', 'perlu_perbaikan'], true)) {
+                    $builder->whereHas('pdi', fn ($p) => $p->where('status', $pdiFilter));
+                }
+            })
+            ->latest('created_at')
+            ->paginate(12)
+            ->withQueryString();
+
+        $orders->getCollection()->each(function (PesananMobilMember $order) use ($gallery, $inventoryService): void {
+            $sameVehicle = $order->matchesCatalogVehicle();
+            $selectedGallery = $sameVehicle ? $gallery->forColor($order->mobil, $order->snapshot_warna) : [];
+            $image = $selectedGallery['images'][0]['src'] ?? null;
+            if ($image === asset('assets/images/hero/yza-hero-reference-v3.png')) {
+                $image = null;
+            }
+            $order->setAttribute('ordered_vehicle_image', $image ?: asset('assets/images/vehicle-photo-unavailable.svg'));
+            $isAggregate = $order->mobil && $inventoryService->find($order->mobil);
+            $order->setAttribute('ordered_vehicle_vin', $order->pdi?->nomor_rangka_snapshot
+                ?: (!$isAggregate && $sameVehicle ? $order->mobil?->nomor_rangka : null));
+            $order->setAttribute('ordered_vehicle_engine_number', $order->pdi?->nomor_mesin_snapshot
+                ?: (!$isAggregate && $sameVehicle ? $order->mobil?->nomor_mesin : null));
+        });
+
+        $checklistDefinition = app(MemberVehiclePurchaseService::class)->checklistDefinition();
+        $sectionMeta = [
+            'identitas' => ['title' => 'Identitas Unit & Nomor Pabrik', 'desc' => 'Verifikasi kesesuaian nomor rangka (VIN) dan nomor mesin kendaraan baru.'],
+            'mesin_fluid' => ['title' => 'Mesin & Cairan Pabrik', 'desc' => 'Periksa kondisi ruang mesin, oli mesin, coolant, minyak rem, dan air washer.'],
+            'kaki_kaki' => ['title' => 'Kaki-Kaki, Ban & Pengereman', 'desc' => 'Pastikan fungsi rem, kondisi ban, tekanan angin, dan velg standar pabrik.'],
+            'electrical' => ['title' => 'Sistem Kelistrikan & Penerangan', 'desc' => 'Uji aki, lampu utama, lampu belakang, lampu sein, dan indikator dashboard.'],
+            'cabin' => ['title' => 'Kabin, AC & Keselamatan Interior', 'desc' => 'Periksa AC, sistem infotainment, kebersihan interior, jok, dan sabuk pengaman.'],
+            'exterior' => ['title' => 'Eksterior, Cat & Bodi', 'desc' => 'Cek panel bodi, kualitas cat pabrik, kaca, wiper, dan spion.'],
+            'feature' => ['title' => 'Fitur & Teknologi Kendaraan', 'desc' => 'Uji sensor parkir, kamera, central lock, dan kunci/keyless.'],
+            'completeness' => ['title' => 'Kelengkapan Unit & Dokumen', 'desc' => 'Pastikan kunci utama & cadangan, toolkit, aksesoris, serta dokumen lengkap.'],
+            'final' => ['title' => 'Uji Fungsi & Road Test Akhir', 'desc' => 'Verifikasi final seluruh fungsi berkendara sebelum serah terima ke Finance / Kasir.'],
+        ];
+
+        return view('admin.pdi.index', compact('orders', 'stats', 'keyword', 'pdiFilter', 'checklistDefinition', 'sectionMeta'));
     }
 }

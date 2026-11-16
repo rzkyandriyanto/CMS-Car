@@ -40,6 +40,7 @@
         <div class="register-membership-price"><div><span>AKTIVASI MEMBERSHIP</span><strong>Rp {{ number_format((float) app(\App\Services\PengaturanService::class)->membershipFee(), 0, ',', '.') }}</strong></div><small>Sekali aktivasi<br>Tanpa biaya bulanan</small></div>
         <div class="register-steps" aria-label="Progress pendaftaran"><span class="active" data-step-label="1"><b>01</b> Data Diri</span><i></i><span data-step-label="2"><b>02</b> Alamat</span><i></i><span data-step-label="3"><b>03</b> Membership</span><i></i><span data-step-label="4"><b>04</b> Pembayaran</span><i></i><span data-step-label="5"><b>05</b> Selesai</span></div>
         @if($errors->any())<div class="alert alert-error" role="alert">{{ $errors->first() }}</div>@endif
+        <div class="alert alert-error" id="register-client-error" role="alert" hidden></div>
         <div class="register-flow-step is-active" data-step="1">
             <div class="form-grid">
                 @foreach ([['nama_lengkap','Nama Lengkap','text','Masukkan nama lengkap Anda'],['no_hp','Nomor HP','tel','Contoh: 08123456789'],['email','Email','email','nama@email.com'],['username','Username','text','Buat username Anda']] as $field)
@@ -66,8 +67,9 @@
         <div class="register-flow-step" data-step="3" hidden>
             <div class="register-membership-summary"><span class="eyebrow">RINGKASAN MEMBERSHIP</span><h3>YZA Member</h3><div class="register-summary-price">Rp {{ number_format((float) app(\App\Services\PengaturanService::class)->membershipFee(), 0, ',', '.') }} <small>sekali aktivasi</small></div><p>Tanpa biaya bulanan. Membership aktif setelah pembayaran berhasil diverifikasi.</p><ul><li>Promo eksklusif</li><li>YZA Points</li><li>Service reminder</li><li>Test drive &amp; kendaraan</li><li>Trade-in terintegrasi</li><li>Akses layanan member</li></ul></div>
             <div class="register-data-summary"><span class="eyebrow">DATA DIRI &amp; ALAMAT</span><div><span>Nama</span><strong data-summary="nama_lengkap">—</strong></div><div><span>Email</span><strong data-summary="email">—</strong></div><div><span>Nomor HP</span><strong data-summary="no_hp">—</strong></div><div><span>Username</span><strong data-summary="username">—</strong></div><div class="register-summary-address"><span>Alamat</span><strong data-summary="address">—</strong></div><div class="register-summary-address"><span>Detail tambahan</span><strong data-summary="address_detail">—</strong></div></div>
-            <label class="register-confirm"><input type="checkbox" name="membership_confirmed" value="1" required> Saya memahami bahwa aktivasi YZA Member dikenakan biaya sekali aktivasi sesuai nominal di atas.</label>
-            <div class="form-actions"><button class="button button-secondary" type="button" data-prev-step="3">← Kembali ke Alamat</button><button class="button button-primary" type="submit">LANJUT KE PEMBAYARAN&nbsp; →</button></div>
+            <label class="register-confirm"><input type="checkbox" name="membership_confirmed" id="membership_confirmed" value="1" required> Saya memahami bahwa aktivasi YZA Member dikenakan biaya sekali aktivasi sesuai nominal di atas.</label>
+            <p class="form-error" id="membership-confirm-error" hidden></p>
+            <div class="form-actions"><button class="button button-secondary" type="button" data-prev-step="3">← Kembali ke Alamat</button><button class="button button-primary" type="submit" id="register-submit-btn">LANJUT KE PEMBAYARAN&nbsp; →</button></div>
         </div>
     </form>
 </main>
@@ -138,10 +140,77 @@
     passwordConfirmation?.addEventListener('input', syncPasswordValidity);
     document.querySelector('[data-next-step="1"]')?.addEventListener('click', () => { syncPasswordValidity(); if (!validateStep(1)) return; showStep(2); });
     const updatePersonalSummary = () => { ['nama_lengkap','email','no_hp','username'].forEach((name) => { const target = document.querySelector(`[data-summary="${name}"]`); const input = document.getElementById(name); if (target) target.textContent = input?.value || '—'; }); const addressTarget = document.querySelector('[data-summary="address"]'); const detailTarget = document.querySelector('[data-summary="address_detail"]'); if (addressTarget) addressTarget.textContent = regionSelects.map((select) => select.selectedOptions[0]?.textContent).filter(Boolean).reverse().join(', ') || '—'; if (detailTarget) detailTarget.textContent = document.getElementById('address_detail')?.value || 'Tidak ada'; };
-    document.querySelector('[data-next-step="2"]')?.addEventListener('click', () => { if (!validAddress()) return; updatePersonalSummary(); showStep(3); });
-    document.querySelector('[data-prev-step="2"]')?.addEventListener('click', () => showStep(1));
-    document.querySelector('[data-prev-step="3"]')?.addEventListener('click', () => showStep(2));
-    form.addEventListener('submit', (event) => { if (!document.querySelector('[data-step="3"]')?.classList.contains('is-active') || !form.reportValidity() || !validAddress()) event.preventDefault(); });
+    const submitBtn = document.getElementById('register-submit-btn');
+    const clientError = document.getElementById('register-client-error');
+    const confirmCheckbox = document.getElementById('membership_confirmed');
+    const confirmError = document.getElementById('membership-confirm-error');
+    const defaultSubmitLabel = submitBtn ? submitBtn.innerHTML : 'LANJUT KE PEMBAYARAN&nbsp; →';
+    const resetSubmitState = () => {
+        if (!submitBtn) return;
+        submitBtn.disabled = false;
+        submitBtn.removeAttribute('aria-busy');
+        submitBtn.innerHTML = defaultSubmitLabel;
+    };
+    const showClientError = (message) => {
+        if (!clientError) return;
+        clientError.textContent = message;
+        clientError.hidden = false;
+    };
+    const clearClientError = () => {
+        if (clientError) {
+            clientError.textContent = '';
+            clientError.hidden = true;
+        }
+        if (confirmError) {
+            confirmError.textContent = '';
+            confirmError.hidden = true;
+        }
+    };
+    confirmCheckbox?.addEventListener('change', () => {
+        if (confirmCheckbox.checked) clearClientError();
+    });
+    document.querySelector('[data-next-step="2"]')?.addEventListener('click', () => { clearClientError(); if (!validAddress()) return; updatePersonalSummary(); showStep(3); });
+    document.querySelector('[data-prev-step="2"]')?.addEventListener('click', () => { clearClientError(); showStep(1); });
+    document.querySelector('[data-prev-step="3"]')?.addEventListener('click', () => { clearClientError(); showStep(2); });
+    form.addEventListener('submit', (event) => {
+        clearClientError();
+        if (submitBtn?.disabled) {
+            event.preventDefault();
+            return;
+        }
+        syncPasswordValidity();
+        if (!validateStep(1)) {
+            event.preventDefault();
+            showStep(1);
+            showClientError('Lengkapi seluruh data diri dan password pada Langkah 01 terlebih dahulu.');
+            validateStep(1);
+            return;
+        }
+        if (!validAddress() || !validateStep(2)) {
+            event.preventDefault();
+            showStep(2);
+            showClientError('Lengkapi seluruh wilayah alamat pada Langkah 02 terlebih dahulu.');
+            return;
+        }
+        if (confirmCheckbox && !confirmCheckbox.checked) {
+            event.preventDefault();
+            showStep(3);
+            if (confirmError) {
+                confirmError.textContent = 'Centang persetujuan biaya aktivasi YZA Member terlebih dahulu.';
+                confirmError.hidden = false;
+            }
+            showClientError('Centang kotak persetujuan aktivasi YZA Member sebelum melanjutkan ke pembayaran.');
+            confirmCheckbox.focus({ preventScroll: true });
+            confirmCheckbox.reportValidity();
+            return;
+        }
+        if (submitBtn) {
+            submitBtn.disabled = true;
+            submitBtn.setAttribute('aria-busy', 'true');
+            submitBtn.textContent = 'Memproses ke Pembayaran...';
+        }
+    });
+    window.addEventListener('pageshow', resetSubmitState);
     document.querySelectorAll('.password-toggle').forEach((button) => button.addEventListener('click', () => { const input = document.getElementById(button.dataset.target); input.type = input.type === 'password' ? 'text' : 'password'; button.setAttribute('aria-label', input.type === 'password' ? 'Tampilkan password' : 'Sembunyikan password'); }));
     updatePersonalSummary();
     showStep(initialStep);

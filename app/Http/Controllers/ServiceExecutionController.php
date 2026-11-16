@@ -18,9 +18,37 @@ class ServiceExecutionController extends Controller
     public function storeApproval(Request $request, Servis $servis, ServiceExecutionService $execution, InventoryService $inventory)
     {
         try {
+            if (!$request->has('items') && ($request->filled('id_jenis_servis') || $request->filled('id_sparepart'))) {
+                $builtItems = [];
+                if ($request->filled('id_jenis_servis')) {
+                    $builtItems[] = [
+                        'item_type' => 'labor',
+                        'id_jenis_servis' => (int) $request->input('id_jenis_servis'),
+                        'quantity' => 1,
+                    ];
+                }
+                if ($request->filled('id_sparepart')) {
+                    $builtItems[] = [
+                        'item_type' => 'sparepart',
+                        'id_sparepart' => (int) $request->input('id_sparepart'),
+                        'quantity' => max(1, (int) $request->input('sparepart_qty', 1)),
+                    ];
+                }
+                $request->merge(['items' => $builtItems]);
+            }
             $data = $request->validate(['id_service_finding' => 'nullable|integer', 'clarification_of_approval_id' => 'nullable|integer', 'title' => 'required|string|max:160', 'reason' => 'required|string', 'items' => 'required|array|min:1', 'items.*.item_type' => 'required|in:labor,sparepart', 'items.*.quantity' => 'required|integer|min:1', 'items.*.id_jenis_servis' => 'nullable|integer', 'items.*.id_sparepart' => 'nullable|integer']);
-            $execution->createApprovalRequest($servis->id_servis, $data, (int) $inventory->actorPetugasId($request->user()->id_user));
-            return back()->with('success', 'Permintaan persetujuan customer berhasil dikirim.');
+            $actorId = (int) $inventory->actorPetugasId($request->user()->id_user);
+            if (empty($data['id_service_finding'])) {
+                $finding = $execution->createFinding($servis->id_servis, [
+                    'title' => $data['title'],
+                    'description' => $data['reason'],
+                    'recommendation' => 'Menunggu konfirmasi perbaikan dari pelanggan.',
+                    'severity' => 'warning',
+                ], $actorId);
+                $data['id_service_finding'] = $finding->id_service_finding;
+            }
+            $execution->createApprovalRequest($servis->id_servis, $data, $actorId);
+            return back()->with('success', 'Laporan temuan & permintaan konfirmasi berhasil dikirim ke member.');
         } catch (\Illuminate\Auth\Access\AuthorizationException $e) { throw $e; } catch (Throwable $e) { return back()->withInput()->withErrors($e->getMessage()); }
     }
 
@@ -36,13 +64,48 @@ class ServiceExecutionController extends Controller
 
     public function startQc(Request $request, Servis $servis, ServiceExecutionService $execution, InventoryService $inventory)
     {
-        try { $execution->assertReadyForQualityControl($servis->id_servis); $execution->startQualityControl($servis->id_servis, (int) $inventory->actorPetugasId($request->user()->id_user)); return back()->with('success', 'Quality Control dimulai.'); }
+        try {
+            $execution->assertReadyForQualityControl($servis->id_servis);
+            $execution->startQualityControl($servis->id_servis, (int) $inventory->actorPetugasId($request->user()->id_user));
+            $message = 'Work Order '.$servis->kode_servis.' berhasil dikirim serah terima ke tim Quality Control (QC).';
+            if ($request->user()?->roleKey() === 'mechanic') {
+                return redirect()->route('admin.sparepart.index')->with('qc_handover_success', $message);
+            }
+            return back()->with('success', $message);
+        }
         catch (\Illuminate\Auth\Access\AuthorizationException $e) { throw $e; } catch (Throwable $e) { return back()->withErrors($e->getMessage()); }
     }
 
     public function updateQc(Request $request, Servis $servis, ServiceExecutionService $execution, InventoryService $inventory)
     {
-        try { $data = $request->validate(['items' => 'required|array', 'items.*.result' => 'required|in:PASS,FAIL,N/A', 'items.*.note' => 'nullable|string', 'notes' => 'nullable|string']); $execution->updateQualityControl($servis->id_servis, $data['items'], $data['notes'] ?? null, (int) $inventory->actorPetugasId($request->user()->id_user)); return back()->with('success', 'Checklist Quality Control diperbarui.'); }
+        try {
+            $data = $request->validate([
+                'items' => 'required|array',
+                'items.*.result' => 'required|in:PASS,FAIL,N/A',
+                'items.*.note' => 'nullable|string',
+                'notes' => 'nullable|string',
+            ]);
+            $actorId = (int) $inventory->actorPetugasId($request->user()->id_user);
+            $qc = $execution->updateQualityControl($servis->id_servis, $data['items'], $data['notes'] ?? null, $actorId);
+
+            if ($qc->status === 'passed') {
+                $servis->refresh();
+                if (!$servis->id_transaksi) {
+                    app(\App\Services\ServisService::class)->finalizeFromQc($servis->id_servis, $actorId);
+                }
+                $message = 'Work Order '.$servis->kode_servis.' lulus Quality Control dan berhasil dikirim serah terima ke Finance / Kasir.';
+                if ($request->user()?->roleKey() === 'quality_control') {
+                    return redirect()->route('admin.servis.qc-history')->with('qc_handover_success', $message);
+                }
+                return back()->with('success', $message);
+            }
+
+            if ($qc->status === 'failed') {
+                return back()->with('warning', 'Hasil QC dicatat dengan status Perlu Perbaikan Ulang. Catatan perbaikan telah diteruskan ke mekanik.');
+            }
+
+            return back()->with('success', 'Checklist Quality Control diperbarui.');
+        }
         catch (\Illuminate\Auth\Access\AuthorizationException $e) { throw $e; } catch (Throwable $e) { return back()->withInput()->withErrors($e->getMessage()); }
     }
 

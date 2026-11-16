@@ -93,7 +93,7 @@
         .member-detail-parity .detail-spec-status .detail-status-tag.is-unverified { border-color: rgba(217,180,90,.65); color: #ffe0a0; background: rgba(217,180,90,.1); }
         .member-detail-parity .detail-status-badge.is-neutral,
         .member-detail-parity .detail-spec-status .detail-status-tag.is-neutral { border-color: rgba(255,255,255,.3); color: #dedede; background: rgba(255,255,255,.06); }
-        .member-detail-parity .detail-spec-status .detail-status-tag { display: inline-flex; align-items: center; justify-content: center; justify-self: end; min-width: 92px; padding: 7px 12px; border: 1px solid rgba(72,210,139,.4); border-radius: 999px; font-size: .75rem; font-weight: 800; }
+        .member-detail-parity .detail-spec-status .detail-status-tag { display: inline; justify-self: end; min-width: 0 !important; padding: 0 !important; border: 0 !important; background: transparent !important; border-radius: 0 !important; font-size: inherit !important; font-weight: 700 !important; }
         body.preorder-modal-open { overflow: hidden; }
         .preorder-modal[hidden] { display: none; }
         .preorder-modal { position: fixed; z-index: 1000; inset: 0; display: grid; place-items: center; padding: 24px; }
@@ -129,19 +129,38 @@
 
 @push('styles')
 <style>
-.member-detail-parity .detail-gallery-color-picker { position:absolute!important;right:16px!important;bottom:14px!important;z-index:4!important;display:inline-flex!important;flex-direction:row!important;align-items:center!important;justify-content:center!important;height:auto!important;min-height:0!important;max-height:38px!important;gap:8px!important;padding:6px 12px!important;background:rgba(7,9,12,.72)!important;backdrop-filter:blur(8px)!important;-webkit-backdrop-filter:blur(8px)!important;border:1px solid rgba(255,255,255,.16)!important;border-radius:999px!important;box-shadow:0 10px 24px rgba(0,0,0,.35)!important;box-sizing:border-box!important; }
-.member-detail-parity .detail-gallery-color-picker .detail-swatch { position:relative!important;display:inline-flex!important;align-items:center!important;justify-content:center!important;width:22px!important;height:22px!important;min-width:22px!important;min-height:22px!important;max-width:22px!important;max-height:22px!important;flex:0 0 22px!important;aspect-ratio:1/1!important;border-radius:50%!important;padding:0!important;margin:0!important;box-sizing:border-box!important;line-height:1!important;background:var(--swatch,#ffffff)!important;border:1.5px solid rgba(255,255,255,.45)!important;cursor:pointer!important;transition:transform .18s ease,outline .18s ease,box-shadow .18s ease!important;outline:none!important;opacity:1!important; }
-.member-detail-parity .detail-gallery-color-picker .detail-swatch:hover { transform:scale(1.18)!important; }
+.member-detail-parity .detail-heading-brand { display:flex; align-items:center; gap:12px; flex-wrap:wrap; margin:0 0 10px; }
+.member-detail-parity .detail-heading-brand .detail-brand-logo { width:44px; height:44px; border-radius:11px; }
+.member-detail-parity .detail-heading-brand-name { font-size:13px; font-weight:800; letter-spacing:.1em; color:#e2e8f0; }
+.member-detail-parity .detail-unified-divider { height:1px; background:rgba(255,255,255,.08); margin:16px 0; }
+.member-detail-parity .detail-color-row { display:flex; align-items:center; justify-content:space-between; gap:14px; flex-wrap:wrap; }
+.member-detail-parity .detail-gallery-cta-box { margin-top:16px; padding:18px; border-radius:18px; background:rgba(17,19,24,.92); border:1px solid rgba(255,255,255,.09); display:grid; gap:12px; }
+.member-detail-parity .detail-main-image { transition:opacity .35s ease,transform .35s ease; }
+.member-detail-parity .detail-main-image.is-sliding-out { opacity:0; transform:translateX(-28px); transition:opacity .2s ease,transform .2s ease; }
+.member-detail-parity .detail-main-image.is-sliding-in { opacity:0; transform:translateX(28px); transition:none!important; }
+.member-detail-parity .detail-gallery-color-picker { position:absolute!important;right:16px!important;bottom:14px!important;z-index:5!important;display:inline-flex!important;flex-direction:row!important;align-items:center!important;justify-content:center!important;height:auto!important;min-height:0!important;gap:10px!important;padding:8px 12px!important;background:rgba(13,15,20,.78)!important;backdrop-filter:blur(12px)!important;-webkit-backdrop-filter:blur(12px)!important;border:1px solid rgba(255,255,255,.16)!important;border-radius:14px!important;box-shadow:0 12px 30px rgba(0,0,0,.35)!important;box-sizing:border-box!important; }
+.member-detail-parity .detail-color-overlay-label { display:grid; gap:1px; padding-right:8px; border-right:1px solid rgba(255,255,255,.14); }
+.member-detail-parity .detail-color-overlay-label small { font-size:9px; font-weight:700; letter-spacing:.08em; text-transform:uppercase; color:#94a3b8; }
+.member-detail-parity .detail-color-overlay-label span { font-size:12px; font-weight:700; color:#fff; white-space:nowrap; }
+.member-detail-parity .detail-gallery-color-picker .detail-swatch { position:relative!important;display:inline-flex!important;align-items:center!important;justify-content:center!important;width:26px!important;height:26px!important;min-width:26px!important;min-height:26px!important;max-width:26px!important;max-height:26px!important;flex:0 0 26px!important;aspect-ratio:1/1!important;border-radius:999px!important;padding:0!important;margin:0!important;box-sizing:border-box!important;line-height:1!important;background:var(--swatch,#ffffff)!important;border:1.5px solid rgba(255,255,255,.45)!important;cursor:pointer!important;transition:transform .18s ease,outline .18s ease,box-shadow .18s ease!important;outline:none!important;opacity:1!important; }
+.member-detail-parity .detail-gallery-color-picker .detail-swatch:hover { transform:scale(1.14)!important; }
 .member-detail-parity .detail-gallery-color-picker .detail-swatch.is-active { outline:2px solid #ef233c!important;outline-offset:2.5px!important;border-color:#fff!important;box-shadow:0 0 10px rgba(239,35,60,.55)!important; }
-.member-detail-parity .detail-gallery-color-picker .detail-swatch.is-out-of-stock { opacity:1!important; }
-.member-detail-parity .detail-gallery-color-picker .detail-swatch.is-out-of-stock::after { content:'×'!important;position:absolute!important;inset:0!important;display:flex!important;align-items:center!important;justify-content:center!important;color:#ffffff!important;font-size:13px!important;font-weight:900!important;line-height:1!important;text-shadow:0 0 3px rgba(0,0,0,.95),0 0 1px #000!important;pointer-events:none!important; }
-.member-detail-parity .detail-gallery-color-picker .detail-swatch[data-tooltip]::before { content:attr(data-tooltip)!important;position:absolute!important;bottom:calc(100% + 9px)!important;left:50%!important;transform:translateX(-50%) translateY(4px)!important;background:rgba(10,12,16,.94)!important;color:#ffffff!important;font-size:11px!important;font-weight:700!important;letter-spacing:.02em!important;white-space:nowrap!important;padding:4px 9px!important;border-radius:6px!important;border:1px solid rgba(255,255,255,.16)!important;box-shadow:0 6px 18px rgba(0,0,0,.45)!important;pointer-events:none!important;opacity:0!important;visibility:hidden!important;transition:opacity .15s ease,transform .15s ease!important;z-index:10!important; }
-.member-detail-parity .detail-gallery-color-picker .detail-swatch:hover::before { opacity:1!important;visibility:visible!important;transform:translateX(-50%) translateY(0)!important; }
-.member-detail-parity .detail-gallery-caption { max-width:calc(100% - 220px)!important; }
+.member-detail-parity .detail-button[hidden],
+.member-detail-parity [data-whatsapp-cta][hidden] { display:none!important; }
+.member-detail-parity .detail-gallery-color-picker .detail-swatch.is-out-of-stock { opacity:.38!important;filter:grayscale(.45)!important;cursor:pointer!important; }
+.member-detail-parity .detail-gallery-color-picker .detail-swatch.is-out-of-stock:hover { transform:none!important; }
+.member-detail-parity .detail-gallery-color-picker .detail-swatch.is-out-of-stock::after { content:'Stok Habis'!important;position:absolute!important;bottom:calc(100% + 9px)!important;left:50%!important;transform:translateX(-50%) translateY(5px)!important;padding:4px 9px!important;border-radius:7px!important;background:#0f172a!important;border:1px solid rgba(255,255,255,.16)!important;color:#f8fafc!important;font-size:10.5px!important;font-weight:700!important;white-space:nowrap!important;opacity:0!important;pointer-events:none!important;box-shadow:0 8px 20px rgba(0,0,0,.4)!important;transition:opacity .18s ease,transform .18s ease!important;z-index:20!important; }
+.member-detail-parity .detail-gallery-color-picker .detail-swatch.is-out-of-stock:hover::after,.member-detail-parity .detail-gallery-color-picker .detail-swatch.is-out-of-stock:focus-visible::after { opacity:1!important;transform:translateX(-50%) translateY(0)!important; }
+.member-detail-parity .detail-gallery-color-picker .detail-swatch[data-tooltip]:not(.is-out-of-stock)::before { content:attr(data-tooltip)!important;position:absolute!important;bottom:calc(100% + 9px)!important;left:50%!important;transform:translateX(-50%) translateY(4px)!important;background:rgba(10,12,16,.94)!important;color:#ffffff!important;font-size:11px!important;font-weight:700!important;letter-spacing:.02em!important;white-space:nowrap!important;padding:4px 9px!important;border-radius:6px!important;border:1px solid rgba(255,255,255,.16)!important;box-shadow:0 6px 18px rgba(0,0,0,.45)!important;pointer-events:none!important;opacity:0!important;visibility:hidden!important;transition:opacity .15s ease,transform .15s ease!important;z-index:10!important; }
+.member-detail-parity .detail-gallery-color-picker .detail-swatch:not(.is-out-of-stock):hover::before { opacity:1!important;visibility:visible!important;transform:translateX(-50%) translateY(0)!important; }
+.member-detail-parity .detail-gallery-caption { max-width:calc(100% - 260px)!important; }
+.member-detail-parity .detail-rec-section { margin-top:38px; }
+.member-detail-parity .detail-rec-grid { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:18px; margin-top:18px; }
+@media (max-width:1024px) { .member-detail-parity .detail-rec-grid { grid-template-columns:repeat(2,minmax(0,1fr)); } }
 @media (max-width:600px) {
-    .member-detail-parity .detail-gallery-caption { left:12px!important;bottom:12px!important;max-width:calc(100% - 150px)!important;padding:6px 9px!important; }
-    .member-detail-parity .detail-gallery-color-picker { right:12px!important;bottom:12px!important;padding:4px 8px!important;gap:6px!important;max-height:32px!important; }
-    .member-detail-parity .detail-gallery-color-picker .detail-swatch { width:20px!important;height:20px!important;min-width:20px!important;min-height:20px!important;max-width:20px!important;max-height:20px!important;flex:0 0 20px!important; }
+    .member-detail-parity .detail-rec-grid { grid-template-columns:1fr; }
+    .member-detail-parity .detail-gallery-caption { left:12px!important;bottom:64px!important;max-width:calc(100% - 24px)!important;padding:6px 9px!important; }
+    .member-detail-parity .detail-gallery-color-picker { left:12px!important;right:12px!important;bottom:12px!important;justify-content:space-between!important;padding:6px 10px!important; }
 }
 .preorder-dialog{background:#fff;color:#142038;border-color:#e2e8f0;box-shadow:0 24px 80px #0f172a40}
 .preorder-modal-brand,.preorder-modal-copy h3{color:#142038}
@@ -158,31 +177,90 @@
         <section class="detail-heading">
             <x-vehicle-back-button :url="$backLink['url']" :label="$backLink['label']" />
             <div class="detail-heading-grid">
-                <div class="detail-heading-copy"><p class="detail-kicker">YZA AUTOMOTIVE · PREMIUM COLLECTION</p><h1>{{ $mobil->merk }} {{ $modelName }}</h1><p class="detail-subtitle">Unit pilihan dengan pemeriksaan dealer dan pengalaman berkendara yang lebih percaya diri.</p></div>
+                <div class="detail-heading-copy">
+                    <div class="detail-heading-brand">
+                        <span class="detail-brand-logo"><img src="{{ $brandLogo }}" alt="Logo {{ $brand }}"></span>
+                        <span class="detail-heading-brand-name">{{ $brand }}</span>
+                        @if($isLimitedEdition)<span class="detail-limited-badge">LIMITED EDITION</span>@endif
+                    </div>
+                    <h1>{{ $mobil->merk }} {{ $modelName }}</h1>
+                    <p class="detail-subtitle">{{ $mobil->deskripsi ?: 'Unit pilihan dengan pemeriksaan dealer dan pengalaman berkendara yang lebih percaya diri.' }}</p>
+                </div>
                 <div class="detail-heading-price"><span>Harga terbaik</span><strong>{{ $price }}</strong></div>
             </div>
         </section>
         <section class="detail-showcase" aria-label="Detail kendaraan">
             <div class="detail-info-column">
-                <div class="detail-panel detail-summary-panel" data-detail-vehicle-id="{{ $mobil->id_mobil }}">
-                    <div class="detail-brand-header">
-                        <div class="detail-brand-identity">
-                            <span class="detail-brand-logo"><img src="{{ $brandLogo }}" alt="Logo {{ $brand }}"></span>
-                            <div><span class="detail-label">Brand</span><strong>{{ $brand }}</strong><small>AUTOMOTIVE</small></div>
-                        </div>
-                        <div class="detail-statuses">
-                            <span class="detail-condition"><i></i>{{ $condition }}</span>
-                            @if($isLimitedEdition)<span class="detail-limited-badge">LIMITED EDITION</span>@endif
-                        </div>
-                        <button class="detail-favorite" type="button" data-detail-favorite aria-label="Tambahkan ke favorit" aria-pressed="false">♡</button>
+                <div class="detail-panel detail-spec-panel" data-detail-vehicle-id="{{ $mobil->id_mobil }}">
+                    <div class="detail-section-head">
+                        <div><p class="detail-kicker">SPESIFIKASI KENDARAAN</p><h2>Detail kendaraan</h2></div>
+                        <span class="detail-code">{{ $mobil->kode_mobil ?: 'YZA-UNIT' }}</span>
                     </div>
-                    <p class="detail-description">{{ $mobil->deskripsi ?: 'Kendaraan terawat dengan karakter berkendara yang nyaman untuk aktivitas harian maupun perjalanan akhir pekan.' }}</p>
-                <div class="detail-actions detail-actions-reference"><a class="detail-button detail-button-primary" href="{{ yza_whatsapp_url($whatsappText) }}" target="_blank" rel="noopener">{!! $uiIcon('whatsapp') !!}<span class="detail-button-text">Tanya via WhatsApp</span><span>→</span></a><div class="detail-action-row"><a class="detail-button detail-button-ghost" data-purchase-link href="{{ $defaultGallery['purchase_url'] ?? '#' }}" @if(empty($defaultGallery['purchase_url'])) hidden @endif><span class="detail-button-text">Lanjutkan Pembelian</span><span>→</span></a><button class="detail-button detail-button-ghost" type="button" data-preorder-trigger @if(!empty($defaultGallery['purchase_url'])) hidden @endif aria-haspopup="dialog" aria-controls="preorder-modal"><span class="detail-button-text">Ajukan Pre-Order</span><span>→</span></button></div></div>
+                    <div class="detail-spec-grid detail-spec-grid-reference">
+                        <div><span class="detail-spec-icon">{!! $uiIcon('engine') !!}</span><span>Tipe</span><strong>{{ $mobil->tipe ?: '-' }}</strong></div>
+                        <div><span class="detail-spec-icon">{!! $uiIcon('year') !!}</span><span>Tahun</span><strong>{{ $mobil->tahun ?: '-' }}</strong></div>
+                        <div><span class="detail-spec-icon">{!! $uiIcon('gear') !!}</span><span>Transmisi</span><strong>{{ strtoupper($mobil->transmisi ?: '-') }}</strong></div>
+                        <div><span class="detail-spec-icon">{!! $uiIcon('fuel') !!}</span><span>Bahan bakar</span><strong>{{ ucfirst($mobil->bahan_bakar ?: '-') }}</strong></div>
+                        <div><span class="detail-spec-icon">{!! $uiIcon('color') !!}</span><span>Warna</span><strong id="detail-spec-color">{{ $colorName }}</strong></div>
+                        <div><span class="detail-spec-icon">{!! $uiIcon('condition') !!}</span><span>Kondisi</span><strong>{{ $condition }}</strong></div>
+                        <div class="detail-spec-status"><span class="detail-spec-icon">{!! $uiIcon('status') !!}</span><span>Status</span><strong class="detail-status-tag {{ $statusMeta['class'] }}">{{ $statusMeta['label'] }}</strong></div>
+                    </div>
+
+                    <div class="detail-unified-divider"></div>
+
+                    <div class="detail-color-row">
+                        <p data-color-stock-status style="margin:0;color:#94a3b8;font-size:13px;">{{ ($defaultGallery['stock'] ?? 0) > 0 ? $defaultGallery['stock'].' unit siap jual' : 'Stok Habis' }}</p>
+                        <a class="detail-button detail-button-primary" data-purchase-link href="{{ $defaultGallery['purchase_url'] ?? '#' }}" @if(empty($defaultGallery['purchase_url'])) hidden @endif><span class="detail-button-text">Lanjutkan Pembelian</span><span>→</span></a>
+                        <button class="detail-button detail-button-primary" type="button" data-preorder-trigger @if(!empty($defaultGallery['purchase_url'])) hidden @endif aria-haspopup="dialog" aria-controls="preorder-modal"><span class="detail-button-text">Ajukan Pre-Order</span><span>→</span></button>
+                    </div>
+
+                    <div class="detail-unified-divider"></div>
+
+                    <div class="detail-gallery-cta-box" data-whatsapp-cta style="margin-top:0;padding:0;background:transparent;border:0;">
+                        <a class="detail-button detail-button-primary" href="{{ yza_whatsapp_url($whatsappText) }}" target="_blank" rel="noopener">{!! $uiIcon('whatsapp') !!}<span class="detail-button-text">Tanya via WhatsApp</span><span>→</span></a>
+                    </div>
                 </div>
-                <div class="detail-panel detail-spec-panel"><div class="detail-section-head"><div><p class="detail-kicker">SPESIFIKASI KENDARAAN</p><h2>Detail kendaraan</h2></div><span class="detail-code">{{ $mobil->kode_mobil ?: 'YZA-UNIT' }}</span></div><div class="detail-spec-grid detail-spec-grid-reference"><div><span class="detail-spec-icon">{!! $uiIcon('engine') !!}</span><span>Tipe</span><strong>{{ $mobil->tipe ?: '-' }}</strong></div><div><span class="detail-spec-icon">{!! $uiIcon('year') !!}</span><span>Tahun</span><strong>{{ $mobil->tahun ?: '-' }}</strong></div><div><span class="detail-spec-icon">{!! $uiIcon('gear') !!}</span><span>Transmisi</span><strong>{{ strtoupper($mobil->transmisi ?: '-') }}</strong></div><div><span class="detail-spec-icon">{!! $uiIcon('fuel') !!}</span><span>Bahan bakar</span><strong>{{ ucfirst($mobil->bahan_bakar ?: '-') }}</strong></div><div><span class="detail-spec-icon">{!! $uiIcon('color') !!}</span><span>Warna</span><strong id="detail-spec-color">{{ $colorName }}</strong></div><div><span class="detail-spec-icon">{!! $uiIcon('condition') !!}</span><span>Kondisi</span><strong>{{ $condition }}</strong></div><div class="detail-spec-status"><span class="detail-spec-icon">{!! $uiIcon('status') !!}</span><span>Status</span><strong class="detail-status-tag {{ $statusMeta['class'] }}">{{ $statusMeta['label'] }}</strong></div></div></div>
             </div>
-            <div class="detail-gallery-column"><div class="detail-gallery-frame"><div class="detail-gallery-topline"><span class="detail-gallery-counter" id="detail-gallery-counter">{{ count($defaultGallery['images'] ?? []) ? '01 / '.str_pad((string) count($defaultGallery['images']), 2, '0', STR_PAD_LEFT) : '—' }}</span><div class="detail-gallery-badges"><span class="detail-gallery-mark"><b>YZA</b> SHOWROOM VIEW</span><span class="detail-available-badge detail-status-badge {{ $statusMeta['class'] }}"><i></i>{{ $statusMeta['label'] }}</span></div></div><button class="detail-gallery-arrow detail-gallery-arrow-prev" type="button" aria-label="Foto sebelumnya"><span aria-hidden="true">←</span></button><img id="detail-main-image" src="{{ $primaryImage }}" alt="{{ $mobil->merk }} {{ $modelName }}" class="detail-main-image"><button class="detail-gallery-arrow detail-gallery-arrow-next" type="button" aria-label="Foto berikutnya"><span aria-hidden="true">→</span></button><div class="detail-image-shade"></div><div class="detail-gallery-caption"><span>{{ $mobil->merk }} {{ $modelName }}</span><small id="detail-gallery-caption">{{ ($defaultGallery['images'][0]['label'] ?? 'Front view') }} · YZA Automotive</small></div>@if(!empty($galleryData))<div class="detail-gallery-color-picker" role="radiogroup" aria-label="Pilihan warna kendaraan">@foreach($galleryData as $colorKey => $color)<button class="detail-swatch {{ ($color['stock'] ?? 0) === 0 ? 'is-out-of-stock' : '' }} {{ $colorKey === $defaultColorKey ? 'is-active' : '' }}" type="button" role="radio" data-color-key="{{ $colorKey }}" data-color="{{ $color['label'] }}" data-tooltip="{{ $color['label'] }} · {{ ($color['stock'] ?? 0) > 0 ? $color['stock'].' unit siap jual' : 'Stok Habis' }}" style="--swatch:{{ $color['swatch'] }}" title="{{ $color['label'] }} · {{ ($color['stock'] ?? 0) > 0 ? $color['stock'].' unit siap jual' : 'Stok Habis' }}" aria-label="{{ $color['label'] }}: {{ ($color['stock'] ?? 0) > 0 ? $color['stock'].' unit siap jual' : 'Stok Habis' }}" aria-checked="{{ $colorKey === $defaultColorKey ? 'true' : 'false' }}"></button>@endforeach</div>@endif</div><div id="detail-thumbnails" class="detail-thumbnails" role="list" aria-label="Galeri foto kendaraan">@foreach($defaultGallery['images'] ?? [] as $index => $image)<button class="detail-thumbnail {{ $index === 0 ? 'is-active' : '' }}" type="button" data-index="{{ $index }}" role="listitem" aria-label="Lihat {{ $image['label'] }}"><img src="{{ $image['src'] }}" alt="{{ $image['label'] }} {{ $mobil->model }}"><span>0{{ $index + 1 }}</span></button>@endforeach</div><div class="detail-gallery-note"><span>✦</span> Pilih warna dan sudut kendaraan untuk melihat detail showroom.</div></div>
+            <div class="detail-gallery-column"><div class="detail-gallery-frame"><div class="detail-gallery-topline"><span class="detail-gallery-counter" id="detail-gallery-counter">{{ count($defaultGallery['images'] ?? []) ? '01 / '.str_pad((string) count($defaultGallery['images']), 2, '0', STR_PAD_LEFT) : '—' }}</span><div class="detail-gallery-badges"><span class="detail-gallery-mark"><b>YZA</b> SHOWROOM VIEW</span></div></div><img id="detail-main-image" src="{{ $primaryImage }}" alt="{{ $mobil->merk }} {{ $modelName }}" class="detail-main-image"><div class="detail-image-shade"></div><div class="detail-gallery-caption"><span>{{ $mobil->merk }} {{ $modelName }}</span><small id="detail-gallery-caption">{{ ($defaultGallery['images'][0]['label'] ?? 'Front view') }} · YZA Automotive</small></div>@if(!empty($galleryData))<div class="detail-gallery-color-picker" role="radiogroup" aria-label="Pilihan warna kendaraan"><div class="detail-color-overlay-label"><small>Warna</small><span id="selected-color">{{ $colorName }}</span></div>@foreach($galleryData as $colorKey => $color)<button class="detail-swatch {{ ($color['stock'] ?? 0) === 0 ? 'is-out-of-stock' : '' }} {{ $colorKey === $defaultColorKey ? 'is-active' : '' }}" type="button" role="radio" data-color-key="{{ $colorKey }}" data-color="{{ $color['label'] }}" data-tooltip="{{ $color['label'] }} · {{ ($color['stock'] ?? 0) > 0 ? $color['stock'].' unit siap jual' : 'Stok Habis' }}" style="--swatch:{{ $color['swatch'] }}" title="{{ $color['label'] }} · {{ ($color['stock'] ?? 0) > 0 ? $color['stock'].' unit siap jual' : 'Stok Habis' }}" aria-label="{{ $color['label'] }}: {{ ($color['stock'] ?? 0) > 0 ? $color['stock'].' unit siap jual' : 'Stok Habis' }}" aria-checked="{{ $colorKey === $defaultColorKey ? 'true' : 'false' }}" aria-disabled="{{ ($color['stock'] ?? 0) === 0 ? 'true' : 'false' }}"></button>@endforeach</div>@endif</div><div id="detail-thumbnails" class="detail-thumbnails" role="list" aria-label="Galeri foto kendaraan">@foreach($defaultGallery['images'] ?? [] as $index => $image)<button class="detail-thumbnail {{ $index === 0 ? 'is-active' : '' }}" type="button" data-index="{{ $index }}" role="listitem" aria-label="Lihat {{ $image['label'] }}"><img src="{{ $image['src'] }}" alt="{{ $image['label'] }} {{ $mobil->model }}"><span>0{{ $index + 1 }}</span></button>@endforeach</div><div class="detail-gallery-note"><span>✦</span> Pilih warna dan sudut kendaraan untuk melihat detail showroom.</div></div>
         </section>
+
+        @if(($sameBrandCars ?? collect())->isNotEmpty() || ($otherBrandCars ?? collect())->isNotEmpty())
+            <section class="detail-recommendations detail-rec-section" aria-labelledby="member-other-brand-title">
+                @if(($sameBrandCars ?? collect())->isNotEmpty())
+                    <div class="detail-recommendations-head">
+                        <div><p class="detail-kicker">MOBIL LAINNYA · {{ strtoupper((string) $mobil->merk) }}</p><h2 id="member-same-brand-title">Koleksi {{ $mobil->merk }} Lainnya</h2><p>Pilihan unit {{ $mobil->merk }} lainnya yang tersedia di YZA Automotive.</p></div>
+                    </div>
+                    <div class="detail-rec-grid">
+                        @foreach($sameBrandCars as $recCar)
+                            @php($recTitle = trim(($recCar->merk ?: 'YZA').' '.($recCar->model ?: 'Vehicle')))
+                            <article class="detail-recommendation-card">
+                                <a class="detail-recommendation-media" href="{{ route('pelanggan.katalog-mobil.show', ['mobil' => $recCar]) }}"><img src="{{ $recCar->recommendation_image }}" alt="{{ $recTitle }}" loading="lazy"><span>{{ strtoupper($recCar->kondisi ?: 'KOLEKSI') }}</span></a>
+                                <div class="detail-recommendation-body"><small>{{ $recCar->merk ?: 'YZA AUTOMOTIVE' }}</small><h3>{{ $recTitle }}</h3><p>{{ $recCar->tipe ?: 'PERFORMANCE' }} <i>•</i> {{ $recCar->tahun ?: '—' }} <i>•</i> {{ ucfirst($recCar->transmisi ?: 'Automatic') }}</p><div><strong>{{ (float) $recCar->harga_jual > 0 ? 'Rp '.number_format((float) $recCar->harga_jual, 0, ',', '.') : 'Hubungi Kami' }}</strong><a href="{{ route('pelanggan.katalog-mobil.show', ['mobil' => $recCar]) }}" aria-label="Lihat detail {{ $recTitle }}"><span aria-hidden="true">→</span></a></div></div>
+                            </article>
+                        @endforeach
+                    </div>
+                @endif
+
+                @if(($sameBrandCars ?? collect())->isNotEmpty() && ($otherBrandCars ?? collect())->isNotEmpty())
+                    <div class="detail-unified-divider" style="margin: 28px 0;"></div>
+                @endif
+
+                @if(($otherBrandCars ?? collect())->isNotEmpty())
+                    <div class="detail-recommendations-head">
+                        <div><p class="detail-kicker">REKOMENDASI MEREK LAIN</p><h2 id="member-other-brand-title">Barangkali Kamu Suka</h2><p>Temukan pilihan mobil dari merek lain di koleksi YZA Automotive.</p></div>
+                    </div>
+                    <div class="detail-rec-grid">
+                        @foreach($otherBrandCars as $recommendation)
+                            @php($recommendationTitle = trim(($recommendation->merk ?: 'YZA').' '.($recommendation->model ?: 'Vehicle')))
+                            <article class="detail-recommendation-card">
+                                <a class="detail-recommendation-media" href="{{ route('pelanggan.katalog-mobil.show', ['mobil' => $recommendation]) }}"><img src="{{ $recommendation->recommendation_image }}" alt="{{ $recommendationTitle }}" loading="lazy"><span>{{ strtoupper($recommendation->kondisi ?: 'KOLEKSI') }}</span></a>
+                                <div class="detail-recommendation-body"><small>{{ $recommendation->merk ?: 'YZA AUTOMOTIVE' }}</small><h3>{{ $recommendationTitle }}</h3><p>{{ $recommendation->tipe ?: 'SPORT COUPE' }} <i>•</i> {{ $recommendation->tahun ?: '—' }} <i>•</i> {{ ucfirst($recommendation->transmisi ?: 'Automatic') }}</p><div><strong>{{ (float) $recommendation->harga_jual > 0 ? 'Rp '.number_format((float) $recommendation->harga_jual, 0, ',', '.') : 'Hubungi Kami' }}</strong><a href="{{ route('pelanggan.katalog-mobil.show', ['mobil' => $recommendation]) }}" aria-label="Lihat detail {{ $recommendationTitle }}"><span aria-hidden="true">→</span></a></div></div>
+                            </article>
+                        @endforeach
+                    </div>
+                @endif
+            </section>
+        @endif
     </main>
 </div>
 @if($canPreorder)
@@ -224,8 +302,9 @@
     const purchaseLink = document.querySelector('[data-purchase-link]');
     const updatePurchaseLink = () => {
         const color = galleryData[state.color]; if (!color) return;
-        if (purchaseLink) { purchaseLink.hidden = !color.purchase_url; purchaseLink.href = color.purchase_url || '#'; }
-        const trigger = document.querySelector('[data-preorder-trigger]'); if (trigger) trigger.hidden = !!color.purchase_url;
+        const hasStock = Number(color.stock || 0) > 0 && !!color.purchase_url;
+        if (purchaseLink) { purchaseLink.hidden = !hasStock; purchaseLink.href = color.purchase_url || '#'; }
+        const trigger = document.querySelector('[data-preorder-trigger]'); if (trigger) trigger.hidden = hasStock;
         const status = document.querySelector('[data-color-stock-status]'); if (status) status.textContent = color.stock > 0 ? color.stock + ' unit siap jual' : 'Stok Habis';
         document.querySelectorAll('.detail-status-badge, .detail-spec-status .detail-status-tag').forEach(badge => {
             badge.textContent = color.stock > 0 ? 'TERSEDIA · ' + color.stock + ' UNIT' : 'STOK HABIS';
@@ -236,19 +315,57 @@
         const submit = document.querySelector('[data-preorder-submit]'); if (submit) { submit.hidden = false; submit.disabled = false; submit.classList.remove('is-loading'); submit.querySelector('span').textContent = '→'; }
         document.querySelector('[data-preorder-list-link]')?.setAttribute('hidden', '');
     };
+    let isInitialRender = true;
+    const transitionImage = (src, alt) => {
+        const nextSrc = src || fallbackImage;
+        if (isInitialRender) {
+            isInitialRender = false;
+            mainImage.src = nextSrc;
+            mainImage.alt = alt;
+            return;
+        }
+        mainImage.classList.remove('is-sliding-in');
+        mainImage.classList.add('is-sliding-out');
+        window.setTimeout(() => {
+            mainImage.classList.remove('is-sliding-out');
+            mainImage.classList.add('is-sliding-in');
+            mainImage.src = nextSrc;
+            mainImage.alt = alt;
+            void mainImage.offsetWidth;
+            window.requestAnimationFrame(() => mainImage.classList.remove('is-sliding-in'));
+        }, 180);
+    };
     const renderGallery = () => {
-        const gallery = galleryData[state.color] || {};  const images = gallery?.images || []; if (!images.length) return;
-        state.index = Math.min(state.index, images.length - 1); const image = images[state.index]; mainImage.src = image.src || fallbackImage; mainImage.alt = `${image.label} {{ $mobil->model }}`; counter.textContent = `${String(state.index + 1).padStart(2, '0')} / ${String(images.length).padStart(2, '0')}`; caption.textContent = `${image.label} · YZA Automotive`;
+        const gallery = galleryData[state.color] || {}; const images = gallery?.images || []; if (!images.length) return;
+        state.index = Math.min(state.index, images.length - 1); const image = images[state.index];
+        transitionImage(image.src, `${image.label} {{ $mobil->model }}`);
+        counter.textContent = `${String(state.index + 1).padStart(2, '0')} / ${String(images.length).padStart(2, '0')}`;
+        caption.textContent = `${image.label} · YZA Automotive`;
         thumbnailsRoot.innerHTML = images.map((item, index) => `<button class="detail-thumbnail ${index === state.index ? 'is-active' : ''}" type="button" data-index="${index}" role="listitem" aria-label="Lihat ${item.label}"><img src="${item.src}" alt="${item.label} {{ $mobil->model }}"><span>0${index + 1}</span></button>`).join('');
     };
-    const changeColor = swatch => { state.color = swatch.dataset.colorKey; state.index = 0; swatches.forEach(item => { const active = item === swatch; item.classList.toggle('is-active', active); item.setAttribute('aria-pressed', active ? 'true' : 'false'); item.setAttribute('aria-checked', active ? 'true' : 'false'); }); if (colorLabel) colorLabel.textContent = swatch.dataset.color; if (specColor) specColor.textContent = swatch.dataset.color; updatePurchaseLink(); renderGallery(); };
-    swatches.forEach(swatch => swatch.addEventListener('click', () => changeColor(swatch)));
-    thumbnailsRoot.addEventListener('click', event => { const thumbnail = event.target.closest('.detail-thumbnail'); if (!thumbnail) return; state.index = Number(thumbnail.dataset.index); renderGallery(); });
-    document.querySelector('.detail-gallery-arrow-prev')?.addEventListener('click', () => { const count = (galleryData[state.color]?.images || []).length; if (!count) return; state.index = (state.index - 1 + count) % count; renderGallery(); });
-    document.querySelector('.detail-gallery-arrow-next')?.addEventListener('click', () => { const count = (galleryData[state.color]?.images || []).length; if (!count) return; state.index = (state.index + 1) % count; renderGallery(); });
+    let autoSlideTimer = null;
+    const stopAutoSlide = () => { if (autoSlideTimer) { window.clearInterval(autoSlideTimer); autoSlideTimer = null; } };
+    const startAutoSlide = () => {
+        stopAutoSlide();
+        const count = (galleryData[state.color]?.images || []).length;
+        if (count <= 1) return;
+        autoSlideTimer = window.setInterval(() => {
+            const currentCount = (galleryData[state.color]?.images || []).length;
+            if (currentCount <= 1) return;
+            state.index = (state.index + 1) % currentCount;
+            renderGallery();
+        }, 3200);
+    };
+    const restartAutoSlide = () => startAutoSlide();
+    const changeColor = swatch => { state.color = swatch.dataset.colorKey; state.index = 0; swatches.forEach(item => { const active = item === swatch; item.classList.toggle('is-active', active); item.setAttribute('aria-pressed', active ? 'true' : 'false'); item.setAttribute('aria-checked', active ? 'true' : 'false'); }); if (colorLabel) colorLabel.textContent = swatch.dataset.color; if (specColor) specColor.textContent = swatch.dataset.color; updatePurchaseLink(); renderGallery(); restartAutoSlide(); };
+    swatches.forEach(swatch => swatch.addEventListener('click', () => {
+        changeColor(swatch);
+    }));
+    thumbnailsRoot.addEventListener('click', event => { const thumbnail = event.target.closest('.detail-thumbnail'); if (!thumbnail) return; state.index = Number(thumbnail.dataset.index); renderGallery(); restartAutoSlide(); });
     mainImage.addEventListener('error', () => { if (mainImage.src !== fallbackImage) mainImage.src = fallbackImage; });
     renderGallery();
     updatePurchaseLink();
+    startAutoSlide();
 
     const preorderModal = document.querySelector('[data-preorder-modal]');
     const preorderTrigger = document.querySelector('[data-preorder-trigger]');

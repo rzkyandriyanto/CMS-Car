@@ -18,8 +18,10 @@ class MobilController extends Controller
             $identity = strtolower(trim($car->merk.' '.$car->model.' '.$car->tipe));
             if (str_contains($identity, 'toyota gr supra')) {
                 $car->setAttribute('showcase_slug', 'toyota-gr-supra');
+                $car->setAttribute('image', asset('assets/images/catalog/toyota-gr-supra/front.png'));
             } elseif (str_contains($identity, 'toyota supra mk4') || str_contains($identity, 'toyota supra 3.0l a/t')) {
                 $car->setAttribute('showcase_slug', 'toyota-supra-mk4');
+                $car->setAttribute('image', asset('assets/images/catalog/toyota-supra-mk4/front.png'));
             } elseif (str_starts_with((string) $car->kode_mobil, 'PREM-')) {
                 if ($galleryService->isReady($car)) {
                     $car->setAttribute('showcase_slug', Str::slug($car->merk.' '.$car->model));
@@ -27,12 +29,27 @@ class MobilController extends Controller
                 } else {
                     $car->setAttribute('gallery_ready', false);
                 }
+            } elseif (!$car->getAttribute('image')) {
+                $firstImg = collect($galleryService->for($car))->flatMap(fn ($c) => $c['images'] ?? [])->first()['src'] ?? null;
+                if ($firstImg) {
+                    $car->setAttribute('image', $firstImg);
+                }
             }
             return $car;
         })->filter(fn (Mobil $car): bool => !str_starts_with((string) $car->kode_mobil, 'PREM-') || $car->getAttribute('gallery_ready') !== false);
         $realIds = $allCars->pluck('id_mobil')->filter()->map(fn ($id): int => (int) $id)->all();
         $showcaseCars = $this->catalogShowcases()->filter(fn (Mobil $car): bool => !$car->getKey() || !in_array((int) $car->getKey(), $realIds, true));
-        $allCars = $allCars->concat($showcaseCars);
+        $allCars = $allCars->concat($showcaseCars)
+            ->groupBy(fn (Mobil $car): string => mb_strtolower(trim($car->merk . '|' . $car->model . '|' . ($car->tipe ?? '') . '|' . $car->tahun . '|' . ($car->kondisi ?? ''))))
+            ->map(function ($group) {
+                return $group->sortBy([
+                    fn (Mobil $c) => $c->exists ? 0 : 1,
+                    fn (Mobil $c) => $c->status === 'tersedia' ? 0 : 1,
+                    fn (Mobil $c) => $c->showcase_slug ? 0 : 1,
+                    fn (Mobil $c) => (int) ($c->id_mobil ?: PHP_INT_MAX),
+                ])->first();
+            })
+            ->values();
         $allCars = $availabilityService->decorate($allCars);
         $cars = $allCars;
         $search = trim((string) $request->input('q', ''));
@@ -45,7 +62,7 @@ class MobilController extends Controller
             return ($search === '' || str_contains($haystack, strtolower($search)))
                 && ($condition === '' || $car->kondisi === $condition)
                 && ($brand === '' || $car->merk === $brand)
-                && (!$sportOnly || (bool) $car->showcase_slug);
+                && (!$sportOnly || $this->isSportVehicle($car));
         });
 
         $sort = (string) $request->input('sort', 'terbaru');
@@ -74,7 +91,7 @@ class MobilController extends Controller
             'allTotalCars' => $allCars->count(),
             'newCars' => $allCars->where('kondisi', 'baru')->count(),
             'usedCars' => $allCars->where('kondisi', 'bekas')->count(),
-            'sportCars' => $allCars->filter(fn (Mobil $car): bool => (bool) $car->showcase_slug)->count(),
+            'sportCars' => $allCars->filter(fn (Mobil $car): bool => $this->isSportVehicle($car))->count(),
             'brands' => $allCars->pluck('merk')->filter()->unique()->sort()->values(),
             'currentPage' => $currentPage,
             'lastPage' => $lastPage,
@@ -87,10 +104,13 @@ class MobilController extends Controller
         abort_if(str_starts_with((string) $mobil->kode_mobil, 'PREM-') && !$galleryService->isReady($mobil), 404);
         $mobil->load('foto');
         $mobil->setAttribute('availability', $availabilityService->for($mobil));
+        $recData = $this->brandAndOtherRecommendations($mobil, $galleryService);
         return view('pelanggan.katalog-mobil.member-show', [
             'mobil' => $mobil,
             'galleryData' => $galleryService->for($mobil),
             'defaultColorKey' => $galleryService->defaultColor($mobil),
+            'sameBrandCars' => $recData['sameBrandCars'],
+            'otherBrandCars' => $recData['otherBrandCars'],
         ]);
     }
 
@@ -119,7 +139,14 @@ class MobilController extends Controller
 
     private function memberShowcaseView(Mobil $mobil, VehicleGalleryService $galleryService, ?string $fallback = null)
     {
-        return view('pelanggan.katalog-mobil.member-show', ['mobil' => $mobil, 'galleryData' => $galleryService->for($mobil, $fallback), 'defaultColorKey' => $galleryService->defaultColor($mobil)]);
+        $recData = $this->brandAndOtherRecommendations($mobil, $galleryService);
+        return view('pelanggan.katalog-mobil.member-show', [
+            'mobil' => $mobil,
+            'galleryData' => $galleryService->for($mobil, $fallback),
+            'defaultColorKey' => $galleryService->defaultColor($mobil),
+            'sameBrandCars' => $recData['sameBrandCars'],
+            'otherBrandCars' => $recData['otherBrandCars'],
+        ]);
     }
 
     private function catalogShowcases()
@@ -242,8 +269,10 @@ class MobilController extends Controller
     {
         $registered = $this->showcaseInventory($slug);
         if ($registered) return view('mobil.show', $this->detailViewData($request, $registered, app(VehicleGalleryService::class)));
-        $premium = Mobil::query()->where('kode_mobil', 'like', 'PREM-%')->where('status', 'tersedia')->get()->first(fn (Mobil $car): bool => Str::slug($car->merk.' '.$car->model) === $slug);
-        if ($premium && app(VehicleGalleryService::class)->isReady($premium)) {
+        $premium = Mobil::query()->where('kode_mobil', 'like', 'PREM-%')->where('status', 'tersedia')->get()->first(fn (Mobil $car): bool => Str::slug($car->merk.' '.$car->model) === $slug)
+            ?? Mobil::query()->where('status', 'tersedia')->get()->first(fn (Mobil $car): bool => Str::slug($car->merk.' '.$car->model) === $slug)
+            ?? Mobil::query()->where('kode_mobil', 'like', 'PREM-%')->where('status', '!=', 'nonaktif')->get()->first(fn (Mobil $car): bool => Str::slug($car->merk.' '.$car->model) === $slug);
+        if ($premium && (app(VehicleGalleryService::class)->isReady($premium) || !str_starts_with((string) $premium->kode_mobil, 'PREM-') || $premium->status === 'terjual')) {
             return view('mobil.show', $this->detailViewData($request, $premium, app(VehicleGalleryService::class)));
         }
         if ($slug === 'toyota-gr-supra') {
@@ -283,14 +312,93 @@ class MobilController extends Controller
 
     private function detailViewData(Request $request, Mobil $mobil, VehicleGalleryService $galleryService, ?string $showcaseImage = null): array
     {
+        $recData = $this->brandAndOtherRecommendations($mobil, $galleryService);
         return [
             'mobil' => $mobil,
             'showcaseImage' => $showcaseImage,
             'galleryData' => $galleryService->for($mobil, $showcaseImage),
             'defaultColorKey' => $galleryService->defaultColor($mobil),
             'recommendations' => $this->detailRecommendations($mobil, $galleryService),
+            'sameBrandCars' => $recData['sameBrandCars'],
+            'otherBrandCars' => $recData['otherBrandCars'],
             ...$this->detailNavigation($request),
         ];
+    }
+
+    private function brandAndOtherRecommendations(Mobil $current, VehicleGalleryService $galleryService): array
+    {
+        $currentId = $current->exists ? (int) $current->getKey() : null;
+        $currentBrand = strtolower(trim((string) $current->merk));
+        $modelKeyFn = static fn (Mobil $m): string => mb_strtolower(trim($m->merk . '|' . $m->model . '|' . ($m->tipe ?? '') . '|' . $m->tahun . '|' . ($m->kondisi ?? '')));
+        $currentModelKey = $modelKeyFn($current);
+
+        $all = Mobil::query()
+            ->where('status', '!=', 'nonaktif')
+            ->when($currentId, fn ($query) => $query->where('id_mobil', '<>', $currentId))
+            ->with('foto')
+            ->orderByDesc('id_mobil')
+            ->get()
+            ->reject(fn (Mobil $car): bool => $modelKeyFn($car) === $currentModelKey)
+            ->groupBy($modelKeyFn)
+            ->map(fn ($group) => $group->sortBy([
+                fn (Mobil $c) => $c->status === 'tersedia' ? 0 : 1,
+                fn (Mobil $c) => (int) $c->id_mobil,
+            ])->first())
+            ->values()
+            ->map(function (Mobil $car) use ($galleryService): Mobil {
+                $idStr = strtolower(trim($car->merk . ' ' . $car->model . ' ' . $car->tipe));
+                if (str_contains($idStr, 'toyota gr supra')) {
+                    $image = asset('assets/images/catalog/toyota-gr-supra/front.png');
+                } elseif (str_contains($idStr, 'supra mk4') || str_contains($idStr, 'supra 3.0l a/t')) {
+                    $image = asset('assets/images/catalog/toyota-supra-mk4/front.png');
+                } else {
+                    $photo = $car->foto->first(fn ($item): bool => $item->existsOnDisk());
+                    $image = $photo?->url() ?: $galleryService->defaultImage($car);
+                    if (!$image || str_contains($image, 'yza-hero-reference-v3.png')) {
+                        $gallery = $galleryService->for($car);
+                        $image = collect($gallery)->pluck('images')->flatten(1)->pluck('src')->filter()->first()
+                            ?: asset('assets/images/lower-landing/showroom-premium.png');
+                    }
+                }
+                $car->setAttribute('recommendation_image', $image);
+                return $car;
+            });
+
+        $sameBrandCars = $currentBrand !== ''
+            ? $all->filter(fn (Mobil $car): bool => strtolower(trim((string) $car->merk)) === $currentBrand)->take(4)->values()
+            : collect();
+
+        $otherCandidates = $all->filter(fn (Mobil $car): bool => strtolower(trim((string) $car->merk)) !== $currentBrand);
+        $currentIsSport = $this->isSportVehicle($current);
+        $sameSegment = $otherCandidates
+            ->filter(fn (Mobil $car): bool => $this->isSportVehicle($car) === $currentIsSport)
+            ->shuffle()
+            ->values();
+        $diverseOther = $sameSegment
+            ->groupBy(fn (Mobil $car): string => strtolower(trim((string) $car->merk)))
+            ->map(fn ($group) => $group->first())
+            ->values();
+        $otherBrandCars = $diverseOther
+            ->concat($sameSegment->reject(fn (Mobil $c) => $diverseOther->contains(fn (Mobil $d) => $d->getKey() === $c->getKey())))
+            ->concat($otherCandidates->shuffle()->reject(fn (Mobil $c) => $sameSegment->contains(fn (Mobil $s) => $s->getKey() === $c->getKey())))
+            ->take(4)
+            ->values();
+
+        return compact('sameBrandCars', 'otherBrandCars');
+    }
+
+    private function isSportVehicle(Mobil $car): bool
+    {
+        if ((bool) $car->showcase_slug) {
+            return true;
+        }
+        $name = strtolower(trim($car->merk . ' ' . $car->model . ' ' . $car->tipe));
+        foreach (['supra', 'revuelto', 'huracan', 'sf90', '911 gt3', 'amg gt', 'dbs 770', 'corvette', 'shelby gt500', 'challenger', 'gt-r', 'lfa', 'audi r8', 'bmw m4', 'chiron', 'mclaren', '33 stradale'] as $kw) {
+            if (str_contains($name, $kw)) {
+                return true;
+            }
+        }
+        return false;
     }
 
     private function detailRecommendations(Mobil $current, VehicleGalleryService $galleryService)

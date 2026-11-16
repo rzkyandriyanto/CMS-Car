@@ -14,11 +14,11 @@ class AdminNavigation
         'admin.preorder-mobil.index' => 'calendar-clock', 'admin.mobil.index' => 'car',
         'admin.katalog-showroom.index' => 'grid', 'admin.pdi.index' => 'clipboard-check',
         'admin.pengambilan.index' => 'calendar', 'admin.serah-terima.index' => 'key',
-        'admin.finance-dashboard.index' => 'chart', 'admin.payments.index' => 'card',
+        'admin.finance-dashboard.index' => 'chart', 'admin.payments.index' => 'card', 'admin.finance.report' => 'chart',
         'admin.transaksi.index' => 'trade', 'admin.invoices.index' => 'receipt',
         'admin.financial-adjustments.index' => 'scale', 'admin.booking.index' => 'calendar-clock',
         'admin.test-drive.index' => 'steering', 'admin.servis.index' => 'wrench',
-        'admin.servis.schedule' => 'calendar', 'admin.servis.personnel' => 'users',
+        'admin.servis.schedule' => 'calendar', 'admin.servis.personnel' => 'users', 'admin.servis.qc-history' => 'list-todo',
         'admin.booking-servis.index' => 'calendar-clock', 'admin.booking-cuci.index' => 'droplets',
         'admin.sparepart.index' => 'box', 'admin.stok-masuk.index' => 'package-in',
         'admin.trade-in.index' => 'repeat', 'admin.pengajuan-mobil.index' => 'car',
@@ -43,7 +43,7 @@ class AdminNavigation
     public static function active(string $target, ?string $current = null): bool
     {
         $current ??= (string) request()->route()?->getName();
-        if ($target === 'admin.servis.index' && in_array($current, ['admin.servis.schedule', 'admin.servis.personnel'], true)) return false;
+        if ($target === 'admin.servis.index' && in_array($current, ['admin.servis.schedule', 'admin.servis.personnel', 'admin.servis.qc-history'], true)) return false;
         if (str_ends_with($target, '.index')) return Str::is(substr($target, 0, -6).'.*', $current);
         $exports = ['owner.sales-report' => 'owner.sales-export', 'owner.payment-report' => 'owner.payment-export',
             'owner.service-report' => 'owner.service-export', 'owner.performance-report' => 'owner.performance-export',

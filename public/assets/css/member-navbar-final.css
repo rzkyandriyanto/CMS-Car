@@ -65,12 +65,12 @@
     .member-horizontal-shell .member-horizontal-nav {
         display: flex !important;
         align-items: center !important;
+        justify-content: center !important;
         height: 82px !important;
-        margin: 0 !important;
+        margin: 0 auto !important;
         padding: 0 !important;
-        gap: clamp(10px, 1.35vw, 22px) !important;
+        gap: clamp(14px, 1.8vw, 28px) !important;
         flex: 0 1 auto !important;
-        margin-right: auto !important;
         min-width: 0 !important;
     }
 }

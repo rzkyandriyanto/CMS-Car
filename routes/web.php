@@ -267,6 +267,8 @@ Route::middleware(['auth', 'role:admin,super_admin,owner,sales,service_advisor,m
     Route::get('audit-log/export', [AdminAuxiliaryController::class, 'auditLogExport'])->name('audit-log.export');
     Route::get('keuangan', [PaymentManagementController::class, 'index'])->name('finance-dashboard.index');
     Route::get('pembayaran', [PaymentManagementController::class, 'index'])->name('payments.index');
+    Route::get('laporan-keuangan', [PaymentManagementController::class, 'report'])->name('finance.report');
+    Route::post('pembayaran/servis/{servis}/checkout', [PaymentManagementController::class, 'checkoutServis'])->name('payments.servis.checkout');
     Route::get('financial-adjustments', [\App\Http\Controllers\FinancialAdjustmentController::class, 'index'])->middleware('permission:finance.view')->name('financial-adjustments.index');
     Route::post('financial-adjustments', [\App\Http\Controllers\FinancialAdjustmentController::class, 'store'])->middleware('permission:finance.verify')->name('financial-adjustments.store');
     Route::patch('financial-adjustments/{adjustment}/transition', [\App\Http\Controllers\FinancialAdjustmentController::class, 'transition'])->middleware('permission:finance.verify')->name('financial-adjustments.transition');
@@ -300,6 +302,8 @@ Route::middleware(['auth', 'role:admin,super_admin,owner,sales,service_advisor,m
     Route::patch('kategori-sparepart/{kategori_sparepart}/toggle', [KategoriSparepartController::class, 'toggle'])->name('kategori-sparepart.toggle');
     Route::resource('supplier', SupplierController::class)->only(['index', 'create', 'store', 'show', 'edit', 'update']);
     Route::patch('supplier/{supplier}/toggle', [SupplierController::class, 'toggle'])->name('supplier.toggle');
+    Route::post('sparepart/permintaan-kustom', [AdminSparepartController::class, 'storeCustomRequest'])->name('sparepart.custom-request.store');
+    Route::delete('sparepart/permintaan-kustom/{custom_request}', [AdminSparepartController::class, 'destroyCustomRequest'])->name('sparepart.custom-request.destroy');
     Route::resource('sparepart', AdminSparepartController::class)->only(['index', 'create', 'store', 'show', 'edit', 'update']);
     Route::patch('sparepart/{sparepart}/toggle', [AdminSparepartController::class, 'toggle'])->name('sparepart.toggle');
     Route::post('sparepart/{sparepart}/fitment', [AdminSparepartController::class, 'storeFitment'])->name('sparepart.fitment.store');
@@ -379,6 +383,7 @@ Route::middleware(['auth', 'role:admin,super_admin,owner,sales,service_advisor,m
     Route::put('servis/jadwal/jam-operasional', [ServiceScheduleController::class, 'updateHours'])->name('servis.schedule.hours');
     Route::post('servis/jadwal/blackout', [ServiceScheduleController::class, 'storeBlackout'])->name('servis.schedule.blackouts.store');
     Route::delete('servis/jadwal/blackout/{blackout}', [ServiceScheduleController::class, 'destroyBlackout'])->name('servis.schedule.blackouts.destroy');
+    Route::get('servis/riwayat-qc', [OperationsServisController::class, 'qcHistory'])->name('servis.qc-history');
     Route::get('servis/{servis}', [OperationsServisController::class, 'show'])->middleware('assigned.wo')->name('servis.show');
     Route::get('servis/{servis}/pemeriksaan', [OperationsServisController::class, 'pemeriksaan'])->middleware('assigned.wo')->name('servis.pemeriksaan');
     Route::get('servis/{servis}/persetujuan', [OperationsServisController::class, 'persetujuan'])->middleware('assigned.wo')->name('servis.persetujuan');
@@ -399,6 +404,7 @@ Route::middleware(['auth', 'role:admin,super_admin,owner,sales,service_advisor,m
     Route::post('servis/{servis}/qc/start', [ServiceExecutionController::class, 'startQc'])->middleware('assigned.wo')->name('servis.qc.start');
     Route::put('servis/{servis}/qc', [ServiceExecutionController::class, 'updateQc'])->middleware('assigned.wo')->name('servis.qc.update');
     Route::put('servis/{servis}/assignment', [ServiceAssignmentController::class, 'update'])->middleware('assigned.wo')->name('servis.assignment.update');
+    Route::put('servis/{servis}/intake', [OperationsServisController::class, 'updateIntake'])->middleware('assigned.wo')->name('servis.intake.update');
     Route::get('transaksi-servis/{transaksi}/pembayaran/create', [PaymentController::class, 'create'])->name('payment.create');
     Route::post('transaksi-servis/{transaksi}/pembayaran', [PaymentController::class, 'store'])->name('payment.store');
     Route::get('transaksi-mobil/{transaksi}/pembayaran/create', [CarSalePaymentController::class, 'create'])->name('car-sale.payment.create');
@@ -466,6 +472,7 @@ Route::middleware(['auth', 'role:admin,super_admin,petugas,service_advisor', 'mo
     Route::get('booking-servis/{booking_servis}', [OperationsBookingServisController::class, 'show'])->name('booking-servis.show');
     Route::post('booking-servis/{booking_servis}/{action}', [OperationsBookingServisController::class, 'action'])->whereIn('action', ['confirm','reject'])->name('booking-servis.action');
     Route::get('servis', [OperationsServisController::class, 'index'])->name('servis.index');
+    Route::get('servis/riwayat-qc', [OperationsServisController::class, 'qcHistory'])->name('servis.qc-history');
     Route::get('servis/{servis}', [OperationsServisController::class, 'show'])->middleware('assigned.wo')->name('servis.show');
      Route::get('servis/{servis}/pemeriksaan', [OperationsServisController::class, 'pemeriksaan'])->middleware('assigned.wo')->name('servis.pemeriksaan');
      Route::get('servis/{servis}/persetujuan', [OperationsServisController::class, 'persetujuan'])->middleware('assigned.wo')->name('servis.persetujuan');

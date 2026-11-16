@@ -93,27 +93,30 @@
         </div>
 
         <!-- Floating Vehicle Info Card on Right Stage (Minimalist, Positioned at Bottom Right) -->
+        @php
+            $heroCarsByCode = \App\Models\Mobil::whereIn('kode_mobil', ['HERO-ALFA-33', 'HERO-LAMBO-HURACAN', 'HERO-MCLAREN-P1'])->get()->keyBy('kode_mobil');
+        @endphp
         <div class="hero-car-stage">
             <div class="hero-vehicle-info hero-vehicle-slider-info is-active" data-card-index="0">
                 <small>ALFA ROMEO</small>
                 <h2>33 Stradale</h2>
                 <p>1967 · V8 Mid-Engine</p>
                 <strong>Rp 125.000.000.000</strong>
-                <a href="{{ route('mobil.index', ['q' => 'Alfa Romeo']) }}">Lihat Detail</a>
+                <a href="{{ isset($heroCarsByCode['HERO-ALFA-33']) ? route('mobil.show', $heroCarsByCode['HERO-ALFA-33']) : route('mobil.index', ['q' => 'Alfa Romeo']) }}">Lihat Detail</a>
             </div>
             <div class="hero-vehicle-info hero-vehicle-slider-info" data-card-index="1">
                 <small>LAMBORGHINI</small>
                 <h2>Huracán LP610-4</h2>
                 <p>2023 · LDF Dual-Clutch</p>
                 <strong>Rp 8.900.000.000</strong>
-                <a href="{{ route('mobil.index', ['q' => 'Huracan']) }}">Lihat Detail</a>
+                <a href="{{ isset($heroCarsByCode['HERO-LAMBO-HURACAN']) ? route('mobil.show', $heroCarsByCode['HERO-LAMBO-HURACAN']) : route('mobil.index', ['q' => 'Lamborghini']) }}">Lihat Detail</a>
             </div>
             <div class="hero-vehicle-info hero-vehicle-slider-info" data-card-index="2">
                 <small>MCLAREN</small>
                 <h2>P1 Track Edition</h2>
                 <p>2024 · 7-Speed SSG</p>
                 <strong>Rp 35.000.000.000</strong>
-                <a href="{{ route('mobil.index', ['q' => 'McLaren']) }}">Lihat Detail</a>
+                <a href="{{ isset($heroCarsByCode['HERO-MCLAREN-P1']) ? route('mobil.show', $heroCarsByCode['HERO-MCLAREN-P1']) : route('mobil.index', ['q' => 'McLaren']) }}">Lihat Detail</a>
             </div>
         </div>
     </div>

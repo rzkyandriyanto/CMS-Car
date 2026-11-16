@@ -8,7 +8,7 @@ use RuntimeException;
 class PenjualanSparepartService
 {
     private function code(string $table,string $column,string $prefix): string { do {$code=$prefix.'-'.now()->format('Ym').'-'.strtoupper(bin2hex(random_bytes(4)));} while(DB::table($table)->where($column,$code)->exists()); return $code; }
-    private function subtotal(string $price,int $qty): string { return (string) DB::selectOne('SELECT CAST(? * ? AS DECIMAL(15,2)) AS value',[$price,$qty])->value; }
+    private function subtotal(string $price,int $qty): string { return (string) DB::selectOne('SELECT CAST(CAST(? AS DECIMAL(15,2)) * CAST(? AS INTEGER) AS DECIMAL(15,2)) AS value',[$price,$qty])->value; }
     private function draft(int $id): PenjualanSparepart { $sale=PenjualanSparepart::lockForUpdate()->findOrFail($id); if($sale->status!=='draft') throw new RuntimeException('Penjualan tidak berstatus draft.'); return $sale; }
 
     public function createDraft(?int $customerId,int $petugasId,string $note=''): PenjualanSparepart

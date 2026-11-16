@@ -82,7 +82,6 @@
             </div>
 
             <p class="login-register">Belum menjadi YZA Member? <a href="{{ route('register') }}">Buat Member</a></p>
-            <p class="login-register" style="margin-top:10px;font-size:12px;opacity:0.85;">Petugas atau Admin bengkel? <a href="{{ route('petugas.login') }}" style="font-weight:700;">Masuk Portal Petugas</a></p>
         </form>
     </section>
 </main>
@@ -156,7 +155,7 @@
             <div style="margin-top: 18px; border-top: 1px solid rgba(255,255,255,0.08); padding-top: 14px;">
                 <button type="button" id="btnToggleStaffRoles" style="background:none; border:none; color:#a0a6b2; font-size:12px; cursor:pointer; display:flex; align-items:center; gap:6px; padding:0;">
                     <span id="staffToggleIcon" style="font-size:10px;">▶</span>
-                    <span>Tampilkan Akun Staf Khusus / Uji Hak Akses (Owner, Sales, SA, Mekanik, Finance, Gudang)</span>
+                    <span>Tampilkan Akun Staf Khusus / Uji Hak Akses (Owner, Sales, SA, Mekanik, QC, Finance, Gudang)</span>
                 </button>
 
                 <div id="staffRolesContainer" style="display:none; margin-top:14px;">
@@ -202,6 +201,12 @@
                             <div class="role-card-top"><span class="role-badge role-badge--service">MEKANIK</span><span class="role-cred-tag">mekanik.andi</span></div>
                             <strong style="color:#fff; font-size:13px;">Andi Pratama</strong>
                             <small style="color:#9aa1ab; font-size:11px;">Senior Mekanik Mesin (Engine &amp; Transmisi)</small>
+                        </div>
+
+                        <div class="role-card-item" style="padding:12px 14px;" onclick="selectRoleAndLogin('qc506', 'qc506', this)">
+                            <div class="role-card-top"><span class="role-badge role-badge--service">QC</span><span class="role-cred-tag">qc506</span></div>
+                            <strong style="color:#fff; font-size:13px;">Quality Control (QC / PDI)</strong>
+                            <small style="color:#9aa1ab; font-size:11px;">Pemeriksaan mutu servis &amp; PDI</small>
                         </div>
 
                         <div class="role-card-item" style="padding:12px 14px;" onclick="selectRoleAndLogin('mekanik.budi', 'mekanik123', this)">

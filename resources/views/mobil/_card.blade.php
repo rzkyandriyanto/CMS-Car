@@ -10,8 +10,15 @@
         : ($mobil->showcase_slug
             ? route('mobil.showcase', array_merge(['slug' => $mobil->showcase_slug], $detailQuery))
             : route('mobil.show', array_merge(['mobil' => $mobil], $detailQuery))));
-    $photo = $mobil->image ?? optional($mobil->primaryPhoto())->url();
+    $galleryPhoto = collect(app(\App\Services\VehicleGalleryService::class)->for($mobil))->flatMap(fn ($c) => $c['images'] ?? [])->first()['src'] ?? null;
+    $photo = $mobil->image ?? $galleryPhoto ?? optional($mobil->primaryPhoto())->url();
     $identity = strtolower(trim($mobil->merk.' '.$mobil->model.' '.$mobil->tipe));
+    if (str_contains($identity, 'toyota gr supra')) {
+        $photo = asset('assets/images/catalog/toyota-gr-supra/front.png');
+    }
+    if (str_contains($identity, 'supra mk4') || str_contains($identity, 'supra 3.0l a/t')) {
+        $photo = asset('assets/images/catalog/toyota-supra-mk4/front.png');
+    }
     if (str_contains($identity, 'fortuner')) {
         $photo = asset('assets/images/vehicles/fortuner/blue/front.png');
     }
@@ -72,7 +79,7 @@
         <p class="catalog-meta">{{ $mobil->tahun ?: '-' }} <i>•</i> {{ $variantLabel ?: 'Collection' }} <i>•</i> {{ ucfirst($mobil->transmisi ?: 'automatic') }}</p>
         <div class="catalog-card-footer">
             <strong class="catalog-price">{{ $price > 0 ? 'Rp '.number_format($price, 0, ',', '.') : 'Hubungi Kami' }}</strong>
-            <a class="catalog-detail-button" href="{{ $detailUrl }}" aria-label="Lihat detail {{ $title }}"><b aria-hidden="true">→</b></a>
+            <a class="catalog-detail-button" href="{{ $detailUrl }}" aria-label="Lihat detail {{ $title }}"><b aria-hidden="true"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></svg></b></a>
         </div>
     </div>
 </article>

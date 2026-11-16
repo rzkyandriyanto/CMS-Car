@@ -165,7 +165,7 @@
 
 /* Booking List */
 .bk-list{display:grid;gap:12px}
-.bk-row{display:grid;grid-template-columns:150px minmax(0,1.4fr) minmax(0,1fr) 155px auto;align-items:center;gap:16px;padding:18px 20px;border:1px solid #e2e8f0;border-radius:16px;background:#fff;transition:border-color .15s,box-shadow .15s}
+.bk-row{display:grid;grid-template-columns:150px minmax(0,1.4fr) minmax(0,1fr) 175px 206px;align-items:center;gap:16px;padding:18px 20px;border:1px solid #e2e8f0;border-radius:16px;background:#fff;transition:border-color .15s,box-shadow .15s}
 .bk-row:hover{border-color:#cbd5e1;box-shadow:0 10px 26px -16px rgba(15,23,42,.16)}
 .bk-row[hidden]{display:none!important}
 .bk-col-code{display:flex;flex-direction:column;gap:6px;align-items:flex-start}
@@ -181,7 +181,8 @@
 .bk-date{color:#0f172a;font-size:13px;font-weight:700}
 .bk-price{color:#64748b;font-size:12px;font-weight:600}
 .bk-promo{display:inline-block;margin-left:6px;padding:1px 6px;border-radius:5px;background:#fef2f2;color:#dc2626;font-size:10.5px;font-weight:800}
-.bk-status{display:inline-flex;align-items:center;justify-content:center;gap:6px;padding:6px 11px;border-radius:999px;font-size:11.5px;font-weight:800;white-space:nowrap}
+.bk-col-status{display:flex;align-items:center;justify-content:flex-start}
+.bk-status{display:inline-flex;align-items:center;justify-content:center;gap:6px;padding:6px 12px;border-radius:999px;font-size:11.5px;font-weight:800;white-space:nowrap}
 .bk-status[data-tone="amber"]{background:#fef3c7;color:#92400e}
 .bk-status[data-tone="sky"]{background:#e0f2fe;color:#075985}
 .bk-status[data-tone="indigo"]{background:#e0e7ff;color:#3730a3}
@@ -318,7 +319,7 @@
                         @if($item['promo_code'])<span class="bk-promo">{{ $item['promo_code'] }}</span>@endif
                     </span>
                 </div>
-                <div>
+                <div class="bk-col-status">
                     <span class="bk-status" data-tone="{{ $item['tone'] }}">{{ $item['status'] }}</span>
                 </div>
                 <div class="bk-col-actions">

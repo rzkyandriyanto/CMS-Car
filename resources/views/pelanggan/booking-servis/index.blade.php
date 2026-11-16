@@ -68,17 +68,40 @@
         $dur = max(1, (int) ($b->jenisServis?->duration_minutes ?? 60));
         $durLabel = $dur >= 60 ? '± ' . intdiv($dur, 60) . ' jam' . ($dur % 60 ? ' ' . ($dur % 60) . ' menit' : '') : '± ' . $dur . ' menit';
         $timeRaw = substr((string) $b->jam, 0, 5);
-        $techName = $b->preferredPetugas?->nama_lengkap ?: 'Tidak Ada Preferensi';
-        $techDesc = $b->preferredPetugas
-            ? 'Preferensi teknisi member. Penugasan teknisi final dilakukan oleh YZA Automotive.'
-            : 'YZA Automotive akan menentukan teknisi yang sesuai.';
+        $assignedTech = $b->servis?->petugas;
+        $techName = $assignedTech?->nama_lengkap ?: ($b->preferredPetugas?->nama_lengkap ?: 'Tidak Ada Preferensi');
+        $techDesc = $assignedTech
+            ? 'Teknisi pelaksana yang ditugaskan oleh Service Advisor untuk menangani kendaraan Anda.'
+            : ($b->preferredPetugas
+                ? 'Preferensi teknisi member. Penugasan teknisi final dilakukan oleh YZA Automotive.'
+                : 'YZA Automotive akan menentukan teknisi yang sesuai.');
+
+        $pendingApprovalModel = $b->servis?->approvalRequests?->firstWhere('status', 'pending');
+        $pendingApproval = null;
+        if ($pendingApprovalModel && $b->servis) {
+            $approvalItems = $pendingApprovalModel->items->map(fn ($it) => [
+                'description' => $it->description,
+                'type' => $it->item_type === 'sparepart' ? 'Sparepart' : 'Jasa',
+                'quantity' => (int) $it->quantity,
+                'total' => 'Rp ' . number_format((float) $it->total_snapshot, 0, ',', '.'),
+            ])->values()->all();
+            $approvalTotal = (float) $pendingApprovalModel->items->sum('total_snapshot');
+            $pendingApproval = [
+                'title' => $pendingApprovalModel->title,
+                'reason' => $pendingApprovalModel->reason,
+                'items' => $approvalItems,
+                'total' => 'Rp ' . number_format($approvalTotal, 0, ',', '.'),
+                'decision_url' => route('pelanggan.servis.approvals.decision', [$b->servis, $pendingApprovalModel]),
+            ];
+        }
+
         return [
             'id' => (string) $b->getKey(),
             'code' => $b->kode_booking,
             'status' => $st,
-            'status_label' => $meta['label'],
-            'status_short' => $meta['short'],
-            'tone' => $meta['tone'],
+            'status_label' => $pendingApproval ? 'Menunggu Konfirmasi Anda' : $meta['label'],
+            'status_short' => $pendingApproval ? 'Perlu Konfirmasi' : $meta['short'],
+            'tone' => $pendingApproval ? 'amber' : $meta['tone'],
             'group' => $meta['group'],
             'stage' => $meta['stage'],
             'vehicle' => trim(($b->kendaraan?->merk ?: '') . ' ' . ($b->kendaraan?->model ?: '')) ?: 'Belum diisi',
@@ -97,6 +120,7 @@
             'can_cancel' => in_array($st, ['menunggu', 'diterima'], true),
             'cancel_url' => route('pelanggan.booking-servis.cancel', $b),
             'pricing' => $pricing,
+            'pending_approval' => $pendingApproval,
         ];
     };
 
@@ -238,6 +262,19 @@
 .bks-price-total-val strong{color:#e31d35;font-size:15.5px;font-weight:800}
 
 .bks-modal-foot{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:14px 24px;border-top:1px solid #f1f5f9;background:#f8fafc}
+.bks-approval-box{padding:16px 18px;border:1px solid #fecdd3;border-radius:14px;background:#fff1f2;display:grid;gap:10px}
+.bks-approval-box[hidden]{display:none!important}
+.bks-approval-head{display:flex;align-items:flex-start;justify-content:space-between;gap:12px}
+.bks-approval-tag{display:inline-block;padding:2px 8px;border-radius:999px;background:#e31d35;color:#fff;font-size:10px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;margin-bottom:4px}
+.bks-approval-head h3{margin:0;font-size:15px;font-weight:800;color:#0f172a}
+.bks-approval-total{font-size:15px;font-weight:900;color:#be123c;white-space:nowrap}
+.bks-approval-reason{margin:0;font-size:12.5px;color:#334155;line-height:1.45}
+.bks-approval-items{display:grid;gap:6px;padding:10px 12px;border-radius:10px;background:#fff;border:1px solid #ffe4e6}
+.bks-approval-item{display:flex;justify-content:space-between;gap:10px;font-size:12.5px;color:#0f172a}
+.bks-approval-item small{color:#64748b}
+.bks-approval-form{display:grid;gap:10px}
+.bks-approval-form input{height:38px;padding:0 12px;border:1px solid #fecdd3;border-radius:9px;background:#fff;font:inherit;font-size:12.5px;color:#0f172a;outline:0}
+.bks-approval-actions{display:flex;justify-content:flex-end;gap:8px;flex-wrap:wrap}
 .bks-modal-foot-right{display:flex;align-items:center;gap:8px;margin-left:auto}
 
 @media(max-width:760px){
@@ -351,7 +388,11 @@
                             </td>
                             <td>
                                 <div class="bks-actions">
-                                    <button type="button" class="bks-btn" data-open-detail="{{ $item['id'] }}">Detail</button>
+                                    @if(!empty($item['pending_approval']))
+                                        <button type="button" class="bks-btn" style="background:#e31d35;border-color:#e31d35;color:#fff;" data-open-detail="{{ $item['id'] }}">Konfirmasi</button>
+                                    @else
+                                        <button type="button" class="bks-btn" data-open-detail="{{ $item['id'] }}">Detail</button>
+                                    @endif
                                     @if($item['can_cancel'])
                                         <form method="post" action="{{ $item['cancel_url'] }}" data-cxc-form data-cxc-code="{{ $item['code'] }}">
                                             @csrf
@@ -465,6 +506,33 @@
                         <p style="margin:0;color:#334155;font-size:12.5px;line-height:1.5;" data-modal-note>{{ $initialModalItem['note'] ?? 'Tidak ada catatan tambahan' }}</p>
                     </section>
                 </div>
+
+                <section class="bks-approval-box" data-modal-approval-box {{ empty($initialModalItem['pending_approval']) ? 'hidden' : '' }}>
+                    <div class="bks-approval-head">
+                        <div>
+                            <span class="bks-approval-tag">Butuh Konfirmasi Anda</span>
+                            <h3 data-modal-approval-title>{{ $initialModalItem['pending_approval']['title'] ?? 'Temuan Pemeriksaan Tambahan' }}</h3>
+                        </div>
+                        <strong class="bks-approval-total" data-modal-approval-total>{{ $initialModalItem['pending_approval']['total'] ?? 'Rp 0' }}</strong>
+                    </div>
+                    <p class="bks-approval-reason" data-modal-approval-reason>{{ $initialModalItem['pending_approval']['reason'] ?? '' }}</p>
+                    <div class="bks-approval-items" data-modal-approval-items>
+                        @foreach(($initialModalItem['pending_approval']['items'] ?? []) as $apItem)
+                            <div class="bks-approval-item">
+                                <span>{{ $apItem['description'] }} <small>({{ $apItem['type'] }} · {{ $apItem['quantity'] }}x)</small></span>
+                                <strong>{{ $apItem['total'] }}</strong>
+                            </div>
+                        @endforeach
+                    </div>
+                    <form method="post" action="{{ $initialModalItem['pending_approval']['decision_url'] ?? '#' }}" data-modal-approval-form class="bks-approval-form">
+                        @csrf
+                        <input type="text" name="note" placeholder="Catatan opsional untuk bengkel..." maxlength="500">
+                        <div class="bks-approval-actions">
+                            <button type="submit" name="decision" value="reject" class="bks-btn bks-btn-danger">Tolak</button>
+                            <button type="submit" name="decision" value="approve" class="bks-btn" style="background:#059669;border-color:#059669;color:#fff;">Setujui &amp; Lanjut Pengerjaan</button>
+                        </div>
+                    </form>
+                </section>
 
                 <div class="bks-pricing-box">
                     <div class="bks-price-row">
@@ -607,6 +675,25 @@
         if (cancelForm) {
             cancelForm.hidden = !item.can_cancel;
             cancelForm.action = item.cancel_url;
+        }
+
+        const approvalBox = modal.querySelector('[data-modal-approval-box]');
+        if (approvalBox) {
+            const ap = item.pending_approval;
+            approvalBox.hidden = !ap;
+            if (ap) {
+                setText('[data-modal-approval-title]', ap.title);
+                setText('[data-modal-approval-reason]', ap.reason);
+                setText('[data-modal-approval-total]', ap.total);
+                const itemsWrap = modal.querySelector('[data-modal-approval-items]');
+                if (itemsWrap) {
+                    itemsWrap.innerHTML = (ap.items || []).map(it =>
+                        `<div class="bks-approval-item"><span>${it.description} <small>(${it.type} · ${it.quantity}x)</small></span><strong>${it.total}</strong></div>`
+                    ).join('');
+                }
+                const apForm = modal.querySelector('[data-modal-approval-form]');
+                if (apForm) apForm.action = ap.decision_url;
+            }
         }
 
         modal.hidden = false;
