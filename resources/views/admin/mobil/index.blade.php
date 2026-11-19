@@ -6,49 +6,29 @@
 @section('content')
 @php
     $resolveCarThumbnail = static function ($car) {
+        $idStr = strtolower(trim($car->merk . ' ' . $car->model . ' ' . $car->tipe));
+        if (str_contains($idStr, 'toyota gr supra')) {
+            return asset('assets/images/catalog/toyota-gr-supra/front.png');
+        }
+        if (str_contains($idStr, 'supra mk4') || str_contains($idStr, 'supra 3.0l a/t')) {
+            return asset('assets/images/catalog/toyota-supra-mk4/front.png');
+        }
+        $galleryPhoto = collect(app(\App\Services\VehicleGalleryService::class)->for($car))->flatMap(fn ($c) => $c['images'] ?? [])->first()['src'] ?? null;
+        if ($galleryPhoto && !str_contains($galleryPhoto, 'yza-hero-reference-v3.png')) {
+            return $galleryPhoto;
+        }
         if ($car->foto && $car->foto->isNotEmpty()) {
             $first = $car->foto->first();
             if ($first && $first->existsOnDisk()) {
                 return $first->url();
             }
         }
-        $slug = \Illuminate\Support\Str::slug($car->merk . ' ' . $car->model);
-        $premiumMap = [
-            'lexus-lfa' => 'lexus-lfa/pearl-white/front.png',
-            'nissan-gt-r-nismo' => 'nissan-gt-r-nismo/nismo-stealth-gray/front.png',
-            'dodge-challenger-srt-hellcat-redeye' => 'dodge-challenger-srt-hellcat-redeye/torred/front.png',
-            'ford-mustang-shelby-gt500' => 'ford-mustang-shelby-gt500/grabber-blue/front.png',
-            'chevrolet-corvette-z06' => 'chevrolet-corvette-z06/torch-red/front.png',
-            'aston-martin-dbs-770-ultimate' => 'aston-martin-dbs-770-ultimate/minotaur-green/front.png',
-            'mercedes-amg-gt-black-series' => 'mercedes-amg-gt-black-series/magno-grey/front.png',
-            'porsche-911-gt3-rs' => 'porsche-911-gt3-rs/guards-red/front.png',
-            'ferrari-sf90-stradale' => 'ferrari-sf90-stradale/rosso-corsa/front.png',
-            'lamborghini-revuelto' => 'lamborghini-revuelto/rosso-mars/front.png',
-        ];
-        if (isset($premiumMap[$slug])) {
-            $path = 'assets/images/vehicles/premium/' . $premiumMap[$slug];
-            if (file_exists(public_path($path))) {
-                return asset($path);
-            }
-        }
-        $modelSlug = \Illuminate\Support\Str::slug($car->model);
-        $stdFolders = ['avanza', 'brio', 'civic', 'fortuner', 'hrv', 'innova-zenix', 'mobilio', 'raize', 'toyota-gr-supra', 'toyota-supra-mk4', 'xenia', 'xl7', 'xpander', 'audi-r8', 'bmw-m4', 'bugatti-chiron', 'mclaren-720s'];
-        foreach ($stdFolders as $folder) {
-            if ($modelSlug === $folder || str_contains($modelSlug, $folder) || str_contains($slug, $folder)) {
-                $glob = glob(public_path('assets/images/vehicles/' . $folder . '/*/front.png'));
-                if (!empty($glob)) {
-                    $rel = str_replace(public_path() . DIRECTORY_SEPARATOR, '', $glob[0]);
-                    $rel = str_replace('\\', '/', $rel);
-                    return asset($rel);
-                }
-            }
-        }
         return asset('assets/images/hero/yza-hero-black-v2.png');
     };
 
-    $activeTab = $activeTab ?? request('tab', 'inventori');
-    if (!in_array($activeTab, ['inventori', 'katalog', 'foto'], true)) {
-        $activeTab = 'inventori';
+    $activeTab = $activeTab ?? request('tab', 'katalog');
+    if (!in_array($activeTab, ['katalog', 'foto'], true)) {
+        $activeTab = 'katalog';
     }
 
     $isOwner = auth()->user()?->roleKey() === 'owner';
@@ -84,7 +64,7 @@
             @if(!$isOwner)
                 <button type="button" class="btn-primary-action" onclick="openVehicleActionModal('new', 'add_unit')" title="Daftarkan Unit Mobil Baru">
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
-                    <span>+ Tambah Mobil</span>
+                    <span>Tambah Mobil</span>
                 </button>
             @else
                 <span class="owner-readonly-badge" title="Mode Baca Saja (Owner)">
@@ -102,10 +82,10 @@
         </div>
     @endif
 
-    {{-- Enam Kartu Statistik Inventori & Showroom Kompak --}}
-    <section class="vehicle-kpi-grid" aria-label="Statistik Kendaraan & Showroom">
-        {{-- Card 1: Total Model Katalog --}}
-        <a class="vehicle-kpi-card is-red" href="{{ route('admin.mobil.index', ['tab' => $activeTab]) }}">
+    {{-- 4 Kartu Statistik Gudang & Inventori Mobil --}}
+    <section class="vehicle-kpi-grid" aria-label="Statistik Gudang &amp; Stok Mobil">
+        {{-- Card 1: Total Model Mobil --}}
+        <div class="vehicle-kpi-card is-red">
             <div class="kpi-icon-box">
                 <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                     <path d="m4 10 2-6h12l2 6"></path>
@@ -114,15 +94,15 @@
                 </svg>
             </div>
             <div class="kpi-content">
-                <span class="kpi-label">Total Model Katalog</span>
+                <span class="kpi-label">Total Model Mobil</span>
                 <strong class="kpi-value" id="kpiTotalUnit">{{ number_format($stats['total_model_katalog'] ?? $stats['total_unit']) }}</strong>
                 <div class="kpi-subtext">
-                    <span>{{ number_format($stats['model_berinventori'] ?? 26) }} Total Kendaraan berinventori</span>
+                    <span>Model unik terdaftar di showroom</span>
                 </div>
             </div>
-        </a>
+        </div>
 
-        {{-- Card 2: Unit Fisik Tercatat --}}
+        {{-- Card 2: Total Unit Fisik --}}
         <div class="vehicle-kpi-card is-blue">
             <div class="kpi-icon-box">
                 <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -131,67 +111,32 @@
                 </svg>
             </div>
             <div class="kpi-content">
-                <span class="kpi-label">Unit Fisik Tercatat</span>
+                <span class="kpi-label">Total Unit Fisik</span>
                 <strong class="kpi-value" id="kpiTotalFisik">{{ number_format($stats['unit_fisik_tercatat'] ?? $stats['total_unit_fisik']) }}</strong>
                 <div class="kpi-subtext">
-                    <span>{{ number_format($stats['stok_menipis']) }} model Stok Menipis (&le; 3 unit)</span>
+                    <span>Unit aktif tercatat di gudang</span>
                 </div>
             </div>
         </div>
 
-        {{-- Card 3: Unit Ready (Tersedia) --}}
-        <a class="vehicle-kpi-card is-green" href="{{ route('admin.mobil.index', ['tab' => $activeTab, 'status' => 'ready']) }}">
+        {{-- Card 3: Unit Siap Jual (Ready) --}}
+        <div class="vehicle-kpi-card is-green">
             <div class="kpi-icon-box">
                 <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
                     <polyline points="20 6 9 17 4 12"></polyline>
                 </svg>
             </div>
             <div class="kpi-content">
-                <span class="kpi-label">Unit Ready</span>
+                <span class="kpi-label">Unit Siap Jual</span>
                 <strong class="kpi-value" id="kpiTersedia">{{ number_format($stats['unit_ready'] ?? $stats['tersedia']) }}</strong>
                 <div class="kpi-subtext is-up">
-                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"></polyline></svg>
-                    <span>Kendaraan Tersedia siap dibeli</span>
+                    <span>{{ number_format($stats['reservasi_aktif'] ?? 0) }} unit sedang direservasi</span>
                 </div>
             </div>
-        </a>
+        </div>
 
-        {{-- Card 4: Reservasi Aktif --}}
-        <a class="vehicle-kpi-card is-amber" href="{{ route('admin.pesanan-mobil.index') }}">
-            <div class="kpi-icon-box">
-                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                    <circle cx="12" cy="12" r="10"></circle>
-                    <polyline points="12 6 12 12 16 14"></polyline>
-                </svg>
-            </div>
-            <div class="kpi-content">
-                <span class="kpi-label">Reservasi Aktif</span>
-                <strong class="kpi-value" id="kpiDipesan">{{ number_format($stats['reservasi_aktif'] ?? $stats['dipesan']) }}</strong>
-                <div class="kpi-subtext">
-                    <span>Kendaraan Dipesan &amp; booking member</span>
-                </div>
-            </div>
-        </a>
-
-        {{-- Card 5: Pre-Order Aktif --}}
-        <a class="vehicle-kpi-card is-cyan" href="{{ route('admin.preorder-mobil.index') }}">
-            <div class="kpi-icon-box">
-                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                    <path d="M12 8v4l3 3"></path>
-                    <circle cx="12" cy="12" r="9"></circle>
-                </svg>
-            </div>
-            <div class="kpi-content">
-                <span class="kpi-label">Pre-Order Aktif</span>
-                <strong class="kpi-value">{{ number_format($stats['preorder']) }}</strong>
-                <div class="kpi-subtext">
-                    <span>Permintaan pre-order aktif</span>
-                </div>
-            </div>
-        </a>
-
-        {{-- Card 6: Kendaraan Terjual --}}
-        <a class="vehicle-kpi-card is-orange" href="{{ route('admin.mobil.index', ['tab' => $activeTab, 'status' => 'terjual']) }}">
+        {{-- Card 4: Unit Terjual --}}
+        <div class="vehicle-kpi-card is-orange">
             <div class="kpi-icon-box">
                 <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                     <circle cx="8" cy="21" r="1"></circle>
@@ -200,691 +145,230 @@
                 </svg>
             </div>
             <div class="kpi-content">
-                <span class="kpi-label">Kendaraan Terjual</span>
-                <strong class="kpi-value" id="kpiTerjual">{{ number_format($stats['terjual']) }}</strong>
+                <span class="kpi-label">Unit Terjual</span>
+                <strong class="kpi-value" id="kpiTerjual">{{ number_format($stats['terjual'] ?? 0) }}</strong>
                 <div class="kpi-subtext">
                     <span>Unit berhasil diserahterimakan</span>
                 </div>
             </div>
-        </a>
+        </div>
     </section>
-
-    {{-- Tabs Navigation Bar --}}
-    <nav class="vehicle-tabs-nav" aria-label="Tab Manajemen Mobil & Showroom">
-        <button type="button" class="vehicle-tab-btn {{ $activeTab === 'inventori' ? 'is-active' : '' }}" data-tab-target="tab-inventori" aria-selected="{{ $activeTab === 'inventori' ? 'true' : 'false' }}" role="tab">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <rect width="18" height="18" x="3" y="3" rx="2"></rect>
-                <path d="M3 9h18M3 15h18M9 3v18M15 3v18"></path>
-            </svg>
-            <span>Inventori &amp; Stok</span>
-            <span class="tab-badge">{{ $cars->total() }}</span>
-        </button>
-
-        <button type="button" class="vehicle-tab-btn {{ $activeTab === 'katalog' ? 'is-active' : '' }}" data-tab-target="tab-katalog" aria-selected="{{ $activeTab === 'katalog' ? 'true' : 'false' }}" role="tab">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <rect width="7" height="7" x="3" y="3" rx="1"></rect>
-                <rect width="7" height="7" x="14" y="3" rx="1"></rect>
-                <rect width="7" height="7" x="14" y="14" rx="1"></rect>
-                <rect width="7" height="7" x="3" y="14" rx="1"></rect>
-            </svg>
-            <span>Katalog &amp; Showroom</span>
-            <span class="tab-badge">{{ $catalogCars->count() }}</span>
-        </button>
-
-        <button type="button" class="vehicle-tab-btn {{ $activeTab === 'foto' ? 'is-active' : '' }}" data-tab-target="tab-foto" aria-selected="{{ $activeTab === 'foto' ? 'true' : 'false' }}" role="tab">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <circle cx="12" cy="12" r="10"></circle>
-                <path d="M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20"></path>
-                <path d="M2 12h20"></path>
-            </svg>
-            <span>Foto &amp; Warna</span>
-            <span class="tab-badge">Galeri &amp; Aset</span>
-        </button>
-    </nav>
 
     {{-- Main Container Card --}}
     <main class="vehicle-main-card">
         {{-- ========================================================== --}}
+        {{-- TAB 1: KELOLA MOBIL (KATALOG & PENGATURAN STOK)            --}}
         {{-- ========================================================== --}}
-        {{-- TAB 1: INVENTORI & STOK (TABEL UTAMA TERPADU)              --}}
-        {{-- ========================================================== --}}
-        <div id="tab-inventori" class="vehicle-tab-pane {{ $activeTab === 'inventori' ? 'is-active' : '' }}" role="tabpanel">
-
-            {{-- Konteks Pre-Order jika Navigasi dari Modul Pre-Order --}}
-            @if(request()->integer('preorder'))
-                <div class="preorder-context-banner" role="status">
-                    <div class="context-banner-text">
-                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 8v4l3 3"></path><circle cx="12" cy="12" r="9"></circle></svg>
-                        <span>Menampilkan konteks permintaan Pre-Order <strong>#{{ request()->integer('preorder') }}</strong>. Tambahkan unit ke inventori untuk memenuhi permintaan ini.</span>
-                    </div>
-                    <a href="{{ route('admin.preorder-mobil.index') }}" class="btn-context-back">&larr; Kembali ke Daftar Pre-Order</a>
-                </div>
-            @endif
-
-            {{-- Konteks Filter Model Katalog jika Aktif --}}
-            @if($catalogKey && $catalogModel)
-                <div class="catalog-filter-context-banner" role="status">
-                    <div class="context-banner-text">
-                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg>
-                        <span>Memfilter spesifik model katalog: <strong>{{ $catalogModel->merk }} {{ $catalogModel->model }}</strong> ({{ $catalogKey }}).</span>
-                    </div>
-                    <a href="{{ route('admin.mobil.index', ['tab' => 'inventori']) }}" class="btn-context-back">Tampilkan Semua Mobil</a>
-                </div>
-            @endif
-
-            {{-- Toolbar Filter Sejajar Horizontal --}}
+        <div id="tab-katalog" class="vehicle-tab-pane {{ $activeTab === 'katalog' ? 'is-active' : '' }}" role="tabpanel">
             <form class="vehicle-filter-toolbar" method="get" action="{{ route('admin.mobil.index') }}">
-                <input type="hidden" name="tab" value="inventori">
-                @if($catalogKey)<input type="hidden" name="catalog" value="{{ $catalogKey }}">@endif
-                @if(request()->integer('preorder'))<input type="hidden" name="preorder" value="{{ request()->integer('preorder') }}">@endif
-                @if(request('per_page'))
-                    <input type="hidden" name="per_page" value="{{ request('per_page') }}">
-                @endif
-
-                {{-- Input Pencarian --}}
+                <input type="hidden" name="tab" value="katalog">
                 <div class="filter-wrap search-box">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
-                    <input type="text" name="q" value="{{ $q }}" class="filter-input" placeholder="Cari merek, model, varian, kode mobil, VIN...">
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+                    <input type="text" name="q" class="filter-input" value="{{ $q ?? '' }}" placeholder="Cari merek, model, varian, kode mobil...">
                 </div>
-
-                {{-- Dropdown Merek --}}
-                <div class="filter-wrap select-box select-brand">
-                    <select name="merk" class="filter-select">
-                        <option value="">Semua Merek</option>
-                        @foreach($brands as $brand)
-                            <option value="{{ $brand }}" @selected($merk === $brand)>{{ $brand }}</option>
-                        @endforeach
-                    </select>
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="select-chevron"><polyline points="6 9 12 15 18 9"></polyline></svg>
-                </div>
-
-                {{-- Dropdown Status & Ketersediaan --}}
-                <div class="filter-wrap select-box select-status">
-                    <select name="status" class="filter-select">
-                        <option value="">Semua Mobil</option>
-                        <option value="ready" @selected($status === 'ready' || $status === 'tersedia')>Ready (Stok Tersedia)</option>
-                        <option value="habis_atau_belum_ada" @selected($status === 'habis_atau_belum_ada')>Stok Habis / Belum Ada Unit</option>
-                        <option value="ada_preorder" @selected($status === 'ada_preorder')>Ada Pre-Order Aktif</option>
-                        <option value="tidak_tayang" @selected($status === 'tidak_tayang' || $status === 'nonaktif')>Tidak Tayang</option>
-                        <option value="dibooking" @selected($status === 'dibooking')>Dipesan (Booking)</option>
-                        <option value="terjual" @selected($status === 'terjual')>Terjual</option>
-                    </select>
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="select-chevron"><polyline points="6 9 12 15 18 9"></polyline></svg>
-                </div>
-
-                {{-- Kondisi --}}
-                <div class="filter-wrap select-box select-kondisi">
-                    <select name="kondisi" class="filter-select">
-                        <option value="">Semua Kondisi</option>
-                        <option value="baru" @selected($kondisi === 'baru')>Baru</option>
-                        <option value="bekas" @selected($kondisi === 'bekas')>Bekas</option>
-                    </select>
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="select-chevron"><polyline points="6 9 12 15 18 9"></polyline></svg>
-                </div>
-
-                {{-- Tombol Aksi --}}
+                <select name="merk" class="filter-select">
+                    <option value="">Semua Merek</option>
+                    @foreach($brands ?? [] as $brand)
+                        <option value="{{ $brand }}" {{ ($merk ?? '') === $brand ? 'selected' : '' }}>{{ $brand }}</option>
+                    @endforeach
+                </select>
+                <select name="status" class="filter-select">
+                    <option value="">Semua Status</option>
+                    <option value="tersedia" {{ ($status ?? '') === 'tersedia' ? 'selected' : '' }}>Tersedia</option>
+                    <option value="dibooking" {{ ($status ?? '') === 'dibooking' ? 'selected' : '' }}>Dibooking</option>
+                    <option value="terjual" {{ ($status ?? '') === 'terjual' ? 'selected' : '' }}>Terjual</option>
+                    <option value="nonaktif" {{ ($status ?? '') === 'nonaktif' ? 'selected' : '' }}>Nonaktif</option>
+                </select>
+                <select name="kondisi" class="filter-select">
+                    <option value="">Semua Kondisi</option>
+                    <option value="baru" {{ ($kondisi ?? '') === 'baru' ? 'selected' : '' }}>Baru</option>
+                    <option value="bekas" {{ ($kondisi ?? '') === 'bekas' ? 'selected' : '' }}>Bekas</option>
+                </select>
                 <div class="filter-actions-group">
-                    <button type="submit" class="btn-filter-apply">
-                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"></polyline></svg>
-                        <span>Terapkan</span>
-                    </button>
-                    <a href="{{ route('admin.mobil.index', ['tab' => 'inventori']) }}" class="btn-filter-reset">
-                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"></path><path d="M3 3v5h5"></path></svg>
-                        <span>Reset</span>
-                    </a>
+                    <button type="submit" class="btn-filter-apply">Terapkan</button>
+                    @if(!empty($q) || !empty($merk) || !empty($status) || !empty($kondisi))
+                        <a href="{{ route('admin.mobil.index', ['tab' => 'katalog']) }}" class="btn-filter-reset">Reset</a>
+                    @endif
                 </div>
             </form>
 
-            {{-- Tabel Utama Terpadu Manajemen Mobil & Showroom --}}
-            <div class="vehicle-table-responsive" id="vehicleTableScrollContainer">
-                <table class="vehicle-table">
-                    <thead>
-                        <tr>
-                            <th class="th-check" style="width: 38px; text-align: center;">
-                                <input type="checkbox" id="checkAllInventory" class="custom-checkbox" title="Pilih Semua">
-                            </th>
-                            <th class="th-car" style="min-width: 250px;">KENDARAAN &amp; KODE</th>
-                            <th class="th-price" style="min-width: 120px;">HARGA</th>
-                            <th class="th-catalog-status" style="min-width: 110px; text-align: center;">STATUS KATALOG</th>
-                            <th class="th-stock-physical" style="min-width: 90px; text-align: center;">STOK FISIK</th>
-                            <th class="th-stock-ready" style="min-width: 95px; text-align: center;">STOK READY</th>
-                            <th class="th-reserved" style="min-width: 90px; text-align: center;">RESERVASI AKTIF</th>
-                            <th class="th-preorder" style="min-width: 105px; text-align: center;">PRE-ORDER AKTIF</th>
-                            <th class="th-availability" style="min-width: 125px; text-align: center;">KETERSEDIAAN</th>
-                            <th class="th-action sticky-col" style="width: 72px; min-width: 72px; text-align: center;">AKSI</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        @php
-                            $renderedAny = false;
-                            $identity = app(\App\Services\CatalogVehicleIdentityService::class);
-                        @endphp
-
-                        {{-- 1. DAFTAR MODEL DENGAN UNIT FISIK (DATABASE INVENTORI) --}}
-                        @foreach($cars as $mobil)
-                            @php
-                                $renderedAny = true;
-                                $availability = $mobil->getAttribute('availability') ?? [];
-                                $colorStocks = array_values(app(\App\Services\VehicleColorStockService::class)->colors($mobil));
-                                $colorColl = collect($colorStocks);
-                                $stockTotal = $colorColl->isNotEmpty()
-                                    ? (int) $colorColl->sum('stock_total')
-                                    : ($availability['stock_total'] ?? (($availability['stock'] ?? null) !== null ? $availability['stock'] : 0));
-                                $stockOrderable = $colorColl->isNotEmpty()
-                                    ? (int) $colorColl->sum('stock')
-                                    : ($availability['stock'] ?? 0);
-                                $reservedUnits = $colorColl->isNotEmpty()
-                                    ? (int) $colorColl->sum('reserved_units')
-                                    : ($availability['reserved_units'] ?? ($availability['active_reservation_count'] ?? 0));
-                                $soldUnits = $colorColl->isNotEmpty()
-                                    ? (int) $colorColl->sum('sold_units')
-                                    : ($availability['sold_units'] ?? 0);
-                                $fotoUrl = $resolveCarThumbnail($mobil);
-                                $cleanStatus = strtolower((string) $mobil->status);
-                                $invHistory = isset($inventories[$mobil->id_mobil]) ? $inventories[$mobil->id_mobil]->histories : collect();
-                                $activeOrdersList = $ordersByCar[$mobil->id_mobil] ?? collect();
-                                $activeBookingsList = $bookingsByCar[$mobil->id_mobil] ?? collect();
-                                $publicPreviewUrl = $mobil->showcase_slug
-                                    ? route('mobil.showcase', ['slug' => $mobil->showcase_slug, 'source' => 'showroom'])
-                                    : route('mobil.show', $mobil);
-
-                                $angles = [
-                                    'front' => ['label' => 'Depan (Front 3/4)', 'path' => null],
-                                    'side' => ['label' => 'Samping (Side Profile)', 'path' => null],
-                                    'rear' => ['label' => 'Belakang (Rear 3/4)', 'path' => null],
-                                    'interior' => ['label' => 'Kabin / Interior', 'path' => null],
-                                ];
-                                $defaultColor = $mobil->warnaPilihan->firstWhere('is_default', true) ?: $mobil->warnaPilihan->first();
-                                if ($defaultColor && $defaultColor->relationLoaded('galeri')) {
-                                    foreach ($defaultColor->galeri as $galeriItem) {
-                                        if (isset($angles[$galeriItem->sudut]) && is_file(public_path($galeriItem->path))) {
-                                            $angles[$galeriItem->sudut]['path'] = asset($galeriItem->path);
-                                        }
-                                    }
-                                }
-                                $slug = \Illuminate\Support\Str::slug($mobil->merk . ' ' . $mobil->model);
-                                foreach (['front', 'side', 'rear', 'interior'] as $angleKey) {
-                                    if (!$angles[$angleKey]['path']) {
-                                        $candidate = "assets/images/vehicles/{$slug}/{$angleKey}.png";
-                                        if (file_exists(public_path($candidate))) {
-                                            $angles[$angleKey]['path'] = asset($candidate);
-                                        }
-                                    }
-                                }
-                                if (!$angles['front']['path'] && $mobil->foto->isNotEmpty()) {
-                                    $angles['front']['path'] = $mobil->foto->first()->url();
-                                }
-
-                                $carDataPayload = [
-                                    'id' => $mobil->id_mobil,
-                                    'kode' => $mobil->kode_mobil,
-                                    'merk' => $mobil->merk,
-                                    'model' => $mobil->model,
-                                    'tipe' => $mobil->tipe ?: '',
-                                    'tahun' => (int) $mobil->tahun,
-                                    'warna' => $mobil->warna ?: '',
-                                    'transmisi' => $mobil->transmisi ?: '',
-                                    'bahan_bakar' => $mobil->bahan_bakar ?: '',
-                                    'nomor_rangka' => $mobil->nomor_rangka ?: '',
-                                    'nomor_mesin' => $mobil->nomor_mesin ?: '',
-                                    'kilometer' => (int) $mobil->kilometer,
-                                    'harga_beli' => (float) $mobil->harga_beli,
-                                    'harga_jual' => (float) $mobil->harga_jual,
-                                    'harga_jual_formatted' => 'Rp ' . number_format((float) $mobil->harga_jual, 0, ',', '.'),
-                                    'kondisi' => $mobil->kondisi,
-                                    'status' => $mobil->status,
-                                    'is_limited_edition' => (bool) $mobil->is_limited_edition,
-                                    'showcase_slug' => $mobil->showcase_slug ?: '',
-                                    'deskripsi' => $mobil->deskripsi ?: '',
-                                    'tanggal_masuk' => optional($mobil->tanggal_masuk)->format('Y-m-d') ?: '',
-                                    'thumbnail' => $fotoUrl,
-                                    'color_stocks' => $colorStocks,
-                                    'stock_total' => $stockTotal,
-                                    'stock_orderable' => $stockOrderable,
-                                    'reserved_units' => $reservedUnits,
-                                    'sold_units' => $soldUnits,
-                                    'is_sold' => $mobil->status === 'terjual',
-                                    'photos' => $mobil->foto->map(fn($f) => [
-                                        'id' => $f->id_foto,
-                                        'url' => $f->url(),
-                                        'is_primary' => (bool) $f->foto_utama,
-                                        'primary_url' => route('admin.mobil.foto.primary', [$mobil, $f]),
-                                        'destroy_url' => route('admin.mobil.foto.destroy', [$mobil, $f]),
-                                    ])->values(),
-                                    'colors' => $mobil->warnaPilihan->map(fn($w) => [
-                                        'id' => $w->id_warna,
-                                        'nama' => $w->nama,
-                                        'hex' => $w->hex,
-                                        'slug' => $w->slug,
-                                        'is_default' => (bool) $w->is_default,
-                                    ])->values(),
-                                    'angles' => $angles,
-                                    'histories' => $invHistory->map(fn($h) => [
-                                        'tanggal' => optional($h->created_at)->format('d M Y, H:i') ?: '—',
-                                        'jenis' => ucwords(str_replace('_', ' ', $h->jenis)),
-                                        'jumlah' => $h->jumlah_perubahan > 0 ? ('+' . $h->jumlah_perubahan) : $h->jumlah_perubahan,
-                                        'before_after' => $h->stock_before . ' → ' . $h->stock_after,
-                                        'catatan' => $h->catatan ?: 'Pergerakan sistem',
-                                    ])->values(),
-                                    'active_orders' => $activeOrdersList->map(fn($o) => [
-                                        'nomor' => $o->nomor_pesanan,
-                                        'nama' => $o->nama_pembeli,
-                                        'status' => ucwords(str_replace('_', ' ', $o->status)),
-                                    ])->values(),
-                                    'active_bookings' => $activeBookingsList->map(fn($b) => [
-                                        'kode' => $b->kode_booking,
-                                        'status' => ucwords(str_replace('_', ' ', $b->status)),
-                                    ])->values(),
-                                    'urls' => [
-                                        'show' => route('admin.mobil.show', $mobil),
-                                        'stock_adjust' => route('admin.mobil.stock.adjust', $mobil),
-                                        'update' => route('admin.mobil.update', $mobil),
-                                        'deactivate' => route('admin.mobil.deactivate', $mobil),
-                                        'photo_store' => route('admin.mobil.foto.store', $mobil),
-                                        'public_preview' => $publicPreviewUrl,
-                                    ],
-                                ];
-                                $identity = app(\App\Services\CatalogVehicleIdentityService::class);
-                                $matchingPreorderModels = $identity->activePreordersList($mobil, $allActivePreorders ?? null);
-                                $activePoCount = $matchingPreorderModels->count();
-                                $matchingPreorders = $matchingPreorderModels->map(function ($po) {
-                                    return [
-                                        'id_preorder' => $po->getKey(),
-                                        'kode_preorder' => 'PRE-' . str_pad((string) $po->getKey(), 5, '0', STR_PAD_LEFT),
-                                        'customer_name' => $po->pelanggan?->nama_lengkap ?: 'Member YZA',
-                                        'customer_code' => $po->pelanggan?->kode_pelanggan ?: 'MEM',
-                                        'customer_phone' => $po->pelanggan?->nomor_telepon ?: ($po->pelanggan?->no_hp ?: '—'),
-                                        'customer_email' => $po->pelanggan?->email ?: ($po->pelanggan?->user?->email ?: '—'),
-                                        'vehicle' => $po->nama_mobil,
-                                        'variant' => $po->varian ?: 'Standar',
-                                        'year' => (int) ($po->tahun ?: date('Y')),
-                                        'color' => $po->warna ?: 'Standar',
-                                        'status' => $po->status,
-                                        'status_label' => ucfirst(str_replace('_', ' ', $po->status)),
-                                        'created_at' => optional($po->created_at)->format('d M Y, H:i') ?: '',
-                                        'detail_url' => route('admin.preorder-mobil.detail', $po),
-                                    ];
-                                })->values()->all();
-                                $carDataPayload['preorders'] = $matchingPreorders;
-                            @endphp
-                            <tr id="row-car-{{ $mobil->id_mobil }}" data-car-id="{{ $mobil->id_mobil }}">
-                                <script type="application/json" id="car-data-{{ $mobil->id_mobil }}">@json($carDataPayload)</script>
-
-                                {{-- Checkbox --}}
-                                <td class="td-check" style="text-align: center;">
-                                    <input type="checkbox" class="inventory-row-check custom-checkbox" value="{{ $mobil->id_mobil }}">
-                                </td>
-
-                                {{-- Kendaraan & Kode (Termasuk VIN & Mesin dalam Subline) --}}
-                                <td class="td-car">
-                                    <div class="car-cell">
-                                        <div class="car-thumb-box">
-                                            <img src="{{ $fotoUrl }}" alt="{{ $mobil->merk }} {{ $mobil->model }}" class="car-thumb-img" loading="lazy">
-                                        </div>
-                                        <div class="car-meta">
-                                            <div class="car-title-wrapper">
-                                                <button type="button" class="car-title-btn" onclick="openVehicleActionModal({{ $mobil->id_mobil }}, 'stock')" title="Klik untuk melihat stok per warna &amp; tambah stok">
-                                                    <strong class="car-title">{{ $mobil->merk }} {{ $mobil->model }}</strong>
-                                                </button>
-                                                <span class="car-code-pill">{{ $mobil->kode_mobil }}</span>
-                                            </div>
-                                            <span class="car-subtext" style="display:flex; align-items:center; gap:6px; flex-wrap:wrap;">
-                                                <span>{{ $mobil->tipe ?: 'Varian Standar' }} &bull; {{ $mobil->tahun }} &bull; {{ count($colorStocks) }} Warna</span>
-                                                <span style="display:inline-flex; align-items:center; gap:3px;" title="Klik nama mobil untuk lihat stok tiap warna">
-                                                    @foreach($colorColl->take(6) as $cs)
-                                                        <i style="width:9px; height:9px; border-radius:999px; display:inline-block; border:1px solid rgba(15,23,42,.25); background:{{ preg_match('/^#[0-9a-f]{6}$/i', (string)($cs['swatch'] ?? '')) ? $cs['swatch'] : '#cbd5e1' }};" title="{{ $cs['label'] }} ({{ $cs['stock'] }} ready)"></i>
-                                                    @endforeach
-                                                </span>
-                                            </span>
-                                            <div class="car-vin-subline">
-                                                <span class="vin-badge" title="Nomor Rangka (VIN)"><strong>VIN:</strong> {{ $mobil->nomor_rangka ?: '—' }}</span>
-                                                <span class="vin-separator">&bull;</span>
-                                                <span class="engine-badge" title="Nomor Mesin"><small>Mesin:</small> {{ $mobil->nomor_mesin ?: '—' }}</span>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </td>
-
-                                {{-- Harga Jual --}}
-                                <td class="td-price">
-                                    <strong>Rp {{ number_format((float) $mobil->harga_jual, 0, ',', '.') }}</strong>
-                                </td>
-
-                                {{-- Status Katalog (Pengganti Kolom Showroom) --}}
-                                <td class="td-catalog-status" style="text-align: center;">
-                                    @if($cleanStatus === 'nonaktif')
-                                        <span class="badge-catalog-status is-unpublished" title="Kendaraan tidak ditayangkan pada katalog website">Tidak Tayang</span>
-                                    @else
-                                        <span class="badge-catalog-status is-published" title="Kendaraan aktif ditayangkan pada katalog website">Tayang</span>
-                                        @if($mobil->showcase_slug)
-                                            <span class="catalog-slug-pill" title="Showcase: {{ $mobil->showcase_slug }}">{{ $mobil->showcase_slug }}</span>
-                                        @endif
-                                    @endif
-                                </td>
-
-                                {{-- Stok Fisik --}}
-                                <td class="td-stock-physical" style="text-align: center;">
-                                    <strong>{{ $stockTotal }}</strong> unit
-                                </td>
-
-                                {{-- Stok Ready (Dapat Dipesan) --}}
-                                <td class="td-stock-ready" style="text-align: center;">
-                                    @if($stockOrderable > 0)
-                                        <span class="stock-ready-badge is-ready">{{ $stockOrderable }} unit</span>
-                                    @else
-                                        <span class="stock-ready-badge is-zero">0 unit</span>
-                                    @endif
-                                </td>
-
-                                {{-- Reservasi Aktif --}}
-                                <td class="td-reserved" style="text-align: center;">
-                                    @if($reservedUnits > 0)
-                                        <span class="reserved-count-badge">{{ $reservedUnits }}</span>
-                                    @else
-                                        <span class="text-muted">0</span>
-                                    @endif
-                                </td>
-
-                                {{-- Pre-Order Aktif --}}
-                                <td class="td-preorder" style="text-align: center;">
-                                    <button type="button" class="preorder-count-badge {{ $activePoCount > 0 ? 'is-active' : 'is-zero' }}" data-action="preorder" onclick="openVehicleActionModal({{ $mobil->id_mobil }}, 'preorder')" title="Buka Permintaan Pre-Order">
-                                        {{ $activePoCount }} permintaan
-                                    </button>
-                                </td>
-
-                                {{-- Ketersediaan --}}
-                                <td class="td-availability" style="text-align: center;">
-                                    @if($cleanStatus === 'tersedia' && $stockOrderable > 0 && ($availability['can_purchase'] ?? false))
-                                        <span class="badge-availability is-ready">Ready</span>
-                                    @elseif($cleanStatus === 'tersedia')
-                                        <span class="badge-availability is-exhausted">Stok Habis</span>
-                                    @elseif($cleanStatus === 'dibooking')
-                                        <span class="badge-availability is-booked">Dipesan</span>
-                                    @elseif($cleanStatus === 'terjual')
-                                        <span class="badge-availability is-sold">Terjual</span>
-                                    @elseif($cleanStatus === 'nonaktif')
-                                        <span class="badge-availability is-inactive">Nonaktif</span>
-                                    @else
-                                        <span class="badge-availability is-other">{{ ucfirst($cleanStatus) }}</span>
-                                    @endif
-                                </td>
-
-                                {{-- Aksi (Sticky Column — Single Three-Dot Menu) --}}
-                                <td class="td-action sticky-col" style="text-align: center;">
-                                    <div class="action-single-wrap">
-                                        <button type="button"
-                                                class="btn-more-options"
-                                                onclick="toggleDropdownFixed(this, {{ $mobil->id_mobil }})"
-                                                aria-label="Menu Opsi Kendaraan {{ $mobil->merk }} {{ $mobil->model }}"
-                                                aria-haspopup="true"
-                                                aria-expanded="false"
-                                                title="Menu Opsi Kendaraan">
-                                            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="1.5"></circle><circle cx="19" cy="12" r="1.5"></circle><circle cx="5" cy="12" r="1.5"></circle></svg>
-                                        </button>
-                                    </div>
-                                </td>
-                            </tr>
-                        @endforeach
-
-                        {{-- 2. DAFTAR MODEL KATALOG TANPA UNIT FISIK (TETAP TAMPIL DI TABEL UTAMA) --}}
-                        @if(($virtualCatalogCars ?? collect())->isNotEmpty() && ($cars->currentPage() === 1 || $cars->isEmpty()))
-                            @foreach($virtualCatalogCars as $model)
-                                @php
-                                    $renderedAny = true;
-                                    $identity = app(\App\Services\CatalogVehicleIdentityService::class);
-                                    $vKey = $identity->key($model);
-                                    $vMatchingPreorderModels = $identity->activePreordersList($model, $allActivePreorders ?? null);
-                                    $vActivePo = $vMatchingPreorderModels->count();
-                                    $vPhotoUrl = $model->image ?: $resolveCarThumbnail($model);
-
-                                    $vMatchingPreorders = $vMatchingPreorderModels->map(function ($po) {
-                                        return [
-                                            'id_preorder' => $po->getKey(),
-                                            'kode_preorder' => 'PRE-' . str_pad((string) $po->getKey(), 5, '0', STR_PAD_LEFT),
-                                            'customer_name' => $po->pelanggan?->nama_lengkap ?: 'Member YZA',
-                                            'customer_code' => $po->pelanggan?->kode_pelanggan ?: 'MEM',
-                                            'customer_phone' => $po->pelanggan?->nomor_telepon ?: ($po->pelanggan?->no_hp ?: '—'),
-                                            'customer_email' => $po->pelanggan?->email ?: ($po->pelanggan?->user?->email ?: '—'),
-                                            'vehicle' => $po->nama_mobil,
-                                            'variant' => $po->varian ?: 'Standar',
-                                            'year' => (int) ($po->tahun ?: date('Y')),
-                                            'color' => $po->warna ?: 'Standar',
-                                            'status' => $po->status,
-                                            'status_label' => ucfirst(str_replace('_', ' ', $po->status)),
-                                            'created_at' => optional($po->created_at)->format('d M Y, H:i') ?: '',
-                                            'detail_url' => route('admin.preorder-mobil.detail', $po),
-                                        ];
-                                    })->values()->all();
-
-                                    $vCarDataPayload = [
-                                        'id' => $vKey,
-                                        'kode' => $vKey,
-                                        'catalog_key' => $vKey,
-                                        'merk' => $model->merk,
-                                        'model' => $model->model,
-                                        'tipe' => $model->tipe ?: '',
-                                        'tahun' => (int) $model->tahun,
-                                        'warna' => $model->warna ?: '',
-                                        'transmisi' => $model->transmisi ?: 'automatic',
-                                        'bahan_bakar' => $model->bahan_bakar ?: 'bensin',
-                                        'nomor_rangka' => '',
-                                        'nomor_mesin' => '',
-                                        'kilometer' => 0,
-                                        'harga_beli' => 0,
-                                        'harga_jual' => (float) $model->harga_jual,
-                                        'harga_jual_formatted' => 'Rp ' . number_format((float) $model->harga_jual, 0, ',', '.'),
-                                        'kondisi' => $model->kondisi ?: 'baru',
-                                        'status' => 'belum_ada_unit',
-                                        'status_label' => 'Belum Ada Unit Fisik',
-                                        'status_katalog' => 'Tayang',
-                                        'is_virtual' => true,
-                                        'is_limited_edition' => (bool) ($model->is_limited_edition ?? false),
-                                        'showcase_slug' => $model->showcase_slug ?: '',
-                                        'deskripsi' => $model->deskripsi ?: 'Model resmi katalog showroom YZA Automotive. Belum memiliki alokasi unit fisik di dealer.',
-                                        'tanggal_masuk' => '',
-                                        'thumbnail' => $vPhotoUrl,
-                                        'color_stocks' => array_values(app(\App\Services\VehicleColorStockService::class)->colors($model)),
-                                        'stock_total' => 0,
-                                        'stock_orderable' => 0,
-                                        'reserved_units' => 0,
-                                        'sold_units' => 0,
-                                        'is_sold' => false,
-                                        'photos' => [],
-                                        'colors' => [],
-                                        'angles' => [
-                                            'front' => ['label' => 'Depan (Front 3/4)', 'path' => $vPhotoUrl],
-                                            'side' => ['label' => 'Samping (Side Profile)', 'path' => null],
-                                            'rear' => ['label' => 'Belakang (Rear 3/4)', 'path' => null],
-                                            'interior' => ['label' => 'Kabin / Interior', 'path' => null],
-                                        ],
-                                        'histories' => [],
-                                        'active_orders' => [],
-                                        'active_bookings' => [],
-                                        'preorders' => $vMatchingPreorders,
-                                        'urls' => [
-                                            'store' => route('admin.mobil.store'),
-                                        ],
-                                    ];
-                                @endphp
-                                <tr id="row-virtual-{{ $model->showcase_slug }}" class="is-virtual-model-row" data-catalog-key="{{ $vKey }}">
-                                    <script type="application/json" id="car-data-{{ $vKey }}">@json($vCarDataPayload)</script>
-
-                                    {{-- Checkbox --}}
-                                    <td class="td-check" style="text-align: center;">
-                                        <input type="checkbox" class="inventory-row-check custom-checkbox" value="{{ $vKey }}">
-                                    </td>
-
-                                    {{-- Kendaraan & Kode --}}
-                                    <td class="td-car">
-                                        <div class="car-cell">
-                                            <div class="car-thumb-box is-virtual-thumb">
-                                                <img src="{{ $vPhotoUrl }}" alt="{{ $model->merk }} {{ $model->model }}" class="car-thumb-img" loading="lazy">
-                                            </div>
-                                            <div class="car-meta">
-                                                <div class="car-title-wrapper">
-                                                    <button type="button" class="car-title-btn" onclick="openVehicleActionModal('{{ $vKey }}', 'detail')" title="Lihat detail model katalog">
-                                                        <strong class="car-title">{{ $model->merk }} {{ $model->model }}</strong>
-                                                    </button>
-                                                    <span class="car-code-pill">{{ $vKey }}</span>
-                                                </div>
-                                                <span class="car-subtext">{{ $model->tipe ?: 'Showcase APM' }} &bull; {{ $model->tahun }} &bull; Warna katalog: {{ $model->warna }}</span>
-                                                <div class="car-virtual-hint">
-                                                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg>
-                                                    <span>Model Katalog &bull; Belum Ada Unit Fisik</span>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </td>
-
-                                    {{-- Harga Jual --}}
-                                    <td class="td-price">
-                                        <strong>Rp {{ number_format((float) $model->harga_jual, 0, ',', '.') }}</strong>
-                                    </td>
-
-                                    {{-- Status Katalog --}}
-                                    <td class="td-catalog-status" style="text-align: center;">
-                                        <span class="badge-catalog-status is-published" title="Model tayang di katalog website">Tayang</span>
-                                        @if($model->showcase_slug)
-                                            <span class="catalog-slug-pill" title="Showcase: {{ $model->showcase_slug }}">{{ $model->showcase_slug }}</span>
-                                        @endif
-                                    </td>
-
-                                    {{-- Stok Fisik --}}
-                                    <td class="td-stock-physical" style="text-align: center;">
-                                        <span class="text-muted">0 unit</span>
-                                    </td>
-
-                                    {{-- Stok Ready --}}
-                                    <td class="td-stock-ready" style="text-align: center;">
-                                        <span class="stock-ready-badge is-zero">0 unit</span>
-                                    </td>
-
-                                    {{-- Reservasi Aktif --}}
-                                    <td class="td-reserved" style="text-align: center;">
-                                        <span class="text-muted">0</span>
-                                    </td>
-
-                                    {{-- Pre-Order Aktif --}}
-                                    <td class="td-preorder" style="text-align: center;">
-                                        <button type="button" class="preorder-count-badge {{ $vActivePo > 0 ? 'is-active' : 'is-zero' }}" data-action="preorder" onclick="openVehicleActionModal('{{ $vKey }}', 'preorder')" title="Buka Permintaan Pre-Order">
-                                            {{ $vActivePo }} permintaan
-                                        </button>
-                                    </td>
-
-                                    {{-- Ketersediaan --}}
-                                    <td class="td-availability" style="text-align: center;">
-                                        <span class="badge-availability is-virtual" title="Model katalog resmi YZA, belum memiliki unit fisik tercatat">Belum Ada Unit Fisik</span>
-                                    </td>
-
-                                    {{-- Aksi (Sticky Column — Single Three-Dot Menu) --}}
-                                    <td class="td-action sticky-col" style="text-align: center;">
-                                        <div class="action-single-wrap">
-                                            <button type="button"
-                                                    class="btn-more-options"
-                                                    onclick="toggleDropdownFixed(this, '{{ $vKey }}')"
-                                                    aria-label="Menu Opsi Model Katalog {{ $model->merk }} {{ $model->model }}"
-                                                    aria-haspopup="true"
-                                                    aria-expanded="false"
-                                                    title="Menu Opsi Model">
-                                                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="1.5"></circle><circle cx="19" cy="12" r="1.5"></circle><circle cx="5" cy="12" r="1.5"></circle></svg>
-                                            </button>
-                                        </div>
-                                    </td>
-                                </tr>
-                            @endforeach
-                        @endif
-
-                        {{-- 3. EMPTY STATE BILA TIDAK ADA KENDARAAN SAMA SEKALI --}}
-                        @if(!$renderedAny)
-                            <tr>
-                                <td colspan="10" class="table-empty-cell">
-                                    <div class="empty-state">
-                                        <div class="empty-state-icon">
-                                            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect width="20" height="14" x="2" y="5" rx="2"></rect><line x1="2" x2="22" y1="10" y2="10"></line></svg>
-                                        </div>
-                                        <h3>Tidak Ada Mobil Ditemukan</h3>
-                                        <p>Belum ada data mobil yang sesuai dengan parameter filter atau pencarian Anda.</p>
-                                        <a href="{{ route('admin.mobil.index', ['tab' => 'inventori']) }}" class="btn-empty-reset">Reset Filter</a>
-                                    </div>
-                                </td>
-                            </tr>
-                        @endif
-                    </tbody>
-                </table>
-            </div>
-
-            {{-- Footer Pagination & Per-Page Controls --}}
-            <div class="vehicle-table-footer">
-                <div class="footer-info">
-                    Menampilkan <strong>{{ $cars->firstItem() ?: 0 }}</strong> – <strong>{{ $cars->lastItem() ?: 0 }}</strong> dari <strong>{{ $cars->total() }}</strong> unit mobil
-                </div>
-
-                <div class="footer-controls">
-                    <div class="pagination-links">
-                        {{ $cars->links('pagination::bootstrap-4') }}
-                    </div>
-
-                    {{-- Dropdown Per-Halaman --}}
-                    <form method="get" action="{{ route('admin.mobil.index') }}" class="per-page-form">
-                        <input type="hidden" name="tab" value="inventori">
-                        <input type="hidden" name="q" value="{{ $q }}">
-                        <input type="hidden" name="merk" value="{{ $merk }}">
-                        <input type="hidden" name="status" value="{{ $status }}">
-                        <input type="hidden" name="kondisi" value="{{ $kondisi }}">
-                        <input type="hidden" name="tahun_min" value="{{ $tahunMin }}">
-                        <input type="hidden" name="tahun_maks" value="{{ $tahunMaks }}">
-                        <input type="hidden" name="harga_min" value="{{ $hargaMin }}">
-                        <input type="hidden" name="harga_maks" value="{{ $hargaMaks }}">
-                        <select name="per_page" class="per-page-select" onchange="this.form.submit()">
-                            <option value="10" @selected($perPage == 10)>10 per halaman</option>
-                            <option value="25" @selected($perPage == 25)>25 per halaman</option>
-                            <option value="50" @selected($perPage == 50)>50 per halaman</option>
-                        </select>
-                    </form>
-                </div>
-            </div>
-        </div>
-
-        {{-- ========================================================== --}}
-        {{-- TAB 2: KATALOG & SHOWROOM                                  --}}
-        {{-- ========================================================== --}}
-        <div id="tab-katalog" class="vehicle-tab-pane {{ $activeTab === 'katalog' ? 'is-active' : '' }}" role="tabpanel">
-            <div class="tab-section-intro">
-                <div class="intro-text">
-                    <h2 class="intro-title">Katalog &amp; Showroom</h2>
-                    <p class="intro-desc">Model katalog dan kendaraan inventori dalam satu daftar. Model tanpa unit fisik tetap ditampilkan dengan stok 0.</p>
-                </div>
-                <div class="intro-badge">
-                    <span>Sumber: <strong>Master Katalog &amp; Inventori Terhubung</strong></span>
-                </div>
-            </div>
-
-            {{-- Grid 3-Kolom Kartu Showroom --}}
+            {{-- Grid 3-Kolom Kartu Kelola Mobil --}}
             <div class="showroom-card-grid">
                 @forelse($catalogCars as $car)
                     @php
                         $availability = $car->getAttribute('availability') ?? [];
-                        $stockOrderable = $availability['stock'] ?? 0;
+                        $colorStocks = $car->exists ? array_values(app(\App\Services\VehicleColorStockService::class)->colors($car)) : [];
+                        $colorColl = collect($colorStocks);
+                        $stockTotal = $colorColl->isNotEmpty()
+                            ? (int) $colorColl->sum('stock_total')
+                            : ($availability['stock_total'] ?? (($availability['stock'] ?? null) !== null ? $availability['stock'] : 0));
+                        $stockOrderable = $colorColl->isNotEmpty()
+                            ? (int) $colorColl->sum('stock')
+                            : ($availability['stock'] ?? 0);
+                        $reservedUnits = $colorColl->isNotEmpty()
+                            ? (int) $colorColl->sum('reserved_units')
+                            : ($availability['reserved_units'] ?? ($availability['active_reservation_count'] ?? 0));
+                        $soldUnits = $colorColl->isNotEmpty()
+                            ? (int) $colorColl->sum('sold_units')
+                            : ($availability['sold_units'] ?? 0);
                         $fotoUrl = $resolveCarThumbnail($car);
                         $cleanStatus = strtolower((string) $car->status);
                         $publicPreviewUrl = $car->showcase_slug
                             ? route('mobil.showcase', ['slug' => $car->showcase_slug, 'source' => 'showroom'])
                             : route('mobil.show', $car);
+
+                        $carDataPayload = null;
+                        if ($car->exists) {
+                            $invHistory = isset($inventories[$car->id_mobil]) ? $inventories[$car->id_mobil]->histories : collect();
+                            $activeOrdersList = $ordersByCar[$car->id_mobil] ?? collect();
+                            $activeBookingsList = $bookingsByCar[$car->id_mobil] ?? collect();
+
+                            $angles = [
+                                'front' => ['label' => 'Depan (Front 3/4)', 'path' => null],
+                                'side' => ['label' => 'Samping (Side Profile)', 'path' => null],
+                                'rear' => ['label' => 'Belakang (Rear 3/4)', 'path' => null],
+                                'interior' => ['label' => 'Kabin / Interior', 'path' => null],
+                            ];
+                            $defaultColor = $car->warnaPilihan->firstWhere('is_default', true) ?: $car->warnaPilihan->first();
+                            if ($defaultColor && $defaultColor->relationLoaded('galeri')) {
+                                foreach ($defaultColor->galeri as $galeriItem) {
+                                    if (isset($angles[$galeriItem->sudut]) && is_file(public_path($galeriItem->path))) {
+                                        $angles[$galeriItem->sudut]['path'] = asset($galeriItem->path);
+                                    }
+                                }
+                            }
+                            $slug = \Illuminate\Support\Str::slug($car->merk . ' ' . $car->model);
+                            foreach (['front', 'side', 'rear', 'interior'] as $angleKey) {
+                                if (!$angles[$angleKey]['path']) {
+                                    $candidate = "assets/images/vehicles/{$slug}/{$angleKey}.png";
+                                    if (file_exists(public_path($candidate))) {
+                                        $angles[$angleKey]['path'] = asset($candidate);
+                                    }
+                                }
+                            }
+                            if (!$angles['front']['path'] && $car->foto->isNotEmpty()) {
+                                $angles['front']['path'] = $car->foto->first()->url();
+                            }
+
+                            $identity = app(\App\Services\CatalogVehicleIdentityService::class);
+                            $matchingPreorderModels = $identity->activePreordersList($car, $allActivePreorders ?? null);
+                            $matchingPreorders = $matchingPreorderModels->map(function ($po) {
+                                return [
+                                    'id_preorder' => $po->getKey(),
+                                    'kode_preorder' => 'PRE-' . str_pad((string) $po->getKey(), 5, '0', STR_PAD_LEFT),
+                                    'customer_name' => $po->pelanggan?->nama_lengkap ?: 'Member YZA',
+                                    'customer_code' => $po->pelanggan?->kode_pelanggan ?: 'MEM',
+                                    'customer_phone' => $po->pelanggan?->nomor_telepon ?: ($po->pelanggan?->no_hp ?: '—'),
+                                    'customer_email' => $po->pelanggan?->email ?: ($po->pelanggan?->user?->email ?: '—'),
+                                    'vehicle' => $po->nama_mobil,
+                                    'variant' => $po->varian ?: 'Standar',
+                                    'year' => (int) ($po->tahun ?: date('Y')),
+                                    'color' => $po->warna ?: 'Standar',
+                                    'status' => $po->status,
+                                    'status_label' => ucfirst(str_replace('_', ' ', $po->status)),
+                                    'created_at' => optional($po->created_at)->format('d M Y, H:i') ?: '',
+                                    'detail_url' => route('admin.preorder-mobil.detail', $po),
+                                ];
+                            })->values()->all();
+
+                            $carDataPayload = [
+                                'id' => $car->id_mobil,
+                                'kode' => $car->kode_mobil,
+                                'merk' => $car->merk,
+                                'model' => $car->model,
+                                'tipe' => $car->tipe ?: '',
+                                'tahun' => (int) $car->tahun,
+                                'warna' => $car->warna ?: '',
+                                'transmisi' => $car->transmisi ?: '',
+                                'bahan_bakar' => $car->bahan_bakar ?: '',
+                                'nomor_rangka' => $car->nomor_rangka ?: '',
+                                'nomor_mesin' => $car->nomor_mesin ?: '',
+                                'kilometer' => (int) $car->kilometer,
+                                'harga_beli' => (float) $car->harga_beli,
+                                'harga_jual' => (float) $car->harga_jual,
+                                'harga_jual_formatted' => 'Rp ' . number_format((float) $car->harga_jual, 0, ',', '.'),
+                                'kondisi' => $car->kondisi,
+                                'status' => $car->status,
+                                'tampil_di' => $car->tampil_di ?: 'keduanya',
+                                'is_limited_edition' => (bool) $car->is_limited_edition,
+                                'showcase_slug' => $car->showcase_slug ?: '',
+                                'deskripsi' => $car->deskripsi ?: '',
+                                'tanggal_masuk' => optional($car->tanggal_masuk)->format('Y-m-d') ?: '',
+                                'thumbnail' => $fotoUrl,
+                                'color_stocks' => $colorStocks,
+                                'stock_total' => $stockTotal,
+                                'stock_orderable' => $stockOrderable,
+                                'reserved_units' => $reservedUnits,
+                                'sold_units' => $soldUnits,
+                                'is_sold' => $car->status === 'terjual',
+                                'photos' => $car->foto->map(fn($f) => [
+                                    'id' => $f->id_foto,
+                                    'url' => $f->url(),
+                                    'is_primary' => (bool) $f->foto_utama,
+                                    'primary_url' => route('admin.mobil.foto.primary', [$car, $f]),
+                                    'destroy_url' => route('admin.mobil.foto.destroy', [$car, $f]),
+                                ])->values(),
+                                'colors' => $car->warnaPilihan->map(fn($w) => [
+                                    'id' => $w->id_warna,
+                                    'nama' => $w->nama,
+                                    'hex' => $w->hex,
+                                    'slug' => $w->slug,
+                                    'is_default' => (bool) $w->is_default,
+                                ])->values(),
+                                'angles' => $angles,
+                                'histories' => $invHistory->map(fn($h) => [
+                                    'tanggal' => optional($h->created_at)->format('d M Y, H:i') ?: '—',
+                                    'jenis' => ucwords(str_replace('_', ' ', $h->jenis)),
+                                    'jumlah' => $h->jumlah_perubahan > 0 ? ('+' . $h->jumlah_perubahan) : $h->jumlah_perubahan,
+                                    'before_after' => $h->stock_before . ' → ' . $h->stock_after,
+                                    'catatan' => $h->catatan ?: 'Pergerakan sistem',
+                                ])->values(),
+                                'active_orders' => $activeOrdersList->map(fn($o) => [
+                                    'nomor' => $o->nomor_pesanan,
+                                    'nama' => $o->nama_pembeli,
+                                    'status' => ucwords(str_replace('_', ' ', $o->status)),
+                                ])->values(),
+                                'active_bookings' => $activeBookingsList->map(fn($b) => [
+                                    'kode' => $b->kode_booking,
+                                    'status' => ucwords(str_replace('_', ' ', $b->status)),
+                                ])->values(),
+                                'urls' => [
+                                    'show' => route('admin.mobil.show', $car),
+                                    'stock_adjust' => route('admin.mobil.stock.adjust', $car),
+                                    'update' => route('admin.mobil.update', $car),
+                                    'deactivate' => route('admin.mobil.deactivate', $car),
+                                    'photo_store' => route('admin.mobil.foto.store', $car),
+                                    'public_preview' => $publicPreviewUrl,
+                                ],
+                                'preorders' => $matchingPreorders,
+                            ];
+                        }
                     @endphp
-                    <article class="showroom-car-card">
+                    <article class="showroom-car-card"
+                             id="{{ $car->exists ? 'row-car-' . $car->id_mobil : 'catalog-car-' . app(\App\Services\CatalogVehicleIdentityService::class)->key($car) }}"
+                             data-default-thumb="{{ $fotoUrl }}"
+                             data-default-color="{{ $car->warna ?: 'Warna —' }}"
+                             data-default-stock="{{ (int) $stockOrderable }}"
+                             data-exists="{{ $car->exists ? '1' : '0' }}"
+                             data-can-purchase="{{ ($availability['can_purchase'] ?? false) ? '1' : '0' }}"
+                             data-status="{{ $cleanStatus }}">
+                        @if($car->exists && $carDataPayload)
+                            <script type="application/json" id="car-data-{{ $car->id_mobil }}">@json($carDataPayload)</script>
+                        @endif
                         <div class="showroom-media">
-                            <img src="{{ $fotoUrl }}" alt="{{ $car->merk }} {{ $car->model }}" loading="lazy">
+                            <img src="{{ $fotoUrl }}" alt="{{ $car->merk }} {{ $car->model }}" loading="lazy" data-role="card-image">
+                            <div class="showroom-media-gradient"></div>
                             <div class="showroom-media-badges">
                                 @if($car->status === 'tersedia' && $stockOrderable > 0 && ($availability['can_purchase'] ?? false))
-                                    <span class="showroom-badge is-available">Tersedia</span>
+                                    <span class="showroom-badge is-available" data-role="availability-badge">Tersedia</span>
                                 @elseif($cleanStatus === 'dibooking')
-                                    <span class="showroom-badge is-booked">Dipesan</span>
+                                    <span class="showroom-badge is-booked" data-role="availability-badge">Dipesan</span>
                                 @elseif($cleanStatus === 'terjual')
-                                    <span class="showroom-badge is-sold">Terjual</span>
+                                    <span class="showroom-badge is-sold" data-role="availability-badge">Terjual</span>
                                 @elseif(!$car->exists || $stockOrderable < 1)
-                                    <span class="showroom-badge is-inactive">{{ $car->exists ? 'Stok Habis' : 'Belum Ada Unit Fisik' }}</span>
+                                    <span class="showroom-badge is-inactive" data-role="availability-badge">{{ $car->exists ? 'Stok Habis' : 'Belum Ada Unit Fisik' }}</span>
                                 @else
-                                    <span class="showroom-badge is-inactive">{{ ucfirst($cleanStatus) }}</span>
+                                    <span class="showroom-badge is-inactive" data-role="availability-badge">{{ ucfirst($cleanStatus) }}</span>
                                 @endif
 
                                 @if($car->is_limited_edition)
@@ -892,44 +376,84 @@
                                 @endif
                                 <span class="showroom-badge is-condition">{{ ucfirst($car->kondisi) }}</span>
                             </div>
+                            <div class="showroom-media-code">{{ $car->kode_mobil }}</div>
                         </div>
 
                         <div class="showroom-body">
                             <div class="showroom-top">
-                                <div>
-                                    <h3 class="showroom-title">{{ $car->merk }} {{ $car->model }}</h3>
-                                    <p class="showroom-sub">{{ $car->kode_mobil }} &bull; {{ $car->tipe ?: 'Koleksi YZA' }}</p>
+                                <div class="showroom-title-wrap">
+                                    <h3 class="showroom-title" title="{{ $car->merk }} {{ $car->model }}">{{ $car->merk }} {{ $car->model }}</h3>
+                                    <p class="showroom-sub">{{ $car->tipe ?: 'Koleksi YZA' }} &bull; {{ $car->tahun ?: '—' }}</p>
                                 </div>
-                                @if($car->showcase_slug)
-                                    <span class="showroom-slug-pill" title="Showcase: {{ $car->showcase_slug }}">{{ $car->showcase_slug }}</span>
-                                @endif
                             </div>
 
                             <div class="showroom-price-row">
                                 <div class="showroom-price">Rp {{ number_format((float) $car->harga_jual, 0, ',', '.') }}</div>
-                                <span class="showroom-stock-pill {{ $stockOrderable > 0 ? 'is-stock' : 'is-nostock' }}">
-                                    {{ $stockOrderable > 0 ? $stockOrderable.' unit tersedia' : 'Stok Kosong' }}
-                                </span>
                             </div>
 
-                            <div class="showroom-meta-chips">
+                            @if(!empty($colorStocks))
+                                <div class="showroom-color-panel">
+                                    <div class="showroom-color-panel-head">
+                                        <span class="color-panel-label">Pilihan Warna</span>
+                                        <span class="color-panel-active" data-role="selected-color-summary">Semua ({{ (int) $stockOrderable }} unit)</span>
+                                    </div>
+                                    <div class="showroom-color-picker" aria-label="Pilih warna kendaraan">
+                                        <button type="button"
+                                                class="showroom-color-chip is-active"
+                                                data-color-mode="all"
+                                                data-color-label="Semua"
+                                                data-color-stock="{{ (int) $stockOrderable }}"
+                                                data-color-image="{{ $fotoUrl }}"
+                                                onclick="selectShowroomCardColor(this)"
+                                                title="Semua warna ({{ (int) $stockOrderable }} unit tersedia)">
+                                            <span>Semua</span>
+                                        </button>
+                                        <div class="showroom-color-dots-group">
+                                            @foreach($colorStocks as $cs)
+                                                @php
+                                                    $csImages = collect($cs['images'] ?? []);
+                                                    $csFront = $csImages->firstWhere('type', 'front')['src'] ?? ($csImages->first()['src'] ?? '');
+                                                    $csStock = (int) ($cs['stock'] ?? 0);
+                                                @endphp
+                                                <button type="button"
+                                                        class="showroom-color-dot {{ $csStock < 1 ? 'is-empty' : '' }}"
+                                                        data-color-mode="single"
+                                                        data-color-label="{{ $cs['label'] }}"
+                                                        data-color-stock="{{ $csStock }}"
+                                                        data-color-image="{{ $csFront }}"
+                                                        onclick="selectShowroomCardColor(this)"
+                                                        title="{{ $cs['label'] }} — {{ $csStock > 0 ? $csStock.' unit tersedia' : 'Stok Kosong' }}">
+                                                    <span class="dot-swatch" style="background: {{ $cs['swatch'] ?? '#cbd5e1' }};"></span>
+                                                </button>
+                                            @endforeach
+                                        </div>
+                                    </div>
+                                </div>
+                            @endif
+
+                            <div class="showroom-spec-strip">
                                 <span>{{ $car->tahun ?: 'Tahun —' }}</span>
-                                <span>{{ $car->warna ?: 'Warna —' }}</span>
+                                <span class="spec-sep">&bull;</span>
                                 <span>{{ ucfirst($car->transmisi ?: 'Otomatis') }}</span>
+                                <span class="spec-sep">&bull;</span>
                                 <span>{{ ucfirst($car->bahan_bakar ?: 'Bensin') }}</span>
+                                @if(empty($colorStocks))
+                                    <span class="spec-sep">&bull;</span>
+                                    <span data-role="color-chip">{{ $car->warna ?: 'Warna —' }}</span>
+                                @endif
                             </div>
 
                             @if($car->deskripsi)
-                                <p class="showroom-description">{{ \Illuminate\Support\Str::limit($car->deskripsi, 85) }}</p>
+                                <p class="showroom-description">{{ $car->deskripsi }}</p>
                             @endif
 
                             <div class="showroom-actions-row">
                                 @if(!$car->exists)
-                                <button type="button" class="btn-modal-primary" onclick="openVehicleActionModal('{{ app(\App\Services\CatalogVehicleIdentityService::class)->key($car) }}', 'add_unit')">Kelola Model &amp; Stok</button>
+                                <button type="button" class="btn-showroom-detail" onclick="openVehicleActionModal('{{ app(\App\Services\CatalogVehicleIdentityService::class)->key($car) }}', 'add_unit')">Kelola Model &amp; Stok</button>
                                 @else
-                                <button type="button" class="btn-showroom-detail" onclick="openVehicleActionModal({{ $car->id_mobil }}, 'detail')">Lihat Detail</button>
-                                <button type="button" class="btn-showroom-detail" onclick="openVehicleActionModal({{ $car->id_mobil }}, 'stock')">Kelola Stok</button>
-                                @if(!$isOwner)<button type="button" class="btn-showroom-edit" onclick="openVehicleActionModal({{ $car->id_mobil }}, 'edit')">Edit</button>@endif
+                                @if(!$isOwner)<button type="button" class="btn-showroom-detail" onclick="openVehicleActionModal({{ $car->id_mobil }}, 'add_unit', this.closest('.showroom-car-card')?.dataset.selectedColor || null)">Kelola Stok</button>@endif
+                                <button type="button" class="btn-showroom-edit" onclick="openVehicleActionModal({{ $car->id_mobil }}, 'detail', this.closest('.showroom-car-card')?.dataset.selectedColor || null)">Detail</button>
+                                @if(!$isOwner)<button type="button" class="btn-showroom-edit" onclick="openVehicleActionModal({{ $car->id_mobil }}, 'edit', this.closest('.showroom-car-card')?.dataset.selectedColor || null)">Edit</button>@endif
                                 @endif
                                 <a class="btn-showroom-preview" href="{{ $publicPreviewUrl }}" target="_blank" rel="noopener" title="Lihat preview halaman publik website">
                                     <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path><polyline points="15 3 21 3 21 9"></polyline><line x1="10" y1="14" x2="21" y2="3"></line></svg>
@@ -947,176 +471,7 @@
         </div>
 
         {{-- ========================================================== --}}
-        {{-- TAB 3: FOTO & WARNA                                        --}}
-        {{-- ========================================================== --}}
-        <div id="tab-foto" class="vehicle-tab-pane {{ $activeTab === 'foto' ? 'is-active' : '' }}" role="tabpanel">
-            <div class="tab-section-intro">
-                <div class="intro-text">
-                    <h2 class="intro-title">Foto &amp; Master Warna Kendaraan</h2>
-                    <p class="intro-desc">Kelola galeri visual multi-sudut (Depan, Samping, Belakang, Interior) dan daftar warna kendaraan. Membedakan warna katalog showroom dengan unit fisik yang tersedia di inventori.</p>
-                </div>
-            </div>
-
-            <div class="gallery-management-container">
-                @forelse($cars as $car)
-                    @php
-                        $warnaPilihan = $car->warnaPilihan ?? collect();
-                        $uploadedPhotos = $car->foto ?? collect();
-                        $slug = \Illuminate\Support\Str::slug($car->merk . ' ' . $car->model);
-
-                        $angles = [
-                            'front' => ['label' => 'Depan (Front 3/4)', 'path' => null],
-                            'side' => ['label' => 'Samping (Side Profile)', 'path' => null],
-                            'rear' => ['label' => 'Belakang (Rear 3/4)', 'path' => null],
-                            'interior' => ['label' => 'Kabin / Interior', 'path' => null],
-                        ];
-                        $defaultColor = $warnaPilihan->firstWhere('is_default', true) ?: $warnaPilihan->first();
-                        if ($defaultColor && $defaultColor->relationLoaded('galeri')) {
-                            foreach ($defaultColor->galeri as $galeriItem) {
-                                if (isset($angles[$galeriItem->sudut]) && is_file(public_path($galeriItem->path))) {
-                                    $angles[$galeriItem->sudut]['path'] = asset($galeriItem->path);
-                                }
-                            }
-                        }
-                        foreach (['front', 'side', 'rear', 'interior'] as $angleKey) {
-                            if (!$angles[$angleKey]['path']) {
-                                $candidate = "assets/images/vehicles/{$slug}/{$angleKey}.png";
-                                if (file_exists(public_path($candidate))) {
-                                    $angles[$angleKey]['path'] = asset($candidate);
-                                }
-                            }
-                        }
-                        if (!$angles['front']['path'] && $uploadedPhotos->isNotEmpty()) {
-                            $angles['front']['path'] = $uploadedPhotos->first()->url();
-                        }
-                    @endphp
-
-                    <div class="car-gallery-card" id="car-gallery-{{ $car->id_mobil }}">
-                        <div class="car-gallery-header">
-                            <div class="gallery-car-meta">
-                                <span class="gallery-car-code">{{ $car->kode_mobil }}</span>
-                                <h3 class="gallery-car-name">{{ $car->merk }} {{ $car->model }} <small>({{ $car->tahun }})</small></h3>
-                                <div class="gallery-color-distinction">
-                                    <span class="badge-physical-color" title="Warna unit fisik di inventori">
-                                        <strong>Warna Fisik Unit:</strong> {{ $car->warna ?: 'Tidak ditentukan' }}
-                                    </span>
-                                    <span class="badge-showroom-status">
-                                        Showroom: {{ $car->showcase_slug ?: 'Standar' }}
-                                    </span>
-                                </div>
-                            </div>
-                            <div class="gallery-car-actions">
-                                <button type="button" class="btn-sm-ghost" onclick="openVehicleActionModal({{ $car->id_mobil }}, 'detail')">Buka Detail</button>
-                                <button type="button" class="btn-sm-ghost" onclick="openVehicleActionModal({{ $car->id_mobil }}, 'gallery')">Kelola Galeri Modal</button>
-                            </div>
-                        </div>
-
-                        {{-- Multi-Sudut Visual Grid --}}
-                        <div class="visual-angles-grid">
-                            @foreach($angles as $angleKey => $angleData)
-                                <div class="angle-card">
-                                    <div class="angle-view-box">
-                                        @if($angleData['path'])
-                                            <img src="{{ $angleData['path'] }}" alt="{{ $angleData['label'] }} - {{ $car->model }}" loading="lazy">
-                                        @else
-                                            <div class="angle-placeholder">
-                                                <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#94a3b8" stroke-width="1.6"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>
-                                                <span>{{ $angleData['label'] }} belum diunggah</span>
-                                            </div>
-                                        @endif
-                                    </div>
-                                    <div class="angle-caption">
-                                        <span>{{ $angleData['label'] }}</span>
-                                        @if($angleData['path'])
-                                            <span class="badge-dot is-active" title="Aset tersedia"></span>
-                                        @else
-                                            <span class="badge-dot is-inactive" title="Aset kosong"></span>
-                                        @endif
-                                    </div>
-                                </div>
-                            @endforeach
-                        </div>
-
-                        {{-- Master Warna Pilihan Showroom vs Stok Fisik --}}
-                        <div class="car-colors-section">
-                            <h4 class="section-micro-title">Pilihan Warna Katalog Showroom &amp; Master Konfigurasi</h4>
-                            <div class="color-swatches-list">
-                                @forelse($warnaPilihan as $warnaItem)
-                                    <div class="color-chip {{ $warnaItem->is_default ? 'is-default' : '' }}">
-                                        <span class="color-circle" style="background-color: {{ $warnaItem->hex ?: '#1e293b' }};"></span>
-                                        <div class="color-chip-info">
-                                            <strong>{{ $warnaItem->nama }}</strong>
-                                            <small>{{ $warnaItem->hex ?: 'Default Hex' }}</small>
-                                        </div>
-                                        @if($warnaItem->is_default)
-                                            <span class="chip-tag-default">Default</span>
-                                        @endif
-                                    </div>
-                                @empty
-                                    <div class="color-empty-notice">
-                                        <span>Menggunakan konfigurasi warna fisik tunggal: <strong>{{ $car->warna ?: 'Koleksi YZA' }}</strong>. Warna katalog tambahan dapat ditambahkan melalui form edit mobil.</span>
-                                    </div>
-                                @endforelse
-                            </div>
-                        </div>
-
-                        {{-- Foto Uploaded & Pengelolaan Aset --}}
-                        <div class="car-uploaded-photos-section">
-                            <div class="uploaded-photos-header">
-                                <h4 class="section-micro-title">Foto Terunggah ({{ $uploadedPhotos->count() }})</h4>
-                                @if(!$isOwner)
-                                    <form action="{{ route('admin.mobil.foto.store', $car) }}" method="post" enctype="multipart/form-data" class="quick-upload-form">
-                                        @csrf
-                                        <label class="btn-upload-file">
-                                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="17 8 12 3 7 8"></polyline><line x1="12" y1="3" x2="12" y2="15"></line></svg>
-                                            <span>Pilih Foto</span>
-                                            <input type="file" name="foto" accept="image/*" required onchange="this.form.submit()" hidden>
-                                        </label>
-                                    </form>
-                                @endif
-                            </div>
-
-                            <div class="uploaded-thumbnails-grid">
-                                @forelse($uploadedPhotos as $foto)
-                                    <div class="uploaded-photo-card {{ $foto->foto_utama ? 'is-primary' : '' }}">
-                                        <img src="{{ $foto->url() }}" alt="Foto mobil {{ $car->model }}" loading="lazy">
-                                        <div class="uploaded-photo-overlay">
-                                            @if($foto->foto_utama)
-                                                <span class="badge-primary-photo">Utama</span>
-                                            @elseif(!$isOwner)
-                                                <form action="{{ route('admin.mobil.foto.primary', [$car, $foto]) }}" method="post">
-                                                    @csrf
-                                                    @method('PATCH')
-                                                    <button type="submit" class="btn-action-photo set-primary" title="Jadikan Foto Utama">Utama</button>
-                                                </form>
-                                            @endif
-                                            @if(!$isOwner)
-                                                <form action="{{ route('admin.mobil.foto.destroy', [$car, $foto]) }}" method="post" onsubmit="return confirm('Hapus foto ini?')">
-                                                    @csrf
-                                                    @method('DELETE')
-                                                    <button type="submit" class="btn-action-photo delete" title="Hapus Foto">
-                                                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
-                                                    </button>
-                                                </form>
-                                            @endif
-                                        </div>
-                                    </div>
-                                @empty
-                                    <div class="no-uploaded-photos">
-                                        <span>Belum ada foto yang diunggah untuk unit ini. Gunakan tombol "Pilih Foto" untuk menambahkan.</span>
-                                    </div>
-                                @endforelse
-                            </div>
-                        </div>
-                    </div>
-                @empty
-                    <div class="catalog-empty-full">
-                        <p>Belum ada data mobil untuk dikelola fotonya.</p>
-                    </div>
-                @endforelse
-            </div>
-        </div>
-    </main>
+            </main>
 </div>
 
 {{-- ========================================================================= --}}
@@ -1192,6 +547,9 @@
 
 @push('styles')
 <style>
+.admin-content:has(> .admin-vehicle-management-page) > .admin-page-heading {
+    display: none !important;
+}
 /* ========================================================
    YZA AUTOMOTIVE — MANAJEMEN MOBIL & SHOWROOM STYLES
    Clean White Background, Navy Accents, YZA Red Highlights
@@ -1309,28 +667,27 @@
     color: #065f46;
 }
 
-/* 6 KPI Cards */
+/* 4 Warehouse KPI Cards */
 .vehicle-kpi-grid {
     display: grid;
-    grid-template-columns: repeat(6, 1fr);
-    gap: 14px;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 16px;
 }
 .vehicle-kpi-card {
     display: flex;
     align-items: center;
     gap: 14px;
-    padding: 16px 18px;
-    border-radius: 12px;
+    padding: 18px 20px;
+    border-radius: 14px;
     background: #ffffff;
     border: 1px solid #e2e8f0;
-    text-decoration: none;
-    box-shadow: 0 2px 6px rgba(15, 23, 42, 0.04);
-    transition: transform 0.15s ease, box-shadow 0.15s ease, border-color 0.15s ease;
+    box-shadow: 0 2px 8px rgba(15, 23, 42, 0.04);
+    cursor: default;
 }
 .vehicle-kpi-card:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 6px 16px rgba(15, 23, 42, 0.08);
-    border-color: #cbd5e1;
+    transform: none;
+    box-shadow: 0 2px 8px rgba(15, 23, 42, 0.04);
+    border-color: #e2e8f0;
 }
 .kpi-icon-box {
     display: flex;
@@ -2082,22 +1439,23 @@
     padding: 24px;
 }
 .showroom-car-card {
-    border-radius: 14px;
+    border-radius: 16px;
     border: 1px solid #e2e8f0;
     background: #ffffff;
-    box-shadow: 0 4px 14px rgba(15, 23, 42, 0.05);
+    box-shadow: 0 2px 10px rgba(15, 23, 42, 0.04);
     overflow: hidden;
     display: flex;
     flex-direction: column;
-    transition: transform 0.15s ease, box-shadow 0.15s ease;
+    transition: transform 0.18s ease, box-shadow 0.18s ease, border-color 0.18s ease;
 }
 .showroom-car-card:hover {
     transform: translateY(-3px);
-    box-shadow: 0 10px 24px rgba(15, 23, 42, 0.09);
+    border-color: #cbd5e1;
+    box-shadow: 0 12px 28px rgba(15, 23, 42, 0.08);
 }
 .showroom-media {
     position: relative;
-    height: 190px;
+    height: 196px;
     background: #0d1420;
     overflow: hidden;
 }
@@ -2105,10 +1463,17 @@
     width: 100%;
     height: 100%;
     object-fit: cover;
-    transition: transform 0.25s ease;
+    transition: transform 0.3s ease;
 }
 .showroom-car-card:hover .showroom-media img {
     transform: scale(1.04);
+}
+.showroom-media-gradient {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(to top, rgba(15, 23, 42, 0.65) 0%, rgba(15, 23, 42, 0) 48%);
+    pointer-events: none;
+    z-index: 1;
 }
 .showroom-media-badges {
     position: absolute;
@@ -2119,13 +1484,27 @@
     gap: 6px;
     z-index: 2;
 }
+.showroom-media-code {
+    position: absolute;
+    bottom: 10px;
+    left: 12px;
+    z-index: 2;
+    padding: 3px 8px;
+    border-radius: 6px;
+    background: rgba(15, 23, 42, 0.72);
+    backdrop-filter: blur(4px);
+    color: #e2e8f0;
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.03em;
+}
 .showroom-badge {
     padding: 4px 8px;
     border-radius: 6px;
     font-size: 10px;
     font-weight: 800;
     text-transform: uppercase;
-    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.28);
 }
 .showroom-badge.is-available { background: #10b981; color: #ffffff; }
 .showroom-badge.is-booked { background: #f59e0b; color: #ffffff; }
@@ -2135,7 +1514,7 @@
 .showroom-badge.is-condition { background: rgba(15, 23, 42, 0.85); color: #ffffff; }
 
 .showroom-body {
-    padding: 18px;
+    padding: 16px 18px 18px;
     display: flex;
     flex-direction: column;
     flex: 1;
@@ -2145,73 +1524,191 @@
     justify-content: space-between;
     align-items: flex-start;
     gap: 10px;
-    margin-bottom: 8px;
+    margin-bottom: 10px;
+}
+.showroom-title-wrap {
+    min-width: 0;
+    flex: 1;
 }
 .showroom-title {
     margin: 0;
     font-size: 16px;
     font-weight: 800;
     color: #0f172a;
+    line-height: 1.3;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 .showroom-sub {
-    margin: 3px 0 0;
+    margin: 2px 0 0;
     font-size: 11px;
+    font-weight: 500;
     color: #64748b;
-}
-.showroom-slug-pill {
-    padding: 3px 8px;
-    border-radius: 6px;
-    background: #f1f5f9;
-    color: #475569;
-    font-size: 10px;
-    font-weight: 700;
-    white-space: nowrap;
 }
 .showroom-price-row {
     display: flex;
     align-items: center;
     justify-content: space-between;
     gap: 10px;
-    margin: 8px 0 12px;
+    margin: 0 0 12px;
 }
 .showroom-price {
-    font-size: 18px;
+    font-size: 17px;
     font-weight: 800;
     color: #ef233c;
+    font-variant-numeric: tabular-nums;
 }
 .showroom-stock-pill {
-    padding: 3px 8px;
-    border-radius: 6px;
-    font-size: 10px;
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 4px 9px;
+    border-radius: 999px;
+    font-size: 11px;
     font-weight: 700;
+    white-space: nowrap;
+}
+.showroom-stock-pill .stock-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: currentColor;
 }
 .showroom-stock-pill.is-stock { background: #ecfdf5; color: #047857; }
-.showroom-stock-pill.is-nostock { background: #fee2e2; color: #b91c1c; }
+.showroom-stock-pill.is-nostock { background: #fef2f2; color: #b91c1c; }
 
-.showroom-meta-chips {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 6px;
-    margin-bottom: 12px;
-}
-.showroom-meta-chips span {
-    padding: 4px 8px;
-    border-radius: 6px;
+.showroom-color-panel {
     background: #f8fafc;
     border: 1px solid #e2e8f0;
+    border-radius: 10px;
+    padding: 10px 12px;
+    margin: 0 0 12px;
+}
+.showroom-color-panel-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    margin-bottom: 8px;
+}
+.color-panel-label {
     font-size: 11px;
+    font-weight: 600;
+    color: #64748b;
+}
+.color-panel-active {
+    font-size: 11px;
+    font-weight: 700;
+    color: #0f172a;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+.showroom-color-picker {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    margin: 0;
+}
+.showroom-color-dots-group {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 6px;
+}
+.showroom-color-chip {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    height: 24px;
+    padding: 0 10px;
+    border-radius: 6px;
+    border: 1px solid #cbd5e1;
+    background: #ffffff;
     color: #475569;
+    font-size: 10px;
+    font-weight: 700;
+    white-space: nowrap;
+    flex-shrink: 0;
+    cursor: pointer;
+    transition: all 0.15s ease;
+}
+.showroom-color-chip:hover {
+    border-color: #94a3b8;
+    color: #0f172a;
+}
+.showroom-color-chip.is-active {
+    background: #0f172a;
+    border-color: #0f172a;
+    color: #ffffff;
+}
+.showroom-color-dot {
+    width: 24px;
+    height: 24px;
+    padding: 2px;
+    border-radius: 999px;
+    border: 1.5px solid #cbd5e1;
+    background: #ffffff;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    position: relative;
+    transition: transform 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease;
+}
+.showroom-color-dot:hover {
+    transform: scale(1.1);
+    border-color: #64748b;
+}
+.showroom-color-dot.is-active {
+    border-color: #ef233c;
+    box-shadow: 0 0 0 2px rgba(239, 35, 60, 0.2);
+    transform: scale(1.06);
+}
+.showroom-color-dot.is-empty .dot-swatch {
+    opacity: 0.35;
+}
+.showroom-color-dot .dot-swatch {
+    width: 100%;
+    height: 100%;
+    border-radius: 999px;
+    border: 1px solid rgba(15, 23, 42, 0.14);
+    display: block;
+}
+
+.showroom-spec-strip {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 6px;
+    font-size: 11px;
+    font-weight: 600;
+    color: #475569;
+    margin-bottom: 10px;
+}
+.showroom-spec-strip .spec-sep {
+    color: #cbd5e1;
 }
 .showroom-description {
     font-size: 12px;
     color: #64748b;
     line-height: 1.45;
-    margin: 0 0 16px;
+    margin: 0 0 14px;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
 }
 .showroom-actions-row {
     display: flex;
+    flex-wrap: wrap;
     gap: 8px;
     margin-top: auto;
+    padding-top: 12px;
+    border-top: 1px solid #f1f5f9;
 }
 .btn-showroom-detail, .btn-showroom-edit, .btn-showroom-preview {
     display: inline-flex;
@@ -2224,6 +1721,7 @@
     font-weight: 700;
     text-decoration: none;
     text-align: center;
+    white-space: nowrap;
     cursor: pointer;
     border: 0;
 }
@@ -3186,7 +2684,7 @@ body.modal-open {
 
 /* Responsive */
 @media (max-width: 1280px) {
-    .vehicle-kpi-grid { grid-template-columns: repeat(3, 1fr); }
+    .vehicle-kpi-grid { grid-template-columns: repeat(2, 1fr); }
     .showroom-card-grid { grid-template-columns: repeat(2, 1fr); }
     .visual-angles-grid { grid-template-columns: repeat(2, 1fr); }
 }
@@ -3203,6 +2701,228 @@ body.modal-open {
     .vehicle-kpi-grid { grid-template-columns: 1fr; }
     .vehicle-tabs-nav { flex-wrap: wrap; }
     .vehicle-modal-dialog { max-height: 94dvh; border-radius: 12px; }
+}
+/* ========================================================
+   MODAL TAMBAH MOBIL BARU (5-STEP STRUCTURED UI)
+   ======================================================== */
+.create-car-sections {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+.create-car-section {
+    border: 1px solid #e2e8f0;
+    border-radius: 12px;
+    padding: 16px;
+    background: #ffffff;
+}
+.create-car-section-head {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    margin-bottom: 14px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid #f1f5f9;
+}
+.create-car-section-head .section-step {
+    width: 24px;
+    height: 24px;
+    border-radius: 8px;
+    background: #ef233c;
+    color: #ffffff;
+    font-size: 12px;
+    font-weight: 800;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+.create-car-section-head h4 {
+    margin: 0;
+    font-size: 14px;
+    font-weight: 800;
+    color: #0f172a;
+}
+.create-car-section-head p {
+    margin: 2px 0 0;
+    font-size: 11.5px;
+    color: #64748b;
+}
+.rgb-picker-box {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 6px 10px;
+    border: 1px solid #cbd5e1;
+    border-radius: 8px;
+    background: #f8fafc;
+    min-height: 42px;
+    flex-wrap: wrap;
+}
+.rgb-picker-box input[type="color"] {
+    width: 34px;
+    height: 30px;
+    border: 0;
+    padding: 0;
+    background: transparent;
+    cursor: pointer;
+    border-radius: 6px;
+}
+.rgb-picker-meta {
+    display: flex;
+    flex-direction: column;
+    line-height: 1.25;
+}
+.rgb-picker-meta strong {
+    font-size: 11.5px;
+    color: #0f172a;
+    font-family: monospace;
+}
+.rgb-picker-meta span {
+    font-size: 10px;
+    color: #64748b;
+    font-family: monospace;
+}
+.rgb-quick-swatches {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    margin-left: auto;
+}
+.rgb-quick-dot {
+    width: 18px;
+    height: 18px;
+    border-radius: 999px;
+    border: 1.5px solid rgba(15, 23, 42, 0.2);
+    cursor: pointer;
+    padding: 0;
+    transition: transform 0.15s ease;
+}
+.rgb-quick-dot:hover {
+    transform: scale(1.15);
+}
+.stock-stepper-wrap {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+.stock-stepper-btn {
+    width: 36px;
+    height: 38px;
+    border-radius: 8px;
+    border: 1px solid #cbd5e1;
+    background: #f8fafc;
+    color: #0f172a;
+    font-size: 16px;
+    font-weight: 800;
+    cursor: pointer;
+}
+.stock-stepper-btn:hover {
+    background: #e2e8f0;
+}
+.stock-stepper-input {
+    width: 90px !important;
+    text-align: center;
+    font-weight: 800;
+}
+.stock-stepper-hint {
+    font-size: 11.5px;
+    color: #64748b;
+}
+.angle-upload-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 10px;
+}
+.angle-upload-card {
+    border: 1.5px dashed #cbd5e1;
+    border-radius: 10px;
+    background: #f8fafc;
+    padding: 8px;
+    cursor: pointer;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    transition: border-color 0.15s ease, background 0.15s ease;
+}
+.angle-upload-card:hover {
+    border-color: #ef233c;
+    background: #fff5f6;
+}
+.angle-file-input {
+    display: none;
+}
+.angle-upload-preview {
+    height: 82px;
+    border-radius: 7px;
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+    color: #94a3b8;
+    font-size: 11px;
+    font-weight: 600;
+    overflow: hidden;
+}
+.angle-upload-preview.has-image img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+.angle-upload-label {
+    font-size: 11px;
+    font-weight: 700;
+    color: #334155;
+    text-align: center;
+}
+.visibility-option-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 10px;
+}
+.visibility-option-card {
+    position: relative;
+    cursor: pointer;
+    display: block;
+}
+.visibility-option-card input[type="radio"] {
+    position: absolute;
+    opacity: 0;
+    pointer-events: none;
+}
+.visibility-card-body {
+    border: 1.5px solid #e2e8f0;
+    border-radius: 10px;
+    padding: 12px;
+    background: #ffffff;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    height: 100%;
+    transition: all 0.15s ease;
+}
+.visibility-card-body strong {
+    font-size: 12.5px;
+    font-weight: 800;
+    color: #0f172a;
+}
+.visibility-card-body span {
+    font-size: 11px;
+    color: #64748b;
+    line-height: 1.4;
+}
+.visibility-option-card input[type="radio"]:checked + .visibility-card-body {
+    border-color: #ef233c;
+    background: #fff5f6;
+    box-shadow: 0 0 0 2px rgba(239, 35, 60, 0.14);
+}
+@media (max-width: 720px) {
+    .angle-upload-grid { grid-template-columns: repeat(2, 1fr); }
+    .visibility-option-grid { grid-template-columns: 1fr; }
 }
 </style>
 @endpush
@@ -3559,6 +3279,61 @@ function updateLocalCarPayload(carId, updatedData) {
     }
 }
 
+function selectShowroomCardColor(btn) {
+    const card = btn.closest('.showroom-car-card');
+    if (!card) return;
+
+    card.querySelectorAll('.showroom-color-chip, .showroom-color-dot').forEach(el => {
+        el.classList.remove('is-active');
+    });
+    btn.classList.add('is-active');
+
+    const mode = btn.dataset.colorMode || 'all';
+    const label = btn.dataset.colorLabel || card.dataset.defaultColor || 'Warna —';
+    const stock = parseInt(btn.dataset.colorStock || '0', 10) || 0;
+    const colorImage = btn.dataset.colorImage || '';
+    const defaultThumb = card.dataset.defaultThumb || '';
+
+    card.dataset.selectedColor = mode === 'single' ? label : '';
+
+    const colorSummary = card.querySelector('[data-role="selected-color-summary"]');
+    if (colorSummary) {
+        colorSummary.textContent = mode === 'single'
+            ? `${label} (${stock} unit)`
+            : `Semua (${stock} unit)`;
+    }
+
+    const colorChip = card.querySelector('[data-role="color-chip"]');
+    if (colorChip) {
+        colorChip.textContent = mode === 'single' ? label : (card.dataset.defaultColor || 'Warna —');
+    }
+
+    const imgEl = card.querySelector('[data-role="card-image"]');
+    if (imgEl) {
+        const nextSrc = mode === 'single' ? (colorImage || defaultThumb) : defaultThumb;
+        if (nextSrc && imgEl.getAttribute('src') !== nextSrc) {
+            imgEl.setAttribute('src', nextSrc);
+        }
+    }
+
+    const badge = card.querySelector('[data-role="availability-badge"]');
+    const status = (card.dataset.status || '').toLowerCase();
+    const exists = card.dataset.exists === '1';
+    if (badge && status !== 'dibooking' && status !== 'terjual') {
+        badge.classList.remove('is-available', 'is-inactive');
+        if (status === 'tersedia' && stock > 0) {
+            badge.classList.add('is-available');
+            badge.textContent = 'Tersedia';
+        } else if (!exists || stock < 1) {
+            badge.classList.add('is-inactive');
+            badge.textContent = exists ? 'Stok Habis' : 'Belum Ada Unit Fisik';
+        } else {
+            badge.classList.add('is-inactive');
+            badge.textContent = status ? status.charAt(0).toUpperCase() + status.slice(1) : 'Stok Habis';
+        }
+    }
+}
+
 async function openVehicleActionModal(carId, action, preselectedColor = null) {
     activeModalTriggerElement = document.activeElement;
     let car = null;
@@ -3633,13 +3408,13 @@ async function openVehicleActionModal(carId, action, preselectedColor = null) {
     switch (action) {
         case 'detail':
         case 'specs':
-            renderDetailAndSpecsModal(car, action, { title, kicker, meta, navTabs, body, footer, dialog });
+            renderDetailAndSpecsModal(car, action, { title, kicker, meta, navTabs, body, footer, dialog }, preselectedColor);
             break;
         case 'stock':
             renderStockManagementModal(car, { title, kicker, meta, navTabs, body, footer, dialog });
             break;
         case 'edit':
-            renderEditVehicleModal(car, { title, kicker, meta, body, footer, dialog });
+            renderEditVehicleModal(car, { title, kicker, meta, body, footer, dialog }, preselectedColor);
             break;
         case 'add_unit':
             renderAddUnitModal(car, { title, kicker, meta, body, footer, dialog }, preselectedColor);
@@ -3704,7 +3479,32 @@ document.getElementById('vehicleModalBackdrop')?.addEventListener('click', funct
 // -------------------------------------------------------------
 // 1 & 4. DETAIL & SPESIFIKASI MODAL (PHASE 3 & 6)
 // -------------------------------------------------------------
-function renderDetailAndSpecsModal(car, initialTab, dom) {
+function resolveCarColorContext(car, preselectedColor) {
+    if (!preselectedColor) return null;
+    const needle = String(preselectedColor).trim().toLowerCase();
+    return (car.color_stocks || []).find(c =>
+        String(c.label || '').trim().toLowerCase() === needle ||
+        String(c.slug || '').trim().toLowerCase() === needle
+    ) || null;
+}
+
+function renderDetailAndSpecsModal(car, initialTab, dom, preselectedColor = null) {
+    const selectedColorObj = resolveCarColorContext(car, preselectedColor);
+    const displayColor = selectedColorObj ? selectedColorObj.label : (preselectedColor || car.warna || 'Standar');
+    const selectedColorImages = (selectedColorObj && Array.isArray(selectedColorObj.images)) ? selectedColorObj.images : [];
+    const selectedFrontImg = (selectedColorImages.find(i => i.type === 'front') || selectedColorImages[0] || {}).src || '';
+    const displayThumb = selectedFrontImg || car.thumbnail;
+    const displayStockTotal = selectedColorObj ? Number(selectedColorObj.stock_total ?? 0) : car.stock_total;
+    const displayStockOrderable = selectedColorObj ? Number(selectedColorObj.stock ?? 0) : car.stock_orderable;
+    const displayReservedUnits = selectedColorObj ? Number(selectedColorObj.reserved_units ?? 0) : car.reserved_units;
+    const displaySoldUnits = selectedColorObj ? Number(selectedColorObj.sold_units ?? 0) : car.sold_units;
+    const displayStatus = selectedColorObj
+        ? (displayStockOrderable > 0 ? 'tersedia' : 'nonaktif')
+        : car.status;
+    const displayStatusLabel = selectedColorObj
+        ? (displayStockOrderable > 0 ? 'TERSEDIA' : 'STOK HABIS')
+        : (car.status_label ? car.status_label.toUpperCase() : car.status.toUpperCase());
+
     dom.title.textContent = 'Detail & Spesifikasi Kendaraan';
     dom.navTabs.removeAttribute('hidden');
     dom.navTabs.innerHTML = `
@@ -3726,12 +3526,12 @@ function renderDetailAndSpecsModal(car, initialTab, dom) {
             <div class="modal-grid-2col" style="margin-bottom:16px;">
                 <div style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:12px; padding:14px; display:flex; flex-direction:column; gap:12px;">
                     <div style="width:100%; height:180px; border-radius:10px; overflow:hidden; background:#0f172a;">
-                        <img src="${car.thumbnail}" alt="${car.merk} ${car.model}" style="width:100%; height:100%; object-fit:cover;">
+                        <img src="${displayThumb}" alt="${car.merk} ${car.model}" style="width:100%; height:100%; object-fit:cover;">
                     </div>
                     <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px;">
                         <div class="modal-hero-price" style="font-size:18px;">${car.harga_jual_formatted}</div>
                         <div style="display:flex; gap:6px;">
-                            <span class="showroom-badge is-${car.status}">${car.status_label ? car.status_label.toUpperCase() : car.status.toUpperCase()}</span>
+                            <span class="showroom-badge is-${displayStatus}">${displayStatusLabel}</span>
                             <span class="showroom-badge is-condition">${car.kondisi.toUpperCase()}</span>
                         </div>
                     </div>
@@ -3741,7 +3541,7 @@ function renderDetailAndSpecsModal(car, initialTab, dom) {
                     <div class="modal-section-box" style="margin-bottom:0;">
                         <h4 style="margin:0 0 8px; font-size:16px; font-weight:800; color:#0f172a;">${car.merk} ${car.model}</h4>
                         <div style="color:#64748b; font-size:12px; margin-bottom:10px;">
-                            Varian: <strong>${car.tipe || 'Varian Standar'}</strong> &bull; Tahun: <strong>${car.tahun}</strong> &bull; Warna: <strong>${car.warna}</strong>
+                            Varian: <strong>${car.tipe || 'Varian Standar'}</strong> &bull; Tahun: <strong>${car.tahun}</strong> &bull; Warna: <strong>${colorStockEscape(displayColor)}</strong>
                         </div>
                         <div style="display:flex; gap:8px; align-items:center; flex-wrap:wrap;">
                             <span class="car-code-pill" style="font-size:11px;">KODE: ${car.kode}</span>
@@ -3802,7 +3602,7 @@ function renderDetailAndSpecsModal(car, initialTab, dom) {
                 </div>
                 <div class="modal-spec-row">
                     <dt>Warna Fisik Unit</dt>
-                    <dd>${car.warna || 'Belum dilengkapi'}</dd>
+                    <dd>${colorStockEscape(displayColor) || 'Belum dilengkapi'}</dd>
                 </div>
             </dl>
 
@@ -3832,25 +3632,25 @@ function renderDetailAndSpecsModal(car, initialTab, dom) {
             <div style="display:grid; grid-template-columns:repeat(4,1fr); gap:12px; margin-bottom:16px;">
                 <div style="padding:14px; background:#f8fafc; border:1px solid #e2e8f0; border-radius:10px; text-align:center;">
                     <div style="font-size:11px; color:#64748b; font-weight:700;">TOTAL STOK</div>
-                    <div style="font-size:22px; font-weight:800; color:#0f172a;">${car.stock_total}</div>
+                    <div style="font-size:22px; font-weight:800; color:#0f172a;">${displayStockTotal}</div>
                 </div>
                 <div style="padding:14px; background:#ecfdf5; border:1px solid #a7f3d0; border-radius:10px; text-align:center;">
                     <div style="font-size:11px; color:#047857; font-weight:700;">DAPAT DIBELI</div>
-                    <div style="font-size:22px; font-weight:800; color:#047857;">${car.stock_orderable}</div>
+                    <div style="font-size:22px; font-weight:800; color:#047857;">${displayStockOrderable}</div>
                 </div>
                 <div style="padding:14px; background:#fef3c7; border:1px solid #fde68a; border-radius:10px; text-align:center;">
                     <div style="font-size:11px; color:#b45309; font-weight:700;">RESERVASI</div>
-                    <div style="font-size:22px; font-weight:800; color:#b45309;">${car.reserved_units}</div>
+                    <div style="font-size:22px; font-weight:800; color:#b45309;">${displayReservedUnits}</div>
                 </div>
                 <div style="padding:14px; background:#f1f5f9; border:1px solid #cbd5e1; border-radius:10px; text-align:center;">
                     <div style="font-size:11px; color:#475569; font-weight:700;">TERJUAL</div>
-                    <div style="font-size:22px; font-weight:800; color:#0f172a;">${car.sold_units}</div>
+                    <div style="font-size:22px; font-weight:800; color:#0f172a;">${displaySoldUnits}</div>
                 </div>
             </div>
 
             <div class="modal-info-callout" style="margin-bottom:16px;">
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg>
-                <span>${car.is_virtual ? 'Model ini merupakan showcase resmi katalog APM digital dan saat ini belum memiliki unit fisik tercatat di showroom. Anda dapat mendaftarkan unit fisik baru melalui tombol Tambah Unit.' : `Unit fisik yang tersedia di inventori dealer terdaftar dengan warna resmi: <strong>${car.warna}</strong>.`}</span>
+                <span>${car.is_virtual ? 'Model ini merupakan showcase resmi katalog APM digital dan saat ini belum memiliki unit fisik tercatat di showroom. Anda dapat mendaftarkan unit fisik baru melalui tombol Tambah Unit.' : `Menampilkan informasi stok untuk warna: <strong>${colorStockEscape(displayColor)}</strong> (${displayStockTotal} unit fisik tercatat).`}</span>
             </div>
 
             <h4 class="section-micro-title">Pesanan Member &amp; Reservasi Aktif</h4>
@@ -3860,13 +3660,15 @@ function renderDetailAndSpecsModal(car, initialTab, dom) {
         </div>
     `;
 
+    const preselectedColorAttr = preselectedColor ? `, '${colorStockEscape(preselectedColor).replace(/'/g, "\\'")}'` : '';
     function updateDetailFooter(activePaneId) {
         if (activePaneId === 'pane-detail-overview') {
             dom.footer.innerHTML = `
                 <button type="button" class="btn-modal-secondary" onclick="closeVehicleModal()">Tutup</button>
+                ${!isUserOwner && !car.is_virtual ? `<button type="button" class="btn-modal-secondary" onclick="openVehicleActionModal('${car.id}', 'gallery')">Kelola Galeri</button>` : ''}
                 ${!isUserOwner ? (car.is_virtual
-                    ? `<button type="button" class="btn-modal-primary" onclick="openVehicleActionModal('${car.id}', 'add_unit')" style="background:#059669;">+ Tambah Unit ke Inventori</button>`
-                    : `<button type="button" class="btn-modal-primary" onclick="openVehicleActionModal('${car.id}', 'edit')">Edit Data Kendaraan</button>`
+                    ? `<button type="button" class="btn-modal-primary" onclick="openVehicleActionModal('${car.id}', 'add_unit'${preselectedColorAttr})" style="background:#059669;">+ Tambah Unit ke Inventori</button>`
+                    : `<button type="button" class="btn-modal-primary" onclick="openVehicleActionModal('${car.id}', 'edit'${preselectedColorAttr})">Edit Data Kendaraan</button>`
                 ) : ''}
             `;
         } else if (activePaneId === 'pane-detail-specs') {
@@ -3877,10 +3679,7 @@ function renderDetailAndSpecsModal(car, initialTab, dom) {
         } else if (activePaneId === 'pane-detail-stock') {
             dom.footer.innerHTML = `
                 <button type="button" class="btn-modal-secondary" onclick="closeVehicleModal()">Tutup</button>
-                ${!isUserOwner ? (car.is_virtual
-                    ? `<button type="button" class="btn-modal-primary" onclick="openVehicleActionModal('${car.id}', 'add_unit')" style="background:#059669;">+ Tambah Unit ke Inventori</button>`
-                    : `<button type="button" class="btn-modal-primary" onclick="openVehicleActionModal('${car.id}', 'stock')">Kelola Stok Kendaraan</button>`
-                ) : ''}
+                ${!isUserOwner ? `<button type="button" class="btn-modal-primary" onclick="openVehicleActionModal('${car.id}', 'add_unit'${preselectedColorAttr})">${car.is_virtual ? '+ Tambah Unit ke Inventori' : 'Kelola Stok Kendaraan'}</button>` : ''}
             `;
         }
     }
@@ -4173,8 +3972,26 @@ async function submitStockAdjust(e, carId) {
 // -------------------------------------------------------------
 // 3. MODAL EDIT DATA KENDARAAN (PHASE 5)
 // -------------------------------------------------------------
-function renderEditVehicleModal(car, dom) {
+function renderEditVehicleModal(car, dom, preselectedColor = null) {
+    const selectedColorObj = resolveCarColorContext(car, preselectedColor);
+    const displayColor = selectedColorObj ? selectedColorObj.label : (preselectedColor || car.warna || '');
+    const initialHex = (selectedColorObj && /^#[0-9a-f]{6}$/i.test(selectedColorObj.swatch))
+        ? selectedColorObj.swatch
+        : '#ef233c';
+    const r0 = parseInt(initialHex.slice(1, 3), 16);
+    const g0 = parseInt(initialHex.slice(3, 5), 16);
+    const b0 = parseInt(initialHex.slice(5, 7), 16);
+    const displayTampilDi = car.tampil_di || 'keduanya';
+    const brandOptions = @json($brands ?? []);
+    const colorImages = (selectedColorObj && Array.isArray(selectedColorObj.images)) ? selectedColorObj.images : [];
+    const getAngleSrc = (key) => {
+        const fromColor = colorImages.find(i => i.type === key)?.src;
+        if (fromColor) return fromColor;
+        return car.angles?.[key]?.path || '';
+    };
+
     dom.title.textContent = 'Edit Data Kendaraan';
+    dom.dialog.classList.add('is-wide');
 
     if (isUserOwner) {
         dom.body.innerHTML = `
@@ -4187,98 +4004,299 @@ function renderEditVehicleModal(car, dom) {
         return;
     }
 
+    const todayStr = new Date().toISOString().split('T')[0];
+
     dom.body.innerHTML = `
-        <form id="editVehicleForm" onsubmit="submitEditVehicle(event, ${car.id})">
+        <form id="editVehicleForm" onsubmit="submitEditVehicle(event, ${car.id})" enctype="multipart/form-data">
             <input type="hidden" name="_token" value="${document.querySelector('meta[name="csrf-token"]')?.content}">
             <input type="hidden" name="_method" value="PUT">
+            <input type="hidden" name="kode_mobil" value="${colorStockEscape(car.kode || '')}">
+            <input type="hidden" name="nomor_rangka" value="${colorStockEscape(car.nomor_rangka || '')}">
+            <input type="hidden" name="nomor_mesin" value="${colorStockEscape(car.nomor_mesin || '')}">
+            <input type="hidden" name="alasan_stok" value="Pembaruan data kendaraan melalui Kelola Mobil">
+            <input type="hidden" name="bukti_stok" value="UPD-${todayStr}">
 
-            <div class="modal-grid-2col">
-                <div class="modal-form-group">
-                    <label class="modal-form-label" for="edit_merk">Merek <span class="required-mark">*</span></label>
-                    <input type="text" id="edit_merk" name="merk" class="modal-form-input" value="${car.merk}" required>
-                    <div class="modal-field-error" data-error-field="merk"></div>
-                </div>
+            <div class="create-car-sections">
+                {{-- 1. Brand & Identitas Mobil --}}
+                <section class="create-car-section">
+                    <div class="create-car-section-head">
+                        <span class="section-step">1</span>
+                        <div>
+                            <h4>Brand &amp; Identitas Mobil</h4>
+                            <p>Perbarui merek, nama model, tahun, dan harga showroom.</p>
+                        </div>
+                    </div>
+                    <div class="modal-form-grid">
+                        <div class="modal-form-group">
+                            <label class="modal-form-label" for="edit_merk">Brand / Merek <span class="required-mark">*</span></label>
+                            <input type="text" id="edit_merk" name="merk" list="editBrandSuggestionsList" class="modal-form-input" value="${colorStockEscape(car.merk || '')}" required>
+                            <datalist id="editBrandSuggestionsList">
+                                ${brandOptions.map(b => `<option value="${colorStockEscape(b)}"></option>`).join('')}
+                            </datalist>
+                            <div class="modal-field-error" data-error-field="merk"></div>
+                        </div>
 
-                <div class="modal-form-group">
-                    <label class="modal-form-label" for="edit_model">Model <span class="required-mark">*</span></label>
-                    <input type="text" id="edit_model" name="model" class="modal-form-input" value="${car.model}" required>
-                    <div class="modal-field-error" data-error-field="model"></div>
-                </div>
+                        <div class="modal-form-group">
+                            <label class="modal-form-label" for="edit_model">Nama Mobil / Model <span class="required-mark">*</span></label>
+                            <input type="text" id="edit_model" name="model" class="modal-form-input" value="${colorStockEscape(car.model || '')}" required>
+                            <div class="modal-field-error" data-error-field="model"></div>
+                        </div>
 
-                <div class="modal-form-group">
-                    <label class="modal-form-label" for="edit_tipe">Tipe / Varian</label>
-                    <input type="text" id="edit_tipe" name="tipe" class="modal-form-input" value="${car.tipe || ''}">
-                    <div class="modal-field-error" data-error-field="tipe"></div>
-                </div>
+                        <div class="modal-form-group">
+                            <label class="modal-form-label" for="edit_tipe">Tipe / Varian</label>
+                            <input type="text" id="edit_tipe" name="tipe" class="modal-form-input" value="${colorStockEscape(car.tipe || '')}">
+                            <div class="modal-field-error" data-error-field="tipe"></div>
+                        </div>
 
-                <div class="modal-form-group">
-                    <label class="modal-form-label" for="edit_tahun">Tahun Pembuatan <span class="required-mark">*</span></label>
-                    <input type="number" id="edit_tahun" name="tahun" class="modal-form-input" value="${car.tahun}" min="1990" max="2035" required>
-                    <div class="modal-field-error" data-error-field="tahun"></div>
-                </div>
+                        <div class="modal-form-group">
+                            <label class="modal-form-label" for="edit_tahun">Tahun <span class="required-mark">*</span></label>
+                            <input type="number" id="edit_tahun" name="tahun" class="modal-form-input" value="${car.tahun || new Date().getFullYear()}" min="1980" max="${new Date().getFullYear() + 1}" required>
+                            <div class="modal-field-error" data-error-field="tahun"></div>
+                        </div>
 
-                <div class="modal-form-group">
-                    <label class="modal-form-label" for="edit_warna">Warna Fisik Unit <span class="required-mark">*</span></label>
-                    <input type="text" id="edit_warna" name="warna" class="modal-form-input" value="${car.warna}" required>
-                    <div class="modal-field-error" data-error-field="warna"></div>
-                </div>
+                        <div class="modal-form-group">
+                            <label class="modal-form-label" for="edit_harga_beli">Harga Beli / Modal (Rp) <span class="required-mark">*</span></label>
+                            <input type="number" step="0.01" id="edit_harga_beli" name="harga_beli" class="modal-form-input" value="${car.harga_beli || 0}" min="0" required>
+                            <div class="modal-field-error" data-error-field="harga_beli"></div>
+                        </div>
 
-                <div class="modal-form-group">
-                    <label class="modal-form-label" for="edit_kondisi">Kondisi Kendaraan <span class="required-mark">*</span></label>
-                    <select id="edit_kondisi" name="kondisi" class="modal-form-select" required>
-                        <option value="baru" ${car.kondisi === 'baru' ? 'selected' : ''}>Baru</option>
-                        <option value="bekas" ${car.kondisi === 'bekas' ? 'selected' : ''}>Bekas</option>
-                    </select>
-                </div>
+                        <div class="modal-form-group">
+                            <label class="modal-form-label" for="edit_harga_jual">Harga Jual Showroom (Rp) <span class="required-mark">*</span></label>
+                            <input type="number" step="0.01" id="edit_harga_jual" name="harga_jual" class="modal-form-input" value="${car.harga_jual || 0}" min="0" required>
+                            <div class="modal-field-error" data-error-field="harga_jual"></div>
+                        </div>
+                    </div>
+                </section>
 
-                <div class="modal-form-group">
-                    <label class="modal-form-label" for="edit_harga_jual">Harga Jual (Rp) <span class="required-mark">*</span></label>
-                    <input type="number" step="0.01" id="edit_harga_jual" name="harga_jual" class="modal-form-input" value="${car.harga_jual}" required>
-                    <div class="modal-field-error" data-error-field="harga_jual"></div>
-                </div>
+                {{-- 2. Spesifikasi Mobil --}}
+                <section class="create-car-section">
+                    <div class="create-car-section-head">
+                        <span class="section-step">2</span>
+                        <div>
+                            <h4>Spesifikasi &amp; Status Mobil</h4>
+                            <p>Atur kondisi, transmisi, bahan bakar, status, dan deskripsi.</p>
+                        </div>
+                    </div>
+                    <div class="modal-form-grid">
+                        <div class="modal-form-group">
+                            <label class="modal-form-label" for="edit_kondisi">Kondisi <span class="required-mark">*</span></label>
+                            <select id="edit_kondisi" name="kondisi" class="modal-form-select" required>
+                                <option value="baru" ${car.kondisi === 'baru' ? 'selected' : ''}>Baru</option>
+                                <option value="bekas" ${car.kondisi === 'bekas' ? 'selected' : ''}>Bekas</option>
+                            </select>
+                        </div>
 
-                <div class="modal-form-group">
-                    <label class="modal-form-label" for="edit_showcase_slug">Showroom Slug (Koleksi)</label>
-                    <input type="text" id="edit_showcase_slug" name="showcase_slug" class="modal-form-input" value="${car.showcase_slug || ''}" placeholder="contoh: lexus-lfa">
-                    <div class="modal-field-error" data-error-field="showcase_slug"></div>
-                </div>
+                        <div class="modal-form-group">
+                            <label class="modal-form-label" for="edit_transmisi">Transmisi</label>
+                            <select id="edit_transmisi" name="transmisi" class="modal-form-select">
+                                <option value="automatic" ${car.transmisi === 'automatic' ? 'selected' : ''}>Automatic</option>
+                                <option value="manual" ${car.transmisi === 'manual' ? 'selected' : ''}>Manual</option>
+                                <option value="cvt" ${car.transmisi === 'cvt' ? 'selected' : ''}>CVT</option>
+                                <option value="dct" ${car.transmisi === 'dct' ? 'selected' : ''}>DCT</option>
+                                <option value="lainnya" ${car.transmisi === 'lainnya' ? 'selected' : ''}>Lainnya</option>
+                            </select>
+                        </div>
 
-                <div class="modal-form-group">
-                    <label class="modal-form-label" for="edit_status">Status Ketersediaan <span class="required-mark">*</span></label>
-                    <select id="edit_status" name="status" class="modal-form-select" ${car.is_sold ? 'disabled' : ''} required>
-                        <option value="tersedia" ${car.status === 'tersedia' ? 'selected' : ''}>Tersedia</option>
-                        <option value="dibooking" ${car.status === 'dibooking' ? 'selected' : ''}>Dipesan</option>
-                        <option value="dalam_pemeriksaan" ${car.status === 'dalam_pemeriksaan' ? 'selected' : ''}>Dalam Pemeriksaan</option>
-                        <option value="terjual" ${car.status === 'terjual' ? 'selected' : ''}>Terjual</option>
-                        <option value="nonaktif" ${car.status === 'nonaktif' ? 'selected' : ''}>Nonaktif</option>
-                    </select>
-                    ${car.is_sold ? '<small style="color:#64748b; font-size:10px;">Unit terjual statusnya terkunci.</small>' : ''}
-                </div>
+                        <div class="modal-form-group">
+                            <label class="modal-form-label" for="edit_bahan_bakar">Bahan Bakar</label>
+                            <select id="edit_bahan_bakar" name="bahan_bakar" class="modal-form-select">
+                                <option value="bensin" ${car.bahan_bakar === 'bensin' ? 'selected' : ''}>Bensin</option>
+                                <option value="diesel" ${car.bahan_bakar === 'diesel' ? 'selected' : ''}>Diesel</option>
+                                <option value="hybrid" ${car.bahan_bakar === 'hybrid' ? 'selected' : ''}>Hybrid</option>
+                                <option value="listrik" ${car.bahan_bakar === 'listrik' ? 'selected' : ''}>Listrik (EV)</option>
+                                <option value="lainnya" ${car.bahan_bakar === 'lainnya' ? 'selected' : ''}>Lainnya</option>
+                            </select>
+                        </div>
 
-                <div class="modal-form-group" style="justify-content:center;">
-                    <label style="display:flex; align-items:center; gap:8px; cursor:pointer; font-size:13px; font-weight:700; margin-top:16px;">
-                        <input type="hidden" name="is_limited_edition" value="0">
-                        <input type="checkbox" name="is_limited_edition" value="1" ${car.is_limited_edition ? 'checked' : ''} class="custom-checkbox">
-                        <span>Tandai Sebagai Limited Edition</span>
-                    </label>
-                </div>
+                        <div class="modal-form-group">
+                            <label class="modal-form-label" for="edit_kilometer">Kilometer (Odometer) <span class="required-mark">*</span></label>
+                            <input type="number" id="edit_kilometer" name="kilometer" class="modal-form-input" value="${car.kilometer || 0}" min="0" required>
+                        </div>
 
-                <div class="modal-form-group" style="grid-column: 1 / -1;">
-                    <label class="modal-form-label" for="edit_deskripsi">Deskripsi Kendaraan</label>
-                    <textarea id="edit_deskripsi" name="deskripsi" class="modal-form-textarea" placeholder="Spesifikasi tambahan, catatan unit, riwayat perawatan...">${car.deskripsi || ''}</textarea>
-                </div>
+                        <div class="modal-form-group">
+                            <label class="modal-form-label" for="edit_status">Status Ketersediaan <span class="required-mark">*</span></label>
+                            <select id="edit_status" name="status" class="modal-form-select" ${car.is_sold ? 'disabled' : ''} required>
+                                <option value="tersedia" ${car.status === 'tersedia' ? 'selected' : ''}>Tersedia</option>
+                                <option value="dibooking" ${car.status === 'dibooking' ? 'selected' : ''}>Dipesan</option>
+                                <option value="dalam_pemeriksaan" ${car.status === 'dalam_pemeriksaan' ? 'selected' : ''}>Dalam Pemeriksaan</option>
+                                <option value="terjual" ${car.status === 'terjual' ? 'selected' : ''}>Terjual</option>
+                                <option value="nonaktif" ${car.status === 'nonaktif' ? 'selected' : ''}>Nonaktif</option>
+                            </select>
+                            ${car.is_sold ? '<small style="color:#64748b; font-size:10px;">Unit terjual statusnya terkunci.</small>' : ''}
+                        </div>
+
+                        <div class="modal-form-group" style="justify-content:center;">
+                            <label style="display:flex; align-items:center; gap:8px; cursor:pointer; font-size:13px; font-weight:700; margin-top:16px;">
+                                <input type="hidden" name="is_limited_edition" value="0">
+                                <input type="checkbox" name="is_limited_edition" value="1" ${car.is_limited_edition ? 'checked' : ''} class="custom-checkbox">
+                                <span>Tandai Sebagai Limited Edition</span>
+                            </label>
+                        </div>
+
+                        <div class="modal-form-group" style="grid-column: 1 / -1;">
+                            <label class="modal-form-label" for="edit_deskripsi">Deskripsi &amp; Catatan Spesifikasi</label>
+                            <textarea id="edit_deskripsi" name="deskripsi" class="modal-form-textarea" rows="2" placeholder="Spesifikasi tambahan, catatan unit, riwayat perawatan...">${colorStockEscape(car.deskripsi || '')}</textarea>
+                        </div>
+                    </div>
+                </section>
+
+                {{-- 3. Pemilihan Warna (RGB) & Info Stok --}}
+                <section class="create-car-section">
+                    <div class="create-car-section-head">
+                        <span class="section-step">3</span>
+                        <div>
+                            <h4>Pemilihan Warna (RGB) &amp; Stok</h4>
+                            <p>Sesuaikan nama warna, kode RGB, atau tambah stok unit untuk warna ini.</p>
+                        </div>
+                    </div>
+                    <div class="modal-form-grid">
+                        <div class="modal-form-group">
+                            <label class="modal-form-label" for="edit_warna">Nama Warna <span class="required-mark">*</span></label>
+                            <input type="text" id="edit_warna" name="warna" class="modal-form-input" value="${colorStockEscape(displayColor)}" required>
+                            <div class="modal-field-error" data-error-field="warna"></div>
+                        </div>
+
+                        <div class="modal-form-group">
+                            <label class="modal-form-label" for="editCarColorHex">Warna RGB <span class="required-mark">*</span></label>
+                            <div class="rgb-picker-box">
+                                <input type="color" id="editCarColorHex" name="warna_hex" value="${initialHex}" oninput="syncEditCarRgbPicker(this.value)">
+                                <div class="rgb-picker-meta">
+                                    <strong id="editCarRgbLabel">rgb(${r0}, ${g0}, ${b0})</strong>
+                                    <span id="editCarHexLabel">${initialHex.toUpperCase()}</span>
+                                </div>
+                                <div class="rgb-quick-swatches">
+                                    <button type="button" class="rgb-quick-dot" style="background:#ef233c;" title="Crimson Red" onclick="applyEditCarPresetColor('#ef233c', 'Crimson Red')"></button>
+                                    <button type="button" class="rgb-quick-dot" style="background:#111827;" title="Obsidian Black" onclick="applyEditCarPresetColor('#111827', 'Obsidian Black')"></button>
+                                    <button type="button" class="rgb-quick-dot" style="background:#f8fafc;" title="Pearl White" onclick="applyEditCarPresetColor('#f8fafc', 'Pearl White')"></button>
+                                    <button type="button" class="rgb-quick-dot" style="background:#facc15;" title="Racing Yellow" onclick="applyEditCarPresetColor('#facc15', 'Racing Yellow')"></button>
+                                    <button type="button" class="rgb-quick-dot" style="background:#1d4ed8;" title="Sapphire Blue" onclick="applyEditCarPresetColor('#1d4ed8', 'Sapphire Blue')"></button>
+                                    <button type="button" class="rgb-quick-dot" style="background:#64748b;" title="Titanium Grey" onclick="applyEditCarPresetColor('#64748b', 'Titanium Grey')"></button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="modal-form-group" style="grid-column: 1 / -1;">
+                            <div style="display:flex; align-items:center; justify-content:space-between; gap:12px; padding:10px 12px; background:#f8fafc; border:1px solid #e2e8f0; border-radius:10px;">
+                                <div style="font-size:12px; color:#334155;">
+                                    Stok warna <strong>${colorStockEscape(displayColor || 'Standar')}</strong> saat ini:
+                                    <strong style="color:#047857;">${selectedColorObj ? Number(selectedColorObj.stock ?? 0) : car.stock_orderable} unit tersedia</strong>
+                                </div>
+                                <button type="button" class="btn-modal-secondary" style="padding:6px 12px; font-size:11.5px;" onclick="openVehicleActionModal(${car.id}, 'add_unit', '${colorStockEscape(displayColor).replace(/'/g, "\\'")}')">+ Tambah Stok Warna Ini</button>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                {{-- 4. Foto Sudut Kendaraan --}}
+                <section class="create-car-section">
+                    <div class="create-car-section-head">
+                        <span class="section-step">4</span>
+                        <div>
+                            <h4>Foto Sudut Kendaraan</h4>
+                            <p>Klik salah satu sudut untuk mengganti atau mengunggah foto baru.</p>
+                        </div>
+                    </div>
+                    <div class="angle-upload-grid">
+                        ${[
+                            { key: 'front', label: 'Depan (Front 3/4)' },
+                            { key: 'side', label: 'Samping (Side Profile)' },
+                            { key: 'rear', label: 'Belakang (Rear 3/4)' },
+                            { key: 'interior', label: 'Kabin / Interior' }
+                        ].map(item => {
+                            const existingSrc = getAngleSrc(item.key);
+                            return `
+                                <label class="angle-upload-card" for="edit_angle_file_${item.key}">
+                                    <input type="file" id="edit_angle_file_${item.key}" name="foto_sudut[${item.key}]" accept="image/png,image/jpeg,image/webp" class="angle-file-input" onchange="previewEditCarAnglePhoto(this, '${item.key}')">
+                                    <div class="angle-upload-preview ${existingSrc ? 'has-image' : ''}" id="edit_angle_preview_${item.key}">
+                                        ${existingSrc
+                                            ? `<img src="${existingSrc}" alt="${item.label}">`
+                                            : `<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg><span>Pilih Foto</span>`
+                                        }
+                                    </div>
+                                    <div class="angle-upload-label">${item.label}</div>
+                                </label>
+                            `;
+                        }).join('')}
+                    </div>
+                </section>
+
+                {{-- 5. Opsi Penampilan --}}
+                <section class="create-car-section">
+                    <div class="create-car-section-head">
+                        <span class="section-step">5</span>
+                        <div>
+                            <h4>Opsi Penampilan</h4>
+                            <p>Tentukan di mana mobil ini akan ditampilkan kepada pengunjung atau member.</p>
+                        </div>
+                    </div>
+                    <div class="visibility-option-grid">
+                        <label class="visibility-option-card">
+                            <input type="radio" name="tampil_di" value="keduanya" ${displayTampilDi === 'keduanya' ? 'checked' : ''}>
+                            <div class="visibility-card-body">
+                                <strong>Landing Page &amp; Katalog Member</strong>
+                                <span>Tampil di halaman utama publik maupun katalog khusus member.</span>
+                            </div>
+                        </label>
+                        <label class="visibility-option-card">
+                            <input type="radio" name="tampil_di" value="landing_only" ${displayTampilDi === 'landing_only' ? 'checked' : ''}>
+                            <div class="visibility-card-body">
+                                <strong>Landing Page Saja</strong>
+                                <span>Hanya ditampilkan di landing page / etalase publik website.</span>
+                            </div>
+                        </label>
+                        <label class="visibility-option-card">
+                            <input type="radio" name="tampil_di" value="member_only" ${displayTampilDi === 'member_only' ? 'checked' : ''}>
+                            <div class="visibility-card-body">
+                                <strong>Katalog Khusus Member</strong>
+                                <span>Eksklusif hanya tampil di halaman katalog member yang login.</span>
+                            </div>
+                        </label>
+                    </div>
+                </section>
             </div>
 
-            <div id="editVehicleGlobalError" class="modal-field-error" style="display:none; margin-bottom:12px;"></div>
-        <div class="modal-form-group" style="grid-column:1/-1"><label class="modal-form-label">Alasan perubahan stok *</label><input name="alasan_stok" class="modal-form-input" minlength="5" maxlength="160" required></div><div class="modal-form-group" style="grid-column:1/-1"><label class="modal-form-label">Bukti / nomor dokumen verifikasi *</label><input name="bukti_stok" class="modal-form-input" minlength="5" maxlength="500" placeholder="Nomor surat jalan / berita acara pemeriksaan" required></div></form>
+            <div id="editVehicleGlobalError" class="modal-field-error" style="display:none; margin-top:12px; margin-bottom:8px;"></div>
+        </form>
     `;
 
     dom.footer.innerHTML = `
         <button type="button" class="btn-modal-secondary" onclick="closeVehicleModal()">Batal</button>
         <button type="submit" form="editVehicleForm" class="btn-modal-primary" id="btnSubmitEditVehicle">Simpan Perubahan</button>
     `;
+
+    setupFormDirtyTracking(document.getElementById('editVehicleForm'));
 }
 
+function syncEditCarRgbPicker(hex) {
+    const clean = /^#[0-9a-f]{6}$/i.test(hex) ? hex : '#ef233c';
+    const r = parseInt(clean.slice(1, 3), 16);
+    const g = parseInt(clean.slice(3, 5), 16);
+    const b = parseInt(clean.slice(5, 7), 16);
+    const rgbEl = document.getElementById('editCarRgbLabel');
+    const hexEl = document.getElementById('editCarHexLabel');
+    if (rgbEl) rgbEl.textContent = `rgb(${r}, ${g}, ${b})`;
+    if (hexEl) hexEl.textContent = clean.toUpperCase();
+}
+
+function applyEditCarPresetColor(hex, label) {
+    const colorInput = document.getElementById('editCarColorHex');
+    const nameInput = document.getElementById('edit_warna');
+    if (colorInput) colorInput.value = hex;
+    if (nameInput) nameInput.value = label;
+    syncEditCarRgbPicker(hex);
+}
+
+function previewEditCarAnglePhoto(input, angleKey) {
+    const box = document.getElementById(`edit_angle_preview_${angleKey}`);
+    if (!box || !input.files || !input.files[0]) return;
+    const file = input.files[0];
+    const reader = new FileReader();
+    reader.onload = function (ev) {
+        box.innerHTML = `<img src="${ev.target.result}" alt="${angleKey}">`;
+        box.classList.add('has-image');
+    };
+    reader.readAsDataURL(file);
+}
 // Handler Submit Edit Kendaraan
 async function submitEditVehicle(e, carId) {
     e.preventDefault();
@@ -4464,163 +4482,283 @@ function renderAddUnitModal(car, dom, preselectedColor = null) {
         return;
     }
 
+    dom.title.textContent = 'Tambah Mobil Baru';
+    dom.kicker.textContent = 'YZA AUTOMOTIVE · KELOLA MOBIL & SHOWROOM';
+
+    const defaultEngine = 'ENG-' + uniqueSuffix;
+    const brandOptions = @json($brands ?? []);
+
     dom.body.innerHTML = `
-        <form id="addUnitVehicleForm" onsubmit="submitAddUnit(event, '${car.id}')" autocomplete="off">
+        <form id="addUnitVehicleForm" onsubmit="submitAddUnit(event, 'new')" autocomplete="off" enctype="multipart/form-data">
             <input type="hidden" name="_token" value="${document.querySelector('meta[name="csrf-token"]')?.content}">
-            ${car.showcase_slug ? `<input type="hidden" name="showcase_slug" value="${car.showcase_slug}">` : ''}
-            <input type="hidden" name="catalog_identity" value="${colorStockEscape(car.catalog_key || (car.id !== 'new' ? 'mobil:' + car.id : ''))}">
+            <input type="hidden" name="kode_mobil" value="${colorStockEscape(defaultCode)}">
+            <input type="hidden" name="nomor_rangka" value="${colorStockEscape(defaultVin)}">
+            <input type="hidden" name="nomor_mesin" value="${colorStockEscape(defaultEngine)}">
+            <input type="hidden" name="status" value="tersedia">
+            <input type="hidden" name="tanggal_masuk" value="${todayStr}">
+            <input type="hidden" name="alasan_stok" value="Penambahan mobil baru melalui Kelola Mobil">
+            <input type="hidden" name="bukti_stok" value="REG-${uniqueSuffix}">
 
-            <div class="modal-info-callout" style="margin-bottom:16px;">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>
-                <span>Formulir ini mendaftarkan unit fisik kendaraan ke inventori dealer. Seluruh nomor identitas (VIN & Nomor Mesin) wajib diisi valid dan akan diverifikasi keasliannya di sistem.</span>
-            </div>
+            <div class="create-car-sections">
+                <section class="create-car-section">
+                    <div class="create-car-section-head">
+                        <span class="section-step">1</span>
+                        <div>
+                            <h4>Brand &amp; Identitas Mobil</h4>
+                            <p>Masukkan merek, nama model, kondisi, dan harga showroom.</p>
+                        </div>
+                    </div>
+                    <div class="modal-form-grid">
+                        <div class="modal-form-group">
+                            <label class="modal-form-label" for="add_unit_merk">Brand / Merek <span class="required-mark">*</span></label>
+                            <input type="text" id="add_unit_merk" name="merk" list="brandSuggestionsList" class="modal-form-input" placeholder="contoh: Toyota, Porsche, Ferrari" required>
+                            <datalist id="brandSuggestionsList">
+                                ${brandOptions.map(b => `<option value="${colorStockEscape(b)}"></option>`).join('')}
+                            </datalist>
+                            <div class="modal-field-error" data-error-field="merk" style="display:none;"></div>
+                        </div>
 
-            <div class="modal-form-grid">
-                {{-- Merek & Model --}}
-                <div class="modal-form-group">
-                    <label class="modal-form-label" for="add_unit_merk">Merek Kendaraan <span class="required-mark">*</span></label>
-                    <input type="text" id="add_unit_merk" name="merk" class="modal-form-input" value="${car.merk || ''}" ${(!isNew && car.merk) ? 'readonly style="background:#f8fafc;"' : 'required placeholder="contoh: Toyota, Lexus, Porsche"'}>
-                    <div class="modal-field-error" data-error-field="merk" style="display:none;"></div>
-                </div>
+                        <div class="modal-form-group">
+                            <label class="modal-form-label" for="add_unit_model">Nama Mobil / Model <span class="required-mark">*</span></label>
+                            <input type="text" id="add_unit_model" name="model" class="modal-form-input" placeholder="contoh: GR Supra, 911 GT3 RS" required>
+                            <div class="modal-field-error" data-error-field="model" style="display:none;"></div>
+                        </div>
 
-                <div class="modal-form-group">
-                    <label class="modal-form-label" for="add_unit_model">Model Kendaraan <span class="required-mark">*</span></label>
-                    <input type="text" id="add_unit_model" name="model" class="modal-form-input" value="${car.model || ''}" ${(!isNew && car.model) ? 'readonly style="background:#f8fafc;"' : 'required placeholder="contoh: GR Supra, 911 GT3"'}>
-                    <div class="modal-field-error" data-error-field="model" style="display:none;"></div>
-                </div>
+                        <div class="modal-form-group">
+                            <label class="modal-form-label" for="add_unit_tipe">Tipe / Varian</label>
+                            <input type="text" id="add_unit_tipe" name="tipe" class="modal-form-input" placeholder="contoh: 3.0L Performance, Coupe">
+                            <div class="modal-field-error" data-error-field="tipe" style="display:none;"></div>
+                        </div>
 
-                {{-- Varian / Tipe & Tahun --}}
-                <div class="modal-form-group">
-                    <label class="modal-form-label" for="add_unit_tipe">Tipe / Varian</label>
-                    <input type="text" id="add_unit_tipe" name="tipe" class="modal-form-input" value="${car.tipe || ''}" placeholder="contoh: 3.0L Pro, Performance Edition">
-                    <div class="modal-field-error" data-error-field="tipe" style="display:none;"></div>
-                </div>
+                        <div class="modal-form-group">
+                            <label class="modal-form-label" for="add_unit_tahun">Tahun <span class="required-mark">*</span></label>
+                            <input type="number" id="add_unit_tahun" name="tahun" class="modal-form-input" value="${new Date().getFullYear()}" min="1980" max="${new Date().getFullYear() + 1}" required>
+                            <div class="modal-field-error" data-error-field="tahun" style="display:none;"></div>
+                        </div>
 
-                <div class="modal-form-group">
-                    <label class="modal-form-label" for="add_unit_tahun">Tahun Pembuatan <span class="required-mark">*</span></label>
-                    <input type="number" id="add_unit_tahun" name="tahun" class="modal-form-input" value="${car.tahun || new Date().getFullYear()}" min="1950" max="${new Date().getFullYear() + 1}" required>
-                    <div class="modal-field-error" data-error-field="tahun" style="display:none;"></div>
-                </div>
+                        <div class="modal-form-group">
+                            <label class="modal-form-label" for="add_unit_harga_beli">Harga Beli / Modal (Rp) <span class="required-mark">*</span></label>
+                            <input type="number" id="add_unit_harga_beli" name="harga_beli" class="modal-form-input" placeholder="contoh: 1850000000" min="0" required>
+                            <div class="modal-field-error" data-error-field="harga_beli" style="display:none;"></div>
+                        </div>
 
-                {{-- Warna Fisik Unit & Kode Mobil --}}
-                <div class="modal-form-group">
-                    <label class="modal-form-label" for="add_unit_warna">Warna Fisik Unit <span class="required-mark">*</span></label>
-                    <input type="text" id="add_unit_warna" name="warna" list="addUnitColorOptions" class="modal-form-input" value="${colorStockEscape(preselectedColor || car.warna || '')}" placeholder="Pilih atau ketik warna (contoh: Pearl White)" required>
-                    <datalist id="addUnitColorOptions">
-                        ${(car.color_stocks || []).map(c => `<option value="${colorStockEscape(c.label)}">Stok ready: ${Number(c.stock || 0)} unit</option>`).join('')}
-                    </datalist>
-                    <div class="modal-field-error" data-error-field="warna" style="display:none;"></div>
-                </div>
+                        <div class="modal-form-group">
+                            <label class="modal-form-label" for="add_unit_harga_jual">Harga Jual Showroom (Rp) <span class="required-mark">*</span></label>
+                            <input type="number" id="add_unit_harga_jual" name="harga_jual" class="modal-form-input" placeholder="contoh: 2350000000" min="0" required>
+                            <div class="modal-field-error" data-error-field="harga_jual" style="display:none;"></div>
+                        </div>
+                    </div>
+                </section>
 
-                <div class="modal-form-group">
-                    <label class="modal-form-label" for="add_unit_kode">Kode Kendaraan (Internal Dealer) <span class="required-mark">*</span></label>
-                    <input type="text" id="add_unit_kode" name="kode_mobil" class="modal-form-input" value="${defaultCode}" required>
-                    <div class="modal-field-error" data-error-field="kode_mobil" style="display:none;"></div>
-                </div>
+                <section class="create-car-section">
+                    <div class="create-car-section-head">
+                        <span class="section-step">2</span>
+                        <div>
+                            <h4>Spesifikasi Mobil</h4>
+                            <p>Lengkapi detail kondisi, transmisi, bahan bakar, dan catatan.</p>
+                        </div>
+                    </div>
+                    <div class="modal-form-grid">
+                        <div class="modal-form-group">
+                            <label class="modal-form-label" for="add_unit_kondisi">Kondisi <span class="required-mark">*</span></label>
+                            <select id="add_unit_kondisi" name="kondisi" class="modal-form-select" required>
+                                <option value="baru" selected>Baru</option>
+                                <option value="bekas">Bekas</option>
+                            </select>
+                            <div class="modal-field-error" data-error-field="kondisi" style="display:none;"></div>
+                        </div>
 
-                {{-- Nomor Rangka (VIN) & Nomor Mesin --}}
-                <div class="modal-form-group">
-                    <label class="modal-form-label" for="add_unit_vin">Nomor Rangka (VIN Fisik) <span class="required-mark">*</span></label>
-                    <input type="text" id="add_unit_vin" name="nomor_rangka" class="modal-form-input" style="font-family:monospace; text-transform:uppercase;" placeholder="Contoh: MH3ABC123DK004921" required>
-                    <div class="modal-field-error" data-error-field="nomor_rangka" style="display:none;"></div>
-                </div>
+                        <div class="modal-form-group">
+                            <label class="modal-form-label" for="add_unit_transmisi">Transmisi <span class="required-mark">*</span></label>
+                            <select id="add_unit_transmisi" name="transmisi" class="modal-form-select" required>
+                                <option value="automatic" selected>Automatic</option>
+                                <option value="manual">Manual</option>
+                                <option value="cvt">CVT</option>
+                                <option value="dct">DCT</option>
+                                <option value="lainnya">Lainnya</option>
+                            </select>
+                        </div>
 
-                <div class="modal-form-group">
-                    <label class="modal-form-label" for="add_unit_mesin">Nomor Mesin Fisik <span class="required-mark">*</span></label>
-                    <input type="text" id="add_unit_mesin" name="nomor_mesin" class="modal-form-input" style="font-family:monospace; text-transform:uppercase;" placeholder="Contoh: B58B30-9823140" required>
-                    <div class="modal-field-error" data-error-field="nomor_mesin" style="display:none;"></div>
-                </div>
+                        <div class="modal-form-group">
+                            <label class="modal-form-label" for="add_unit_bahan_bakar">Bahan Bakar <span class="required-mark">*</span></label>
+                            <select id="add_unit_bahan_bakar" name="bahan_bakar" class="modal-form-select" required>
+                                <option value="bensin" selected>Bensin</option>
+                                <option value="diesel">Diesel</option>
+                                <option value="hybrid">Hybrid</option>
+                                <option value="listrik">Listrik (EV)</option>
+                                <option value="lainnya">Lainnya</option>
+                            </select>
+                        </div>
 
-                {{-- Kondisi & Kilometer --}}
-                <div class="modal-form-group">
-                    <label class="modal-form-label" for="add_unit_kondisi">Kondisi Fisik <span class="required-mark">*</span></label>
-                    <select id="add_unit_kondisi" name="kondisi" class="modal-form-select" required>
-                        <option value="baru" ${car.kondisi === 'baru' ? 'selected' : ''}>Baru (Brand New / Showroom)</option>
-                        <option value="bekas" ${car.kondisi === 'bekas' ? 'selected' : ''}>Bekas (Pre-Owned Bersertifikat)</option>
-                    </select>
-                    <div class="modal-field-error" data-error-field="kondisi" style="display:none;"></div>
-                </div>
+                        <div class="modal-form-group">
+                            <label class="modal-form-label" for="add_unit_kilometer">Kilometer (Odometer) <span class="required-mark">*</span></label>
+                            <input type="number" id="add_unit_kilometer" name="kilometer" class="modal-form-input" value="0" min="0" required>
+                            <div class="modal-field-error" data-error-field="kilometer" style="display:none;"></div>
+                        </div>
 
-                <div class="modal-form-group">
-                    <label class="modal-form-label" for="add_unit_kilometer">Kilometer (Odometer) <span class="required-mark">*</span></label>
-                    <input type="number" id="add_unit_kilometer" name="kilometer" class="modal-form-input" value="0" min="0" required>
-                    <div class="modal-field-error" data-error-field="kilometer" style="display:none;"></div>
-                </div>
+                        <div class="modal-form-group" style="grid-column: 1 / -1;">
+                            <label class="modal-form-label" for="add_unit_deskripsi">Deskripsi &amp; Catatan Spesifikasi</label>
+                            <textarea id="add_unit_deskripsi" name="deskripsi" class="modal-form-textarea" rows="2" placeholder="Contoh: Mesin 3.0L Twin-Turbo, fitur keselamatan aktif, interior Alcantara..."></textarea>
+                        </div>
+                    </div>
+                </section>
 
-                {{-- Harga Beli & Harga Jual --}}
-                <div class="modal-form-group">
-                    <label class="modal-form-label" for="add_unit_harga_beli">Harga Beli / Modal (Rp) <span class="required-mark">*</span></label>
-                    <input type="number" id="add_unit_harga_beli" name="harga_beli" class="modal-form-input" value="${car.harga_beli || Math.round((car.harga_jual || 1000000000) * 0.85)}" min="0" required>
-                    <div class="modal-field-error" data-error-field="harga_beli" style="display:none;"></div>
-                </div>
+                <section class="create-car-section">
+                    <div class="create-car-section-head">
+                        <span class="section-step">3</span>
+                        <div>
+                            <h4>Pemilihan Warna (RGB) &amp; Atur Stok</h4>
+                            <p>Pilih warna beserta kode RGB dan tentukan jumlah stok awal unit.</p>
+                        </div>
+                    </div>
+                    <div class="modal-form-grid">
+                        <div class="modal-form-group">
+                            <label class="modal-form-label" for="add_unit_warna">Nama Warna <span class="required-mark">*</span></label>
+                            <input type="text" id="add_unit_warna" name="warna" class="modal-form-input" value="Crimson Red" placeholder="contoh: Pearl White, Racing Yellow" required>
+                            <div class="modal-field-error" data-error-field="warna" style="display:none;"></div>
+                        </div>
 
-                <div class="modal-form-group">
-                    <label class="modal-form-label" for="add_unit_harga_jual">Harga Jual Showroom (Rp) <span class="required-mark">*</span></label>
-                    <input type="number" id="add_unit_harga_jual" name="harga_jual" class="modal-form-input" value="${car.harga_jual || ''}" min="0" required>
-                    <div class="modal-field-error" data-error-field="harga_jual" style="display:none;"></div>
-                </div>
+                        <div class="modal-form-group">
+                            <label class="modal-form-label" for="newCarColorHex">Warna RGB <span class="required-mark">*</span></label>
+                            <div class="rgb-picker-box">
+                                <input type="color" id="newCarColorHex" name="warna_hex" value="#ef233c" oninput="syncNewCarRgbPicker(this.value)">
+                                <div class="rgb-picker-meta">
+                                    <strong id="newCarRgbLabel">rgb(239, 35, 60)</strong>
+                                    <span id="newCarHexLabel">#EF233C</span>
+                                </div>
+                                <div class="rgb-quick-swatches">
+                                    <button type="button" class="rgb-quick-dot" style="background:#ef233c;" title="Crimson Red" onclick="applyNewCarPresetColor('#ef233c', 'Crimson Red')"></button>
+                                    <button type="button" class="rgb-quick-dot" style="background:#111827;" title="Obsidian Black" onclick="applyNewCarPresetColor('#111827', 'Obsidian Black')"></button>
+                                    <button type="button" class="rgb-quick-dot" style="background:#f8fafc;" title="Pearl White" onclick="applyNewCarPresetColor('#f8fafc', 'Pearl White')"></button>
+                                    <button type="button" class="rgb-quick-dot" style="background:#facc15;" title="Racing Yellow" onclick="applyNewCarPresetColor('#facc15', 'Racing Yellow')"></button>
+                                    <button type="button" class="rgb-quick-dot" style="background:#1d4ed8;" title="Sapphire Blue" onclick="applyNewCarPresetColor('#1d4ed8', 'Sapphire Blue')"></button>
+                                    <button type="button" class="rgb-quick-dot" style="background:#64748b;" title="Titanium Grey" onclick="applyNewCarPresetColor('#64748b', 'Titanium Grey')"></button>
+                                </div>
+                            </div>
+                        </div>
 
-                {{-- Transmisi & Bahan Bakar --}}
-                <div class="modal-form-group">
-                    <label class="modal-form-label" for="add_unit_transmisi">Transmisi</label>
-                    <select id="add_unit_transmisi" name="transmisi" class="modal-form-select">
-                        <option value="automatic" ${car.transmisi === 'automatic' ? 'selected' : ''}>Automatic</option>
-                        <option value="manual" ${car.transmisi === 'manual' ? 'selected' : ''}>Manual</option>
-                        <option value="cvt" ${car.transmisi === 'cvt' ? 'selected' : ''}>CVT</option>
-                        <option value="dct" ${car.transmisi === 'dct' ? 'selected' : ''}>DCT</option>
-                        <option value="lainnya" ${car.transmisi === 'lainnya' ? 'selected' : ''}>Lainnya</option>
-                    </select>
-                    <div class="modal-field-error" data-error-field="transmisi" style="display:none;"></div>
-                </div>
+                        <div class="modal-form-group" style="grid-column: 1 / -1;">
+                            <label class="modal-form-label" for="add_unit_stok_awal">Jumlah Stok Awal (Unit) <span class="required-mark">*</span></label>
+                            <div class="stock-stepper-wrap">
+                                <button type="button" class="stock-stepper-btn" onclick="stepNewCarStock(-1)">&minus;</button>
+                                <input type="number" id="add_unit_stok_awal" name="stok_awal" class="modal-form-input stock-stepper-input" value="1" min="1" max="50" required>
+                                <button type="button" class="stock-stepper-btn" onclick="stepNewCarStock(1)">+</button>
+                                <span class="stock-stepper-hint">Setiap unit stok akan langsung tercatat di inventori warna ini.</span>
+                            </div>
+                        </div>
+                    </div>
+                </section>
 
-                <div class="modal-form-group">
-                    <label class="modal-form-label" for="add_unit_bahan_bakar">Bahan Bakar</label>
-                    <select id="add_unit_bahan_bakar" name="bahan_bakar" class="modal-form-select">
-                        <option value="bensin" ${car.bahan_bakar === 'bensin' ? 'selected' : ''}>Bensin</option>
-                        <option value="diesel" ${car.bahan_bakar === 'diesel' ? 'selected' : ''}>Diesel</option>
-                        <option value="hybrid" ${car.bahan_bakar === 'hybrid' ? 'selected' : ''}>Hybrid</option>
-                        <option value="listrik" ${car.bahan_bakar === 'listrik' ? 'selected' : ''}>Listrik (EV)</option>
-                        <option value="lainnya" ${car.bahan_bakar === 'lainnya' ? 'selected' : ''}>Lainnya</option>
-                    </select>
-                    <div class="modal-field-error" data-error-field="bahan_bakar" style="display:none;"></div>
-                </div>
+                <section class="create-car-section">
+                    <div class="create-car-section-head">
+                        <span class="section-step">4</span>
+                        <div>
+                            <h4>Foto Sudut Kendaraan</h4>
+                            <p>Unggah foto dari 4 sudut utama untuk tampilan showroom &amp; galeri warna.</p>
+                        </div>
+                    </div>
+                    <div class="angle-upload-grid">
+                        ${[
+                            { key: 'front', label: 'Depan (Front 3/4)' },
+                            { key: 'side', label: 'Samping (Side Profile)' },
+                            { key: 'rear', label: 'Belakang (Rear 3/4)' },
+                            { key: 'interior', label: 'Kabin / Interior' }
+                        ].map(item => `
+                            <label class="angle-upload-card" for="angle_file_${item.key}">
+                                <input type="file" id="angle_file_${item.key}" name="foto_sudut[${item.key}]" accept="image/png,image/jpeg,image/webp" class="angle-file-input" onchange="previewNewCarAnglePhoto(this, '${item.key}')">
+                                <div class="angle-upload-preview" id="angle_preview_${item.key}">
+                                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+                                    <span>Pilih Foto</span>
+                                </div>
+                                <div class="angle-upload-label">${item.label}</div>
+                            </label>
+                        `).join('')}
+                    </div>
+                </section>
 
-                {{-- Status Masuk & Tanggal --}}
-                <div class="modal-form-group">
-                    <label class="modal-form-label" for="add_unit_status">Status Awal Unit <span class="required-mark">*</span></label>
-                    <select id="add_unit_status" name="status" class="modal-form-select" required>
-                        <option value="tersedia">Tersedia (Sudah Diverifikasi)</option>
-                        <option value="dalam_pemeriksaan" selected>Dalam Pemeriksaan (Menunggu Verifikasi)</option>
-                    </select>
-                    <div class="modal-field-error" data-error-field="status" style="display:none;"></div>
-                </div>
-
-                <div class="modal-form-group">
-                    <label class="modal-form-label" for="add_unit_tanggal_masuk">Tanggal Masuk Dealer</label>
-                    <input type="date" id="add_unit_tanggal_masuk" name="tanggal_masuk" class="modal-form-input" value="${new Date().toISOString().split('T')[0]}">
-                    <div class="modal-field-error" data-error-field="tanggal_masuk" style="display:none;"></div>
-                </div>
-
-                {{-- Catatan Dokumen & BASTK --}}
-                <div class="modal-form-group" style="grid-column: 1 / -1;">
-                    <label class="modal-form-label" for="add_unit_deskripsi">Catatan Dokumen / BASTK / Keterangan Unit</label>
-                    <textarea id="add_unit_deskripsi" name="deskripsi" class="modal-form-textarea" placeholder="Kelengkapan faktur, BPKB, STNK, berita acara serah terima kendaraan (BASTK), atau kelengkapan aksesoris...">${car.deskripsi || ''}</textarea>
-                    <div class="modal-field-error" data-error-field="deskripsi" style="display:none;"></div>
-                </div>
+                <section class="create-car-section">
+                    <div class="create-car-section-head">
+                        <span class="section-step">5</span>
+                        <div>
+                            <h4>Opsi Penampilan</h4>
+                            <p>Tentukan di mana mobil ini akan ditampilkan kepada pengunjung atau member.</p>
+                        </div>
+                    </div>
+                    <div class="visibility-option-grid">
+                        <label class="visibility-option-card">
+                            <input type="radio" name="tampil_di" value="keduanya" checked>
+                            <div class="visibility-card-body">
+                                <strong>Landing Page &amp; Katalog Member</strong>
+                                <span>Tampil di halaman utama publik maupun katalog khusus member.</span>
+                            </div>
+                        </label>
+                        <label class="visibility-option-card">
+                            <input type="radio" name="tampil_di" value="landing_only">
+                            <div class="visibility-card-body">
+                                <strong>Landing Page Saja</strong>
+                                <span>Hanya ditampilkan di landing page / etalase publik website.</span>
+                            </div>
+                        </label>
+                        <label class="visibility-option-card">
+                            <input type="radio" name="tampil_di" value="member_only">
+                            <div class="visibility-card-body">
+                                <strong>Katalog Khusus Member</strong>
+                                <span>Eksklusif hanya tampil di halaman katalog member yang login.</span>
+                            </div>
+                        </label>
+                    </div>
+                </section>
             </div>
 
             <div id="addUnitGlobalError" class="modal-field-error" style="display:none; margin-top:12px; margin-bottom:8px;"></div>
-        <div class="modal-form-group" style="grid-column:1/-1"><label class="modal-form-label">Alasan perubahan stok *</label><input name="alasan_stok" class="modal-form-input" minlength="5" maxlength="160" required></div><div class="modal-form-group" style="grid-column:1/-1"><label class="modal-form-label">Bukti / nomor dokumen verifikasi *</label><input name="bukti_stok" class="modal-form-input" minlength="5" maxlength="500" placeholder="Nomor surat jalan / berita acara pemeriksaan" required></div></form>
+        </form>
     `;
 
     dom.footer.innerHTML = `
         <button type="button" class="btn-modal-secondary" onclick="closeVehicleModal()">Batal</button>
-        <button type="submit" form="addUnitVehicleForm" class="btn-modal-primary" id="btnSubmitAddUnit" style="background:#059669; border-color:#059669;">+ Simpan Unit ke Inventori</button>
+        <button type="submit" form="addUnitVehicleForm" class="btn-modal-primary" id="btnSubmitAddUnit">+ Simpan &amp; Publikasikan Mobil</button>
     `;
 
     setupFormDirtyTracking(document.getElementById('addUnitVehicleForm'));
 }
 
+function syncNewCarRgbPicker(hex) {
+    const clean = /^#[0-9a-f]{6}$/i.test(hex) ? hex : '#ef233c';
+    const r = parseInt(clean.slice(1, 3), 16);
+    const g = parseInt(clean.slice(3, 5), 16);
+    const b = parseInt(clean.slice(5, 7), 16);
+    const rgbEl = document.getElementById('newCarRgbLabel');
+    const hexEl = document.getElementById('newCarHexLabel');
+    if (rgbEl) rgbEl.textContent = `rgb(${r}, ${g}, ${b})`;
+    if (hexEl) hexEl.textContent = clean.toUpperCase();
+}
+
+function applyNewCarPresetColor(hex, label) {
+    const colorInput = document.getElementById('newCarColorHex');
+    const nameInput = document.getElementById('add_unit_warna');
+    if (colorInput) colorInput.value = hex;
+    if (nameInput) nameInput.value = label;
+    syncNewCarRgbPicker(hex);
+}
+
+function stepNewCarStock(delta) {
+    const input = document.getElementById('add_unit_stok_awal');
+    if (!input) return;
+    const current = parseInt(input.value || '1', 10) || 1;
+    input.value = Math.min(50, Math.max(1, current + delta));
+}
+
+function previewNewCarAnglePhoto(input, angleKey) {
+    const box = document.getElementById(`angle_preview_${angleKey}`);
+    if (!box || !input.files || !input.files[0]) return;
+    const file = input.files[0];
+    const reader = new FileReader();
+    reader.onload = function (ev) {
+        box.innerHTML = `<img src="${ev.target.result}" alt="${angleKey}">`;
+        box.classList.add('has-image');
+    };
+    reader.readAsDataURL(file);
+}
 async function submitAddUnit(e, carId) {
     e.preventDefault();
     const form = e.target;

@@ -35,30 +35,30 @@
     @endif
 
     <section class="qch-kpis" aria-label="Ringkasan riwayat QC">
-        <a href="{{ $indexRoute }}" class="qch-kpi {{ $qcStatus === '' ? 'is-active' : '' }}">
+        <div class="qch-kpi">
             <div>
                 <span class="qch-kpi-label">Total Unit QC</span>
                 <strong class="qch-kpi-value">{{ number_format($stats['total'] ?? 0) }}</strong>
             </div>
-        </a>
-        <a href="{{ $indexRoute }}?qc_status=in_progress" class="qch-kpi {{ $qcStatus === 'in_progress' ? 'is-active' : '' }}">
+        </div>
+        <div class="qch-kpi">
             <div>
                 <span class="qch-kpi-label">Menunggu / Proses QC</span>
                 <strong class="qch-kpi-value is-amber">{{ number_format($stats['in_progress'] ?? 0) }}</strong>
             </div>
-        </a>
-        <a href="{{ $indexRoute }}?qc_status=passed" class="qch-kpi {{ $qcStatus === 'passed' ? 'is-active' : '' }}">
+        </div>
+        <div class="qch-kpi">
             <div>
                 <span class="qch-kpi-label">Lulus QC</span>
                 <strong class="qch-kpi-value is-emerald">{{ number_format($stats['passed'] ?? 0) }}</strong>
             </div>
-        </a>
-        <a href="{{ $indexRoute }}?qc_status=failed" class="qch-kpi {{ $qcStatus === 'failed' ? 'is-active' : '' }}">
+        </div>
+        <div class="qch-kpi">
             <div>
                 <span class="qch-kpi-label">Perlu Perbaikan</span>
                 <strong class="qch-kpi-value is-crimson">{{ number_format($stats['failed'] ?? 0) }}</strong>
             </div>
-        </a>
+        </div>
     </section>
 
     <section class="qch-panel">

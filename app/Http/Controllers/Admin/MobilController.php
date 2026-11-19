@@ -33,10 +33,7 @@ class MobilController extends Controller
         $catalogModel = $catalogKey !== '' ? $identity->resolve($catalogKey) : null;
         abort_if($catalogKey !== '' && !$catalogModel, 404, 'Identitas katalog tidak ditemukan.');
 
-        $activeTab = (string) request('tab', 'inventori');
-        if (!in_array($activeTab, ['inventori', 'katalog', 'foto'], true)) {
-            $activeTab = 'inventori';
-        }
+        $activeTab = 'katalog';
 
         $carsQuery = Mobil::query()
             ->with(['foto', 'warnaPilihan.galeri'])
@@ -132,7 +129,7 @@ class MobilController extends Controller
                 && (!$catalogKey || $identity->key($car) === $catalogKey)
                 && (!$tahunMin || $car->tahun >= $tahunMin) && (!$tahunMaks || $car->tahun <= $tahunMaks)
                 && (!$hargaMin || $car->harga_jual >= $hargaMin) && (!$hargaMaks || $car->harga_jual <= $hargaMaks);
-        })->unique(fn ($car) => $identity->key($car))->values();
+        })->unique(fn ($car) => mb_strtolower(trim($car->merk . '|' . $car->model . '|' . ($car->tipe ?? '') . '|' . $car->tahun . '|' . ($car->kondisi ?? ''))))->values();
         $virtualCatalogCars = $catalogCars->filter(fn ($car) => !$car->exists);
 
         $cars = $carsQuery->paginate($perPage)->withQueryString();
@@ -143,11 +140,19 @@ class MobilController extends Controller
 
         // Kalkulasi Statistik Nyata
         $allCars = Mobil::all();
-        $totalModelKatalog = $allCatalogModels->count();
+        $uniqueCatalogModels = $allCatalogModels
+            ->groupBy(fn (Mobil $car): string => mb_strtolower(trim($car->merk . '|' . $car->model . '|' . ($car->tipe ?? '') . '|' . $car->tahun . '|' . ($car->kondisi ?? ''))))
+            ->map(fn ($group) => $group->first())
+            ->values();
+        $totalModelKatalog = $uniqueCatalogModels->count();
         $modelBerinventori = $allCars->count();
         $totalUnitFisik = $allCars->filter(fn ($car) => !in_array($car->status, ['nonaktif', 'terjual'], true) && app(\App\Services\VehicleColorStockService::class)->identified($car))->count();
         $mobilTersedia = $allCars->filter(fn ($car) => $car->status === 'tersedia' && ($availability->for($car)['can_purchase'] ?? false))->count();
         $mobilTerjual = $allCars->where('status', 'terjual')->count();
+        $perluRestock = $uniqueCatalogModels->filter(function (Mobil $car): bool {
+            $stock = (int) (($car->getAttribute('availability')['stock'] ?? 0));
+            return $stock <= 3;
+        })->count();
 
         $unitReady = $mobilTersedia;
 
@@ -186,6 +191,7 @@ class MobilController extends Controller
             'terjual' => $mobilTerjual,
             'preorder' => $preorderCount,
             'stok_menipis' => $stokMenipis,
+            'perlu_restock' => $perluRestock,
             'perlu_perhatian' => $unitPerhatian,
         ];
 
@@ -229,18 +235,60 @@ class MobilController extends Controller
     }
     public function store(StoreMobilRequest $request, MobilAuditService $audit): RedirectResponse|JsonResponse
     {
-        $proof = $request->validate(['alasan_stok' => ['required', 'string', 'min:5', 'max:160'], 'bukti_stok' => ['required', 'string', 'min:5', 'max:500'], 'status' => ['required', 'in:tersedia,dalam_pemeriksaan,nonaktif']]);
-        $mobil = DB::transaction(function () use ($request, $audit, $proof) {
-            $data = app(\App\Services\CatalogVehicleIdentityService::class)->bindNewUnit($request->validated());
-            unset($data['foto']);
+        $proof = $request->validate([
+            'alasan_stok' => ['nullable', 'string', 'min:5', 'max:160'],
+            'bukti_stok' => ['nullable', 'string', 'min:5', 'max:500'],
+            'status' => ['required', 'in:tersedia,dalam_pemeriksaan,nonaktif'],
+        ]);
+        $alasanStok = $proof['alasan_stok'] ?? 'Registrasi unit & stok awal melalui Kelola Mobil';
+        $buktiStok = $proof['bukti_stok'] ?? ('REG-' . date('YmdHis'));
+
+        $mobil = DB::transaction(function () use ($request, $audit, $alasanStok, $buktiStok) {
+            $validated = $request->validated();
+            $warnaHex = $validated['warna_hex'] ?? '#ef233c';
+            $stokAwal = max(1, min(50, (int) ($validated['stok_awal'] ?? 1)));
+            $tampilDi = $validated['tampil_di'] ?? 'keduanya';
+            $angleFiles = $request->file('foto_sudut', []);
+
+            unset($validated['foto'], $validated['foto_sudut'], $validated['warna_hex'], $validated['stok_awal']);
+            $validated['tampil_di'] = $tampilDi;
+
+            $data = app(\App\Services\CatalogVehicleIdentityService::class)->bindNewUnit($validated);
             $data['sumber_mobil'] = 'dealer';
             $mobil = Mobil::create($data);
+
+            // Buat master warna + RGB hex
+            $warnaRecord = $mobil->warnaPilihan()->create([
+                'nama' => $mobil->warna,
+                'slug' => \Illuminate\Support\Str::slug($mobil->warna) ?: 'standar',
+                'hex' => $warnaHex,
+                'is_default' => true,
+                'urutan' => 1,
+            ]);
+
+            // Simpan foto per sudut (Depan, Samping, Belakang, Interior)
+            $this->storeAnglePhotos($mobil, $warnaRecord, is_array($angleFiles) ? $angleFiles : []);
+
             if ($mobil->status !== 'nonaktif') {
                 app(\App\Services\VehicleInventoryService::class)->registerPhysicalUnit($mobil);
             }
             $this->storePhotos($mobil, $request->file('foto', []));
-            app(\App\Services\VehicleInventoryService::class)->recordUnitChange($mobil, $proof['alasan_stok'], $proof['bukti_stok']);
+            app(\App\Services\VehicleInventoryService::class)->recordUnitChange($mobil, $alasanStok, $buktiStok);
             $audit->record('create', $mobil->id_mobil, 'Mobil dibuat');
+
+            // Jika stok awal > 1, daftarkan unit fisik tambahan dengan identitas unik
+            for ($i = 2; $i <= $stokAwal; $i++) {
+                $unitData = $data;
+                $unitData['kode_mobil'] = substr($data['kode_mobil'], 0, 24) . '-' . $i;
+                $unitData['nomor_rangka'] = substr($data['nomor_rangka'], 0, 94) . '-' . $i;
+                $unitData['nomor_mesin'] = substr($data['nomor_mesin'], 0, 94) . '-' . $i;
+                $extraUnit = Mobil::create($unitData);
+                if ($extraUnit->status !== 'nonaktif') {
+                    app(\App\Services\VehicleInventoryService::class)->registerPhysicalUnit($extraUnit);
+                }
+                app(\App\Services\VehicleInventoryService::class)->recordUnitChange($extraUnit, $alasanStok, $buktiStok . "-{$i}");
+            }
+
             return $mobil;
         });
 
@@ -249,7 +297,7 @@ class MobilController extends Controller
         if ($request->wantsJson() || $request->ajax()) {
             return response()->json([
                 'success' => true,
-                'message' => "Unit kendaraan {$mobil->merk} {$mobil->model} (VIN: {$mobil->nomor_rangka}) berhasil didaftarkan ke inventori.",
+                'message' => "Mobil {$mobil->merk} {$mobil->model} berhasil ditambahkan ke showroom.",
                 'mobil' => $mobil,
             ]);
         }
@@ -352,16 +400,46 @@ class MobilController extends Controller
     }
     public function update(UpdateMobilRequest $request, Mobil $mobil, MobilAuditService $audit): RedirectResponse|JsonResponse
     {
-        $proof = $request->validate(['alasan_stok' => ['required', 'string', 'min:5', 'max:160'], 'bukti_stok' => ['required', 'string', 'min:5', 'max:500']]);
-        DB::transaction(function () use ($request, $mobil, $audit, $proof) {
+        $proof = $request->validate([
+            'alasan_stok' => ['nullable', 'string', 'min:5', 'max:160'],
+            'bukti_stok' => ['nullable', 'string', 'min:5', 'max:500'],
+        ]);
+        $alasanStok = $proof['alasan_stok'] ?? 'Pembaruan data kendaraan melalui Kelola Mobil';
+        $buktiStok = $proof['bukti_stok'] ?? ('UPD-' . date('YmdHis'));
+
+        DB::transaction(function () use ($request, $mobil, $audit, $alasanStok, $buktiStok) {
             $mobil = Mobil::lockForUpdate()->findOrFail($mobil->getKey());
             $before = $mobil->only(['warna', 'nomor_rangka', 'nomor_mesin', 'status']);
-            $data = app(\App\Services\CatalogVehicleIdentityService::class)->validateExisting($mobil, $request->validated());
+            $validated = $request->validated();
+            $warnaHex = $validated['warna_hex'] ?? null;
+            $angleFiles = $request->file('foto_sudut', []);
+            unset($validated['foto_sudut'], $validated['warna_hex'], $validated['stok_awal']);
+
+            $data = app(\App\Services\CatalogVehicleIdentityService::class)->validateExisting($mobil, $validated);
             unset($data['foto'], $data['sumber_mobil']);
             try { app(\App\Services\VehicleInventoryService::class)->assertEditable($mobil, $data); }
             catch (\RuntimeException $e) { throw \Illuminate\Validation\ValidationException::withMessages(['status' => $e->getMessage()]); }
             $mobil->update($data);
-            app(\App\Services\VehicleInventoryService::class)->recordUnitChange($mobil, $proof['alasan_stok'], $proof['bukti_stok'], $before);
+
+            // Sinkronkan warna & RGB hex serta foto sudut jika ada
+            $warnaSlug = \Illuminate\Support\Str::slug($mobil->warna) ?: 'standar';
+            $warnaRecord = $mobil->warnaPilihan()->where('slug', $warnaSlug)->orWhere('nama', $mobil->warna)->first();
+            if (!$warnaRecord) {
+                $warnaRecord = $mobil->warnaPilihan()->create([
+                    'nama' => $mobil->warna,
+                    'slug' => $warnaSlug,
+                    'hex' => $warnaHex ?: '#ef233c',
+                    'is_default' => !$mobil->warnaPilihan()->exists(),
+                    'urutan' => (int) $mobil->warnaPilihan()->max('urutan') + 1,
+                ]);
+            } elseif ($warnaHex) {
+                $warnaRecord->update(['hex' => $warnaHex]);
+            }
+            if (is_array($angleFiles) && !empty($angleFiles)) {
+                $this->storeAnglePhotos($mobil, $warnaRecord, $angleFiles);
+            }
+
+            app(\App\Services\VehicleInventoryService::class)->recordUnitChange($mobil, $alasanStok, $buktiStok, $before);
             $this->storePhotos($mobil, $request->file('foto', []));
             $audit->record('update', $mobil->id_mobil, 'Mobil diperbarui');
         });
@@ -402,6 +480,32 @@ class MobilController extends Controller
             ]);
         }
         return back()->with('success', 'Mobil dinonaktifkan.');
+    }
+
+    private function storeAnglePhotos(Mobil $mobil, \App\Models\MobilWarna $warna, array $angleFiles): void
+    {
+        $allowedAngles = ['front' => 1, 'side' => 2, 'rear' => 3, 'interior' => 4];
+        $dirRel = "assets/images/vehicles/unit-{$mobil->id_mobil}";
+        $dirAbs = public_path($dirRel);
+        if (!is_dir($dirAbs)) {
+            @mkdir($dirAbs, 0755, true);
+        }
+
+        foreach ($allowedAngles as $angle => $order) {
+            $file = $angleFiles[$angle] ?? null;
+            if (!$file instanceof UploadedFile) {
+                continue;
+            }
+            $ext = strtolower($file->extension() ?: 'png');
+            $filename = "{$angle}.{$ext}";
+            $file->move($dirAbs, $filename);
+            $relPath = "{$dirRel}/{$filename}";
+
+            $warna->galeri()->updateOrCreate(
+                ['sudut' => $angle],
+                ['path' => $relPath, 'urutan' => $order]
+            );
+        }
     }
 
     private function storePhotos(Mobil $mobil, array $files): void

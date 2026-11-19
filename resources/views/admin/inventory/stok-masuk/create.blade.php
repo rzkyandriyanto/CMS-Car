@@ -6,6 +6,9 @@
 @section('content')
 <div class="admin-stok-masuk-create">
     <style>
+        .admin-content:has(> .admin-stok-masuk-create) > .admin-page-heading {
+            display: none !important;
+        }
         .admin-stok-masuk-create {
             display: flex;
             flex-direction: column;

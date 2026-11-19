@@ -46,22 +46,22 @@
     @endif
 
     <section class="pdi-kpis" aria-label="Ringkasan PDI Kendaraan Baru">
-        <a href="{{ $indexRoute }}" class="pdi-kpi {{ $pdiFilter === '' ? 'is-active' : '' }}">
+        <div class="pdi-kpi">
             <span class="pdi-kpi-label">Total Unit Masuk PDI</span>
             <strong class="pdi-kpi-value">{{ number_format($stats['total'] ?? 0) }}</strong>
-        </a>
-        <a href="{{ $indexRoute }}?pdi_status=pending" class="pdi-kpi {{ $pdiFilter === 'pending' ? 'is-active' : '' }}">
+        </div>
+        <div class="pdi-kpi">
             <span class="pdi-kpi-label">Menunggu / Proses PDI</span>
             <strong class="pdi-kpi-value is-amber">{{ number_format($stats['pending'] ?? 0) }}</strong>
-        </a>
-        <a href="{{ $indexRoute }}?pdi_status=lulus" class="pdi-kpi {{ $pdiFilter === 'lulus' ? 'is-active' : '' }}">
+        </div>
+        <div class="pdi-kpi">
             <span class="pdi-kpi-label">Lulus PDI</span>
             <strong class="pdi-kpi-value is-emerald">{{ number_format($stats['lulus'] ?? 0) }}</strong>
-        </a>
-        <a href="{{ $indexRoute }}?pdi_status=perlu_perbaikan" class="pdi-kpi {{ $pdiFilter === 'perlu_perbaikan' ? 'is-active' : '' }}">
+        </div>
+        <div class="pdi-kpi">
             <span class="pdi-kpi-label">Perlu Perbaikan</span>
             <strong class="pdi-kpi-value is-crimson">{{ number_format($stats['perlu_perbaikan'] ?? 0) }}</strong>
-        </a>
+        </div>
     </section>
 
     <section class="pdi-panel">

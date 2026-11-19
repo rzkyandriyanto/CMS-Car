@@ -66,7 +66,13 @@ use Illuminate\Support\Facades\Route;
 use App\Models\Mobil;
 
 Route::get('/', function () {
-    $cars = Mobil::query()->whereIn('status', ['tersedia', 'dibooking'])->with('foto')->orderByDesc('id_mobil')->limit(6)->get();
+    $cars = Mobil::query()
+        ->whereIn('status', ['tersedia', 'dibooking'])
+        ->where(fn ($q) => $q->whereNull('tampil_di')->orWhereIn('tampil_di', ['keduanya', 'landing_only']))
+        ->with('foto')
+        ->orderByDesc('id_mobil')
+        ->limit(6)
+        ->get();
     $featuredHeroCar = Mobil::query()->where('kode_mobil', 'YZA-TOYOTA-GR-SUPRA-2024')->whereIn('status', ['tersedia', 'dibooking'])->with('foto')->first();
     $featuredCars = app(PublicMobilController::class)->sportShowcases()->map(function (Mobil $vehicle): array {
         return [
@@ -122,7 +128,7 @@ Route::post('/payment/midtrans/notification', [MidtransController::class, 'notif
 
 Route::middleware('auth')->group(function (): void {
     Route::get('/staff/dashboard', RoleDashboardController::class)
-        ->middleware(['role:owner,sales,service_advisor,mechanic,warehouse_staff,finance,operational_staff,quality_control'])
+        ->middleware(['role:owner,sales,service_advisor,mechanic,warehouse_staff,finance,operational_staff,quality_control,car_wash_staff'])
         ->name('staff.dashboard');
     Route::middleware(['role:owner,super_admin', 'permission:reports.view'])->prefix('owner')->name('owner.')->group(function (): void {
         Route::get('dashboard', [OwnerDashboardController::class, 'dashboard'])->name('dashboard');
@@ -253,7 +259,7 @@ Route::middleware('auth')->group(function (): void {
     });
 });
 
-Route::middleware(['auth', 'role:admin,super_admin,owner,sales,service_advisor,mechanic,warehouse_staff,finance,operational_staff,quality_control', 'module.access'])->prefix('admin')->name('admin.')->group(function (): void {
+Route::middleware(['auth', 'role:admin,super_admin,owner,sales,service_advisor,mechanic,warehouse_staff,finance,operational_staff,quality_control,car_wash_staff', 'module.access'])->prefix('admin')->name('admin.')->group(function (): void {
     Route::get('aktivitas', [AdminWorkspaceController::class, 'activity'])->name('aktivitas.index');
     Route::get('katalog-showroom', [AdminWorkspaceController::class, 'catalog'])->name('katalog-showroom.index');
     Route::get('pdi', [AdminAuxiliaryController::class, 'ordersWorkflow'])->defaults('workflow', 'pdi')->name('pdi.index');
@@ -263,6 +269,8 @@ Route::middleware(['auth', 'role:admin,super_admin,owner,sales,service_advisor,m
     Route::get('invoice', [AdminAuxiliaryController::class, 'transactions'])->defaults('invoice_mode', true)->name('invoices.index');
     Route::get('garage', [AdminAuxiliaryController::class, 'garage'])->name('garage.index');
     Route::get('roles-permissions', [AdminAuxiliaryController::class, 'roles'])->name('roles.index');
+    Route::post('roles-permissions', [AdminAuxiliaryController::class, 'storeRole'])->name('roles.store');
+    Route::put('roles-permissions/{role}', [AdminAuxiliaryController::class, 'updateRolePermissions'])->name('roles.update');
     Route::get('audit-log', [AdminAuxiliaryController::class, 'auditLog'])->name('audit-log.index');
     Route::get('audit-log/export', [AdminAuxiliaryController::class, 'auditLogExport'])->name('audit-log.export');
     Route::get('keuangan', [PaymentManagementController::class, 'index'])->name('finance-dashboard.index');

@@ -209,6 +209,12 @@
                             <small style="color:#9aa1ab; font-size:11px;">Pemeriksaan mutu servis &amp; PDI</small>
                         </div>
 
+                        <div class="role-card-item" style="padding:12px 14px;" onclick="selectRoleAndLogin('cuci506', 'cuci506', this)">
+                            <div class="role-card-top"><span class="role-badge role-badge--service">CUCI</span><span class="role-cred-tag">cuci506</span></div>
+                            <strong style="color:#fff; font-size:13px;">Petugas Cuci Mobil</strong>
+                            <small style="color:#9aa1ab; font-size:11px;">Antrean &amp; operasional booking cuci mobil</small>
+                        </div>
+
                         <div class="role-card-item" style="padding:12px 14px;" onclick="selectRoleAndLogin('mekanik.budi', 'mekanik123', this)">
                             <div class="role-card-top"><span class="role-badge role-badge--service">MEKANIK</span><span class="role-cred-tag">mekanik.budi</span></div>
                             <strong style="color:#fff; font-size:13px;">Budi Santoso</strong>

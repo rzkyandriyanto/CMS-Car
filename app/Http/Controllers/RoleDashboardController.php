@@ -2,7 +2,7 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\{BookingServis, Mobil, Pembayaran, Pelanggan, PesananMobilMember, Servis, Transaksi};
+use App\Models\{BookingCuci, BookingServis, Mobil, Pembayaran, Pelanggan, PesananMobilMember, Servis, Transaksi};
 use Illuminate\Http\Request;
 use Illuminate\View\View;
 
@@ -39,6 +39,11 @@ class RoleDashboardController extends Controller
             ],
             'quality_control' => [
                 ['label' => 'Work Order', 'value' => Servis::whereIn('status', ['pemeriksaan', 'dikerjakan'])->count(), 'hint' => 'Menunggu proses QC'],
+            ],
+            'car_wash_staff' => [
+                ['label' => 'Antrean Cuci', 'value' => BookingCuci::whereIn('status', ['menunggu', 'diterima'])->count(), 'hint' => 'Menunggu proses pencucian'],
+                ['label' => 'Sedang Dicuci', 'value' => BookingCuci::where('status', 'proses')->count(), 'hint' => 'Unit sedang dikerjakan'],
+                ['label' => 'Selesai Cuci', 'value' => BookingCuci::where('status', 'selesai')->count(), 'hint' => 'Pencucian selesai'],
             ],
             default => [
                 ['label' => 'Pesanan Mobil', 'value' => PesananMobilMember::count(), 'hint' => 'Order member'],

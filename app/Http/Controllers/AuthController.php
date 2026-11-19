@@ -168,9 +168,17 @@ class AuthController extends Controller
         User::query()->whereKey($user->getKey())->update(['last_login' => now()]);
 
         $targetRoute = $this->dashboardRoute($user->roleName());
-        $intended = $request->session()->get('url.intended');
-        if ($intended && !in_array($intended, [url('/'), url('/login'), url('/petugas/login'), url('/admin/login')], true)) {
-            return redirect()->intended(route($targetRoute));
+        $intended = (string) $request->session()->pull('url.intended', '');
+        $intendedPath = (string) parse_url($intended, PHP_URL_PATH);
+        $isSafeStaffIntended = $intended !== ''
+            && $intendedPath !== '/'
+            && !Str::startsWith($intendedPath, ['/pelanggan', '/login', '/petugas/login', '/admin/login'])
+            && (Str::startsWith($intendedPath, ['/admin', '/petugas', '/staff'])
+                || ($user->roleKey() === 'owner' && Str::startsWith($intendedPath, '/owner'))
+                || ($user->roleKey() === 'sales' && Str::startsWith($intendedPath, '/sales')));
+
+        if ($isSafeStaffIntended) {
+            return redirect()->to($intended);
         }
 
         return redirect()->route($targetRoute);
@@ -196,9 +204,9 @@ class AuthController extends Controller
     {
         return match ($role) {
             'admin', 'super_admin' => 'admin.dashboard',
-            'admin', 'super_admin' => 'admin.dashboard',
             'sales' => 'sales.dashboard',
             'owner' => 'owner.dashboard',
+            'car_wash_staff' => 'staff.dashboard',
             'petugas' => 'petugas.dashboard',
             'pelanggan' => 'pelanggan.member',
             default => 'petugas.dashboard',

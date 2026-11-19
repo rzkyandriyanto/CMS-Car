@@ -39,15 +39,28 @@
             justify-content: space-between;
             align-items: flex-start;
             border-bottom: 2px solid #0f172a;
-            padding-bottom: 28px;
-            margin-bottom: 28px;
-            flex-wrap: wrap;
-            gap: 20px;
+            padding-bottom: 24px;
+            margin-bottom: 24px;
+            flex-wrap: nowrap;
+            gap: 16px;
+        }
+        .inv-brand {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            min-width: 0;
+            flex: 1 1 auto;
+        }
+        .inv-brand-logo {
+            width: 56px;
+            height: 56px;
+            object-fit: contain;
+            flex-shrink: 0;
         }
         .inv-brand h1 {
-            font-size: 28px;
+            font-size: 22px;
             font-weight: 900;
-            letter-spacing: -0.03em;
+            letter-spacing: -0.02em;
             margin: 0;
             color: #0f172a;
             text-transform: uppercase;
@@ -56,20 +69,22 @@
             color: #ef1b2d;
         }
         .inv-brand p {
-            font-size: 12px;
+            font-size: 11.5px;
             color: #64748b;
-            margin: 6px 0 0;
-            line-height: 1.6;
+            margin: 4px 0 0;
+            line-height: 1.5;
         }
         .inv-meta-right {
             text-align: right;
+            flex-shrink: 0;
         }
         .inv-badge-title {
-            font-size: 22px;
+            font-size: 18px;
             font-weight: 800;
             color: #0f172a;
-            letter-spacing: 0.06em;
+            letter-spacing: 0.04em;
             text-transform: uppercase;
+            white-space: nowrap;
         }
         .inv-code {
             font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
@@ -233,6 +248,7 @@
         }
         @media (max-width: 640px) {
             .invoice-paper { padding: 26px 20px; }
+            .inv-header { flex-wrap: wrap; }
             .inv-grid-info { grid-template-columns: 1fr; }
             .inv-meta-right { text-align: left; }
             .inv-summary-table { width: 100%; }
@@ -254,12 +270,15 @@
         <!-- Header & Kop Perusahaan -->
         <header class="inv-header">
             <div class="inv-brand">
-                <h1>YZA <span>AUTOMOTIVE</span></h1>
-                <p>
-                    Authorized Workshop & Certified Pre-Owned Dealership<br>
-                    Jl. Veteran Otomotif No. 506, Jakarta Selatan<br>
-                    Layanan Kasir: (021) 8899-7700 · Email: finance@yza-automotive.com
-                </p>
+                <img src="{{ asset('assets/images/branding/logo-yza.png') }}" alt="YZA Automotive" class="inv-brand-logo">
+                <div>
+                    <h1>YZA <span>AUTOMOTIVE</span></h1>
+                    <p>
+                        Authorized Workshop & Certified Pre-Owned Dealership<br>
+                        Jl. Veteran Otomotif No. 506, Jakarta Selatan<br>
+                        Layanan Kasir: (021) 8899-7700 · Email: finance@yza-automotive.com
+                    </p>
+                </div>
             </div>
             <div class="inv-meta-right">
                 <div class="inv-badge-title">INVOICE FAKTUR SERVIS</div>
@@ -341,17 +360,22 @@
             $paid = (float)$transaksi->pembayarans->where('status', 'terverifikasi')->sum('jumlah_bayar');
             $remaining = max(0, (float)$transaksi->total - $paid);
             $isPaid = $remaining <= 0 || $transaksi->status === 'lunas';
+            $awardedPoints = (int) \App\Models\RiwayatPoin::where('id_transaksi', $transaksi->id_transaksi)->where('perubahan_poin', '>', 0)->sum('perubahan_poin');
+            $estimatedPoints = app(\App\Services\YzaPointService::class)->calculate((string) $transaksi->total, $transaksi->jenis_transaksi);
         @endphp
         <div class="inv-summary-wrap">
             <div>
-                <!-- Clean Typography Stamp -->
-                <div class="inv-stamp {{ $isPaid ? 'stamp-paid' : 'stamp-unpaid' }}">
-                    <span>{{ $isPaid ? '✓ LUNAS · FULLY PAID' : 'BELUM LUNAS · UNPAID' }}</span>
-                </div>
-
-                <div style="margin-top:16px; font-size:12px; color:#64748b; max-width:340px; line-height:1.6;">
-                    Terima kasih atas kepercayaan Anda mempercayakan perawatan unit kendaraan di <strong>YZA Automotive</strong>. Seluruh pekerjaan jasa perbaikan dan penggantian suku cadang asli dijamin dengan garansi operasional 14 hari kerja.
-                </div>
+                @if($awardedPoints > 0 || $estimatedPoints > 0)
+                    <div style="padding:12px 14px; border-radius:10px; background:#f8fafc; border:1px solid #e2e8f0; max-width:340px; font-size:12px;">
+                        @if($awardedPoints > 0)
+                            <strong style="color:#047857;">YZA Points Didapat: +{{ number_format($awardedPoints, 0, ',', '.') }} Poin</strong><br>
+                            <small style="color:#475569;">Poin telah dikreditkan ke saldo YZA Points member.</small>
+                        @else
+                            <strong style="color:#0f172a;">Estimasi YZA Points: +{{ number_format($estimatedPoints, 0, ',', '.') }} Poin</strong><br>
+                            <small style="color:#64748b;">Poin akan dikreditkan setelah transaksi berstatus Lunas.</small>
+                        @endif
+                    </div>
+                @endif
             </div>
 
             <div>
@@ -383,21 +407,6 @@
                 </table>
             </div>
         </div>
-
-        <!-- Riwayat Pembayaran -->
-        @if($transaksi->pembayarans->isNotEmpty())
-            <div style="margin-top:28px; padding-top:18px; border-top:1px dashed #e2e8f0;">
-                <small style="font-weight:800; text-transform:uppercase; font-size:11px; color:#64748b; display:block; margin-bottom:8px;">Histori Pembayaran Diterima:</small>
-                <div style="display:grid; gap:8px; font-size:12px;">
-                    @foreach($transaksi->pembayarans as $p)
-                        <div style="display:flex; justify-content:space-between; background:#f8fafc; padding:10px 14px; border-radius:10px;">
-                            <span>{{ $p->created_at?->format('d/m/Y H:i') }} · <strong>{{ strtoupper(str_replace('_',' ',$p->metode_pembayaran ?: 'Tunai')) }}</strong></span>
-                            <span>Status: <strong>{{ ucfirst($p->status) }}</strong> · <strong style="color:#059669; font-family:ui-monospace, monospace;">Rp {{ number_format((float)$p->jumlah_bayar, 0, ',', '.') }}</strong></span>
-                        </div>
-                    @endforeach
-                </div>
-            </div>
-        @endif
 
         <!-- Footer & Signatures -->
         <footer class="inv-footer">

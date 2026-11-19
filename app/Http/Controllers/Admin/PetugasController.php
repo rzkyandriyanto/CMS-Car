@@ -6,6 +6,7 @@ use App\Http\Requests\UpdatePetugasRequest;
 use App\Models\Petugas;
 use App\Models\Role;
 use App\Services\MasterAuditService;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -20,7 +21,7 @@ class PetugasController extends Controller
   $status = trim((string) $request->query('status'));
   $perPage = (int) $request->query('per_page', 5);
   $perPage = in_array($perPage, [5, 10, 20], true) ? $perPage : 5;
-  $query = Petugas::with('user')
+  $query = Petugas::with('user.role')
    ->withMax('confirmedBookings as latest_booking_at', 'created_at')
    ->withMax('testDrives as latest_test_drive_at', 'created_at')
    ->withMax('bookingCuci as latest_booking_cuci_at', 'created_at')
@@ -75,12 +76,40 @@ class PetugasController extends Controller
    'jabatanOptions' => Petugas::whereNotNull('jabatan')->where('jabatan', '<>', '')->distinct()->orderBy('jabatan')->pluck('jabatan'),
    'metrics' => $metrics,
    'distribution' => $distribution,
+   'roles' => Role::where('nama_role', '<>', 'pelanggan')->orderBy('nama_role')->get(),
   ]);
  }
  public function create(): View { return view('admin.petugas.create',['item'=>new Petugas]); }
- public function store(StorePetugasRequest $request, MasterAuditService $audit): RedirectResponse { $data=$request->validated(); $p=DB::transaction(function()use($data,$audit){$rid=Role::where('nama_role','petugas')->value('id_role');abort_unless($rid,422);$uid=DB::table('users')->insertGetId(['id_role'=>$rid,'username'=>$data['username'],'email'=>$data['email'],'password'=>Hash::make($data['password']),'status'=>'aktif','created_at'=>now(),'updated_at'=>now()], 'id_user');$pid=DB::table('petugas')->insertGetId(['id_user'=>$uid,'kode_petugas'=>'PTG-'.now()->format('Ym').'-'.strtoupper(bin2hex(random_bytes(3))),'nama_lengkap'=>$data['nama_lengkap'],'no_hp'=>$data['no_hp'],'alamat'=>$data['alamat']??null,'jabatan'=>$data['jabatan'],'status'=>'aktif','created_at'=>now(),'updated_at'=>now()], 'id_petugas');$audit->record('create','petugas',$pid,'Admin membuat petugas');return $pid;}); return redirect()->route('admin.petugas.show',$p)->with('success','Petugas berhasil ditambahkan.'); }
+ public function store(StorePetugasRequest $request, MasterAuditService $audit): RedirectResponse|JsonResponse {
+  $data=$request->validated();
+  $p=DB::transaction(function()use($data,$audit){
+   $rid=$data['id_role'] ?? Role::where('nama_role','petugas')->value('id_role');
+   abort_unless($rid,422);
+   $uid=DB::table('users')->insertGetId(['id_role'=>$rid,'username'=>$data['username'],'email'=>$data['email'],'password'=>Hash::make($data['password']),'status'=>'aktif','created_at'=>now(),'updated_at'=>now()], 'id_user');
+   $pid=DB::table('petugas')->insertGetId(['id_user'=>$uid,'kode_petugas'=>'PTG-'.now()->format('Ym').'-'.strtoupper(bin2hex(random_bytes(3))),'nama_lengkap'=>$data['nama_lengkap'],'no_hp'=>$data['no_hp'],'alamat'=>$data['alamat']??null,'jabatan'=>$data['jabatan'],'status'=>'aktif','created_at'=>now(),'updated_at'=>now()], 'id_petugas');
+   $audit->record('create','petugas',$pid,'Admin membuat petugas');
+   return $pid;
+  });
+  if ($request->wantsJson() || $request->ajax()) {
+   return response()->json(['success'=>true,'message'=>'Petugas berhasil ditambahkan.']);
+  }
+  return redirect()->route('admin.petugas.show',$p)->with('success','Petugas berhasil ditambahkan.');
+ }
  public function show(Petugas $petugas): View { return view('admin.petugas.show',['item'=>$petugas->load('user')]); }
  public function edit(Petugas $petugas): View { return view('admin.petugas.edit',['item'=>$petugas->load('user')]); }
- public function update(UpdatePetugasRequest $request, Petugas $petugas, MasterAuditService $audit): RedirectResponse { $data=$request->validated();DB::transaction(function()use($data,$petugas,$audit){$petugas->user->update(['username'=>$data['username'],'email'=>$data['email']]);$petugas->update(['nama_lengkap'=>$data['nama_lengkap'],'no_hp'=>$data['no_hp']??null,'alamat'=>$data['alamat']??null,'jabatan'=>$data['jabatan']]);$audit->record('update','petugas',$petugas->id_petugas,'Admin mengubah petugas');});return redirect()->route('admin.petugas.show',$petugas)->with('success','Petugas berhasil diperbarui.'); }
+ public function update(UpdatePetugasRequest $request, Petugas $petugas, MasterAuditService $audit): RedirectResponse|JsonResponse {
+  $data=$request->validated();
+  DB::transaction(function()use($data,$petugas,$audit){
+   $userPayload=['username'=>$data['username'],'email'=>$data['email']];
+   if (!empty($data['id_role'])) { $userPayload['id_role']=(int)$data['id_role']; }
+   $petugas->user->update($userPayload);
+   $petugas->update(['nama_lengkap'=>$data['nama_lengkap'],'no_hp'=>$data['no_hp']??null,'alamat'=>$data['alamat']??null,'jabatan'=>$data['jabatan']]);
+   $audit->record('update','petugas',$petugas->id_petugas,'Admin mengubah petugas');
+  });
+  if ($request->wantsJson() || $request->ajax()) {
+   return response()->json(['success'=>true,'message'=>'Petugas berhasil diperbarui.']);
+  }
+  return redirect()->route('admin.petugas.show',$petugas)->with('success','Petugas berhasil diperbarui.');
+ }
  public function toggle(Petugas $petugas, MasterAuditService $audit): RedirectResponse { DB::transaction(function()use($petugas,$audit){$target=$petugas->status==='aktif'?'nonaktif':'aktif';$petugas->update(['status'=>$target]);$petugas->user?->update(['status'=>$target]);$audit->record('status','petugas',$petugas->id_petugas,'Status petugas menjadi '.$target);});return back()->with('success','Status petugas diperbarui.'); }
 }

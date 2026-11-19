@@ -49,7 +49,7 @@
     @endif
 
     <section class="mwo-kpis" aria-label="Ringkasan work order">
-        <a href="{{ $indexRoute }}" class="mwo-kpi {{ $activeStatus === '' ? 'is-active' : '' }}">
+        <div class="mwo-kpi">
             <div class="mwo-kpi-body">
                 <span class="mwo-kpi-label">Total Work Order</span>
                 <strong class="mwo-kpi-value">{{ number_format($totalWo) }}</strong>
@@ -59,9 +59,9 @@
                     <rect x="8" y="2" width="8" height="4" rx="1"/><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><path d="M12 11h4"/><path d="M12 16h4"/><path d="M8 11h.01"/><path d="M8 16h.01"/>
                 </svg>
             </span>
-        </a>
+        </div>
 
-        <a href="{{ $indexRoute }}?status=pemeriksaan" class="mwo-kpi {{ $activeStatus === 'pemeriksaan' ? 'is-active' : '' }}">
+        <div class="mwo-kpi">
             <div class="mwo-kpi-body">
                 <span class="mwo-kpi-label">Diagnosis &amp; Inspeksi</span>
                 <strong class="mwo-kpi-value is-amber">{{ number_format($inspectionCount) }}</strong>
@@ -71,9 +71,9 @@
                     <circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/>
                 </svg>
             </span>
-        </a>
+        </div>
 
-        <a href="{{ $indexRoute }}?status=dikerjakan" class="mwo-kpi {{ $activeStatus === 'dikerjakan' ? 'is-active' : '' }}">
+        <div class="mwo-kpi">
             <div class="mwo-kpi-body">
                 <span class="mwo-kpi-label">Sedang Dikerjakan</span>
                 <strong class="mwo-kpi-value is-blue">{{ number_format($workingCount) }}</strong>
@@ -83,9 +83,9 @@
                     <path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/>
                 </svg>
             </span>
-        </a>
+        </div>
 
-        <a href="{{ $indexRoute }}?status=selesai" class="mwo-kpi {{ $activeStatus === 'selesai' ? 'is-active' : '' }}">
+        <div class="mwo-kpi">
             <div class="mwo-kpi-body">
                 <span class="mwo-kpi-label">Selesai Servis</span>
                 <strong class="mwo-kpi-value is-emerald">{{ number_format($doneCount) }}</strong>
@@ -95,7 +95,7 @@
                     <path d="M20 6 9 17l-5-5"/>
                 </svg>
             </span>
-        </a>
+        </div>
     </section>
 
     <section class="mwo-panel">

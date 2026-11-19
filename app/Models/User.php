@@ -77,6 +77,7 @@ class User extends Authenticatable
         'finance',
         'operational_staff',
         'quality_control',
+        'car_wash_staff',
         'sales',
     ];
 

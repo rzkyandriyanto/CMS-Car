@@ -57,6 +57,7 @@ class AdminNavigation
             'super_admin' => 'Super Admin', 'owner' => 'Owner', 'sales' => 'Sales',
             'service_advisor' => 'Service Advisor', 'mechanic' => 'Mekanik', 'warehouse_staff' => 'Staf Gudang',
             'finance' => 'Finance', 'operational_staff' => 'Staf Operasional', 'quality_control' => 'Quality Control',
+            'car_wash_staff' => 'Petugas Cuci Mobil',
             'pelanggan' => 'Member', default => Str::headline($role),
         };
     }

@@ -57,6 +57,10 @@
     foreach (($washBookings ?? collect()) as $w) {
         $st = strtolower((string) $w->status);
         $meta = $statusMap[$st] ?? ['label' => ucfirst($st), 'tone' => 'slate', 'group' => 'active'];
+        $needsPayment = $st === 'selesai' && $w->transaksi && $w->transaksi->status !== 'lunas';
+        if ($needsPayment) {
+            $meta = ['label' => 'Menunggu Pembayaran', 'tone' => 'amber', 'group' => 'active'];
+        }
         $pkgPrice = (float) ($w->paket?->harga ?? 0);
         $txTotal = $w->transaksi?->total !== null ? (float) $w->transaksi->total : $pkgPrice;
         $dateObj = $w->tanggal ? \Illuminate\Support\Carbon::parse($w->tanggal) : null;
@@ -77,6 +81,8 @@
             'tone' => $meta['tone'],
             'group' => $meta['group'],
             'detail_url' => route('pelanggan.booking-cuci.index', ['detail' => $w->getKey()]),
+            'needs_payment' => $needsPayment,
+            'pay_url' => $needsPayment ? route('pelanggan.midtrans.create', $w->transaksi) : null,
             'can_cancel' => in_array($st, ['menunggu', 'diterima'], true),
             'cancel_url' => route('pelanggan.booking-cuci.cancel', $w),
         ]);
@@ -149,16 +155,9 @@
 .bk-kpi small{color:#64748b;font-size:12px;font-weight:600;text-transform:none!important;letter-spacing:0!important}
 
 /* Filter & Search Bar */
-.bk-toolbar{display:flex;align-items:center;justify-content:space-between;gap:14px;flex-wrap:wrap;padding:12px 16px;border:1px solid #e2e8f0;border-radius:16px;background:#fff}
-.bk-tabs{display:flex;align-items:center;gap:6px;flex-wrap:wrap}
-.bk-tab{display:inline-flex;align-items:center;gap:7px;height:36px;min-height:36px!important;padding:0 14px;border:1px solid #e2e8f0;border-radius:999px;background:#f8fafc;color:#475569;font-size:12.5px!important;font-weight:700!important;cursor:pointer;transition:all .15s}
-.bk-tab:hover{border-color:#cbd5e1;color:#0f172a}
-.bk-tab.is-active{border-color:#0f172a;background:#0f172a;color:#fff}
-.bk-tab-cnt{display:inline-grid;place-items:center;min-width:20px;height:20px;padding:0 6px;border-radius:999px;background:rgba(15,23,42,.08);color:inherit;font-size:11px;font-weight:800}
-.bk-tab.is-active .bk-tab-cnt{background:rgba(255,255,255,.2)}
-.bk-tools-right{display:flex;align-items:center;gap:10px;flex:1 1 280px;justify-content:flex-end;flex-wrap:wrap}
+.bk-toolbar{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;padding:12px 16px;border:1px solid #e2e8f0;border-radius:16px;background:#fff}
 .bk-select{height:38px!important;min-height:38px!important;width:auto!important;padding:0 14px!important;border:1px solid #e2e8f0!important;border-radius:10px!important;background:#f8fafc!important;color:#0f172a!important;font-size:12.5px!important;font-weight:700!important;cursor:pointer}
-.bk-search-wrap{position:relative;flex:1 1 220px;max-width:300px}
+.bk-search-wrap{position:relative;flex:1 1 320px}
 .bk-search{width:100%!important;height:38px!important;min-height:38px!important;padding:0 14px 0 36px!important;border:1px solid #e2e8f0!important;border-radius:10px!important;background:#f8fafc!important;color:#0f172a!important;font-size:13px!important;font-weight:500!important}
 .bk-search:focus{background:#fff!important;border-color:#0f172a!important;outline:none}
 .bk-search-ic{position:absolute;left:12px;top:50%;transform:translateY(-50%);color:#94a3b8;pointer-events:none}
@@ -194,6 +193,8 @@
 .bk-btn:hover{border-color:#0f172a!important;background:#0f172a!important;color:#fff!important}
 .bk-btn-danger,.bk-btn-danger:visited{border-color:#fecdd3!important;background:#fff!important;color:#be123c!important}
 .bk-btn-danger:hover{border-color:#e31d35!important;background:#e31d35!important;color:#fff!important}
+.bk-btn-pay{border-color:#e31d35!important;background:#e31d35!important;color:#fff!important}
+.bk-btn-pay:hover{border-color:#be123c!important;background:#be123c!important;color:#fff!important}
 
 /* Empty State */
 .bk-empty{display:grid;place-items:center;text-align:center;padding:54px 24px;border:1px dashed #cbd5e1;border-radius:18px;background:#fff}
@@ -277,24 +278,16 @@
     </section>
 
     <div class="bk-toolbar">
-        <div class="bk-tabs" role="tablist" aria-label="Filter kategori booking">
-            <button type="button" class="bk-tab is-active" data-bk-cat="all">Semua <span class="bk-tab-cnt">{{ $countAll }}</span></button>
-            <button type="button" class="bk-tab" data-bk-cat="servis">Servis <span class="bk-tab-cnt">{{ $countServis }}</span></button>
-            <button type="button" class="bk-tab" data-bk-cat="cuci">Car Wash <span class="bk-tab-cnt">{{ $countCuci }}</span></button>
-            <button type="button" class="bk-tab" data-bk-cat="mobil">Booking Mobil <span class="bk-tab-cnt">{{ $countMobil }}</span></button>
+        <div class="bk-search-wrap">
+            <svg class="bk-search-ic" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+            <input type="search" class="bk-search" data-bk-search placeholder="Cari kode, kendaraan, layanan..." aria-label="Cari booking">
         </div>
-        <div class="bk-tools-right">
-            <select class="bk-select" data-bk-status aria-label="Filter status">
-                <option value="all">Semua Status</option>
-                <option value="active">Aktif / Berjalan</option>
-                <option value="done">Selesai</option>
-                <option value="cancelled">Dibatalkan / Kadaluarsa</option>
-            </select>
-            <div class="bk-search-wrap">
-                <svg class="bk-search-ic" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
-                <input type="search" class="bk-search" data-bk-search placeholder="Cari kode, kendaraan, layanan..." aria-label="Cari booking">
-            </div>
-        </div>
+        <select class="bk-select" data-bk-status aria-label="Filter status">
+            <option value="all">Semua Status</option>
+            <option value="active">Aktif / Berjalan</option>
+            <option value="done">Selesai</option>
+            <option value="cancelled">Dibatalkan / Kadaluarsa</option>
+        </select>
     </div>
 
     <div class="bk-list" data-bk-list>
@@ -323,6 +316,12 @@
                     <span class="bk-status" data-tone="{{ $item['tone'] }}">{{ $item['status'] }}</span>
                 </div>
                 <div class="bk-col-actions">
+                    @if(!empty($item['needs_payment']) && !empty($item['pay_url']))
+                        <form method="POST" action="{{ $item['pay_url'] }}" style="display:inline;">
+                            @csrf
+                            <button type="submit" class="bk-btn bk-btn-pay">Bayar</button>
+                        </form>
+                    @endif
                     <a class="bk-btn" href="{{ $item['detail_url'] }}">Lihat Detail</a>
                     @if($item['can_cancel'])
                         <form method="post" action="{{ $item['cancel_url'] }}" data-bkc-form data-bkc-code="{{ $item['code'] }}" data-bkc-type="{{ $item['category_label'] }}">

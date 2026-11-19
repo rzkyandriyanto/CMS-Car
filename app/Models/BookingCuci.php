@@ -9,4 +9,5 @@ class BookingCuci extends Model {
  public function paket(){return $this->belongsTo(PaketCuci::class,'id_paket','id_paket');}
  public function petugas(){return $this->belongsTo(Petugas::class,'id_petugas','id_petugas');}
  public function transaksi(){return $this->belongsTo(Transaksi::class,'id_transaksi','id_transaksi');}
+ public function promo(){return $this->belongsTo(PromoMember::class,'id_promo','id_promo');}
 }

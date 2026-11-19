@@ -14,7 +14,16 @@ class MobilController extends Controller
     public function index(Request $request, VehicleAvailabilityService $availabilityService)
     {
         $galleryService = app(VehicleGalleryService::class);
-        $allCars = Mobil::query()->where('status', '!=', 'nonaktif')->with('foto')->get()->map(function (Mobil $car) use ($galleryService): Mobil {
+        $isMemberCatalog = $request->routeIs('pelanggan.katalog-mobil.index');
+        $allCars = Mobil::query()
+            ->where('status', '!=', 'nonaktif')
+            ->where(function ($q) use ($isMemberCatalog): void {
+                $allowed = $isMemberCatalog ? ['keduanya', 'member_only'] : ['keduanya', 'landing_only'];
+                $q->whereNull('tampil_di')->orWhereIn('tampil_di', $allowed);
+            })
+            ->with('foto')
+            ->get()
+            ->map(function (Mobil $car) use ($galleryService): Mobil {
             $identity = strtolower(trim($car->merk.' '.$car->model.' '.$car->tipe));
             if (str_contains($identity, 'toyota gr supra')) {
                 $car->setAttribute('showcase_slug', 'toyota-gr-supra');

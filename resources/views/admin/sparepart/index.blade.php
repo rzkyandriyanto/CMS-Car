@@ -157,9 +157,8 @@
             box-sizing: border-box;
         }
         .sparepart-kpi-card:hover {
-            transform: translateY(-1px);
-            border-color: #CBD5E1;
-            box-shadow: 0 4px 12px rgba(15, 23, 42, 0.05);
+            transform: none;
+            box-shadow: 0 2px 8px rgba(15, 23, 42, 0.03);
         }
         .kpi-card-top {
             display: flex;
@@ -219,9 +218,36 @@
         /* Content Grid */
         .sparepart-content-grid {
             display: grid;
-            grid-template-columns: minmax(0, 1fr) 292px;
+            grid-template-columns: 1fr;
             gap: 16px;
             align-items: start;
+        }
+        .sparepart-kpi-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+            gap: 12px;
+            margin-bottom: 18px;
+        }
+        .sparepart-kpi-card {
+            background: #FFFFFF;
+            border: 1px solid #E2E8F0;
+            border-radius: 12px;
+            padding: 14px 16px;
+            display: flex;
+            flex-direction: row;
+            align-items: center;
+            gap: 12px;
+            box-shadow: 0 2px 8px rgba(15, 23, 42, 0.03);
+            cursor: default;
+        }
+        .sparepart-kpi-card .kpi-icon-box {
+            width: 40px;
+            height: 40px;
+            border-radius: 10px;
+        }
+        .sparepart-kpi-card .kpi-content {
+            min-width: 0;
+            flex: 1;
         }
 
         /* Main Container Card */
@@ -773,6 +799,215 @@
             .header-action-group { width: 100%; }
             .header-action-group a { flex: 1; justify-content: center; }
         }
+        /* Card Grid (Kelola Mobil Style) */
+        .sparepart-card-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 18px;
+            padding: 20px;
+        }
+        .sparepart-card {
+            border-radius: 16px;
+            border: 1px solid #e2e8f0;
+            background: #ffffff;
+            box-shadow: 0 2px 10px rgba(15, 23, 42, 0.04);
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            transition: transform 0.18s ease, box-shadow 0.18s ease, border-color 0.18s ease;
+        }
+        .sparepart-card:hover {
+            transform: translateY(-3px);
+            border-color: #cbd5e1;
+            box-shadow: 0 12px 28px rgba(15, 23, 42, 0.08);
+        }
+        .sparepart-card-media {
+            position: relative;
+            height: 168px;
+            background: #f1f5f9;
+            overflow: hidden;
+        }
+        .sparepart-card-media img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            transition: transform 0.3s ease;
+        }
+        .sparepart-card:hover .sparepart-card-media img {
+            transform: scale(1.04);
+        }
+        .sparepart-card-placeholder {
+            width: 100%;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            color: #94a3b8;
+            font-size: 11.5px;
+            font-weight: 600;
+            background: linear-gradient(135deg, #f8fafc 0%, #eef2f6 100%);
+        }
+        .sparepart-card-gradient {
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(to top, rgba(15, 23, 42, 0.55) 0%, rgba(15, 23, 42, 0) 48%);
+            pointer-events: none;
+            z-index: 1;
+        }
+        .sparepart-card-badges {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+            z-index: 2;
+        }
+        .sparepart-card-sku {
+            position: absolute;
+            bottom: 10px;
+            left: 10px;
+            z-index: 2;
+            padding: 3px 8px;
+            border-radius: 6px;
+            background: rgba(15, 23, 42, 0.78);
+            backdrop-filter: blur(4px);
+            color: #f8fafc;
+            font-size: 10px;
+            font-weight: 700;
+            font-family: monospace;
+            letter-spacing: 0.03em;
+        }
+        .sparepart-card-body {
+            padding: 16px;
+            display: flex;
+            flex-direction: column;
+            flex: 1;
+        }
+        .sparepart-card-head {
+            margin-bottom: 10px;
+        }
+        .sparepart-card-title {
+            margin: 0;
+            font-size: 15px;
+            font-weight: 800;
+            color: #0f172a;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        .sparepart-card-sub {
+            margin: 3px 0 0;
+            font-size: 11.5px;
+            color: #64748b;
+            font-weight: 500;
+        }
+        .sparepart-card-price-row {
+            display: flex;
+            align-items: baseline;
+            justify-content: space-between;
+            gap: 8px;
+            margin-bottom: 12px;
+        }
+        .sparepart-card-price {
+            font-size: 16px;
+            font-weight: 800;
+            color: #ef233c;
+            font-variant-numeric: tabular-nums;
+        }
+        .sparepart-card-cost {
+            font-size: 11px;
+            color: #64748b;
+            font-weight: 600;
+        }
+        .sparepart-card-stock-panel {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            background: #f8fafc;
+            border: 1px solid #e2e8f0;
+            border-radius: 10px;
+            padding: 9px 12px;
+            margin-bottom: 14px;
+        }
+        .stock-panel-item {
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+        }
+        .stock-panel-item span {
+            font-size: 10px;
+            color: #64748b;
+            font-weight: 600;
+        }
+        .stock-panel-item strong {
+            font-size: 12px;
+            color: #0f172a;
+            font-weight: 800;
+        }
+        .stock-panel-sep {
+            width: 1px;
+            height: 24px;
+            background: #e2e8f0;
+        }
+        .sparepart-card-actions {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+            margin-top: auto;
+            padding-top: 12px;
+            border-top: 1px solid #f1f5f9;
+        }
+        .btn-sp-card {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            padding: 7px 11px;
+            border-radius: 8px;
+            border: 1px solid #cbd5e1;
+            background: #ffffff;
+            color: #334155;
+            font-size: 11.5px;
+            font-weight: 700;
+            white-space: nowrap;
+            cursor: pointer;
+            transition: all 0.15s ease;
+        }
+        .btn-sp-card:hover {
+            background: #f8fafc;
+            color: #0f172a;
+        }
+        .btn-sp-card.is-primary {
+            flex: 1;
+            border-color: #ef233c;
+            background: #ef233c;
+            color: #ffffff;
+        }
+        .btn-sp-card.is-primary:hover {
+            background: #d90429;
+        }
+        .btn-sp-card.is-danger {
+            color: #dc2626;
+            border-color: #fecaca;
+            background: #fef2f2;
+        }
+        .btn-sp-card.is-danger:hover {
+            background: #fee2e2;
+        }
+        .sparepart-card-empty {
+            grid-column: 1 / -1;
+            text-align: center;
+            padding: 48px 20px;
+            color: #64748b;
+        }
+        @media (max-width: 1120px) {
+            .sparepart-card-grid { grid-template-columns: repeat(2, 1fr); }
+        }
+        @media (max-width: 680px) {
+            .sparepart-card-grid { grid-template-columns: 1fr; }
+        }
     </style>
 
     {{-- Header --}}
@@ -816,7 +1051,7 @@
     {{-- 6 KPI Cards --}}
     <section class="sparepart-kpi-grid" aria-label="Statistik Sparepart & Stok">
         {{-- Card 1: Total Jenis Sparepart --}}
-        <a class="sparepart-kpi-card is-red" href="{{ route('admin.sparepart.index') }}">
+        <div class="sparepart-kpi-card is-red" style="cursor:default;">
             <div class="kpi-icon-box">
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                     <rect x="2" y="7" width="20" height="14" rx="2" ry="2"></rect>
@@ -830,10 +1065,10 @@
                     <span>Katalog suku cadang</span>
                 </div>
             </div>
-        </a>
+        </div>
 
         {{-- Card 2: Total Stok Tersedia --}}
-        <a class="sparepart-kpi-card is-green" href="{{ route('admin.inventory.stock') }}">
+        <div class="sparepart-kpi-card is-green" style="cursor:default;">
             <div class="kpi-icon-box">
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
                     <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path>
@@ -846,10 +1081,10 @@
                     <span>Unit barang siap pakai</span>
                 </div>
             </div>
-        </a>
+        </div>
 
         {{-- Card 3: Stok Menipis --}}
-        <a class="sparepart-kpi-card is-amber" href="{{ route('admin.sparepart.index', ['stok' => 'menipis']) }}">
+        <div class="sparepart-kpi-card is-amber" style="cursor:default;">
             <div class="kpi-icon-box">
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                     <path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"></path>
@@ -864,10 +1099,10 @@
                     <span>&le; batas minimum stok</span>
                 </div>
             </div>
-        </a>
+        </div>
 
         {{-- Card 4: Stok Habis --}}
-        <a class="sparepart-kpi-card is-red" href="{{ route('admin.sparepart.index', ['stok' => 'habis']) }}">
+        <div class="sparepart-kpi-card is-red" style="cursor:default;">
             <div class="kpi-icon-box">
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                     <circle cx="12" cy="12" r="10"></circle>
@@ -881,10 +1116,10 @@
                     <span>Stok = 0 (perlu restock)</span>
                 </div>
             </div>
-        </a>
+        </div>
 
         {{-- Card 5: Barang Masuk --}}
-        <a class="sparepart-kpi-card is-blue" href="{{ route('admin.stok-masuk.index') }}">
+        <div class="sparepart-kpi-card is-blue" style="cursor:default;">
             <div class="kpi-icon-box">
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                     <polyline points="7 10 12 15 17 10"></polyline>
@@ -899,10 +1134,10 @@
                     <span>Total penerimaan stok</span>
                 </div>
             </div>
-        </a>
+        </div>
 
         {{-- Card 6: Barang Dipakai Servis --}}
-        <a class="sparepart-kpi-card is-purple" href="{{ route('admin.inventory.history') }}">
+        <div class="sparepart-kpi-card is-purple" style="cursor:default;">
             <div class="kpi-icon-box">
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                     <path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"></path>
@@ -915,9 +1150,9 @@
                     <span>Suku cadang terpasang</span>
                 </div>
             </div>
-        </a>
+        </div>
 
-        <a class="sparepart-kpi-card is-amber" href="{{ route('admin.sparepart.index') }}">
+        <div class="sparepart-kpi-card is-amber" style="cursor:default;">
             <div class="kpi-icon-box">
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
                     <polyline points="20 6 9 17 4 12"></polyline>
@@ -928,7 +1163,7 @@
                 <strong class="kpi-value">{{ number_format($stats['fitment_review'] ?? 0) }}</strong>
                 <div class="kpi-subtext" style="color:#D97706;"><span>Belum punya fit terverifikasi</span></div>
             </div>
-        </a>
+        </div>
     </section>
 
     {{-- Main Container Card --}}
@@ -1019,130 +1254,108 @@
             @endif
         </form>
 
-        {{-- Table --}}
-        <div class="sparepart-table-wrapper">
-            <table class="sparepart-table">
-                <thead>
-                    <tr>
-                        <th style="width: 55px;">Foto</th>
-                        <th>Kode SKU</th>
-                        <th>Nama Barang & Merk</th>
-                        <th>Kategori</th>
-                        <th>Satuan</th>
-                        <th>Harga Beli</th>
-                        <th>Harga Jual</th>
-                        <th>Stok Fisik</th>
-                        <th>Minimum</th>
-                        <th>Status</th>
-                        <th style="text-align: right; width: 180px;">Aksi</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    @forelse($items as $item)
-                        <tr>
-                            <td>
-                                <div class="part-thumb-wrap">
-                                    @if($item->photoUrl())
-                                        <img src="{{ $item->photoUrl() }}" alt="{{ $item->nama_sparepart }}" class="part-thumb-img">
-                                    @else
-                                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#94A3B8" stroke-width="1.8"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><circle cx="8.5" cy="8.5" r="1.5"></circle><polyline points="21 15 16 10 5 21"></polyline></svg>
-                                    @endif
-                                </div>
-                            </td>
-                            <td>
-                                <span class="badge-sku">{{ $item->kode_sparepart }}</span>
-                            </td>
-                            <td>
-                                <div>
-                                    <strong style="color: #0F172A; font-size: 13.5px; display: block;">{{ $item->nama_sparepart }}</strong>
-                                    <span style="color: #64748B; font-size: 12px;">Merk: {{ $item->merk ?: '—' }}</span>
-                                </div>
-                            </td>
-                            <td>
-                                <span class="badge-category">{{ $item->kategori->nama_kategori }}</span>
-                            </td>
-                            <td>
-                                <span style="font-weight: 600; color: #475569;">{{ $item->satuan }}</span>
-                            </td>
-                            <td>
-                                <span style="color: #64748B; font-size: 12.5px;">Rp {{ number_format((float)$item->harga_beli, 0, ',', '.') }}</span>
-                            </td>
-                            <td>
-                                <strong style="color: #0F172A; font-size: 13px;">Rp {{ number_format((float)$item->harga_jual, 0, ',', '.') }}</strong>
-                            </td>
-                            <td>
-                                <div class="stock-indicator">
-                                    <span class="stock-num">{{ $item->stok }} {{ $item->satuan }}</span>
-                                    <span class="stock-tag is-{{ $item->stockLevel() }}">
-                                        {{ ucfirst($item->stockLevel()) }}
-                                    </span>
-                                </div>
-                            </td>
-                            <td>
-                                <span style="color: #64748B; font-weight: 600;">{{ $item->stok_minimum }} {{ $item->satuan }}</span>
-                            </td>
-                            <td>
-                                <span class="badge-status {{ $item->status === 'aktif' ? 'is-active' : 'is-inactive' }}">
-                                    {{ $item->status }}
-                                </span>
-                            </td>
-                            <td style="text-align: right;">
-                                @php
-                                    $itemPayload = [
-                                        'id' => $item->id_sparepart,
-                                        'kode_sparepart' => $item->kode_sparepart,
-                                        'nama_sparepart' => $item->nama_sparepart,
-                                        'merk' => $item->merk ?? '',
-                                        'id_kategori' => $item->id_kategori,
-                                        'kategori_nama' => $item->kategori?->nama_kategori ?? '—',
-                                        'id_supplier' => $item->id_supplier,
-                                        'supplier_nama' => $item->supplier?->nama_supplier ?? '—',
-                                        'nomor_part_oem' => $item->nomor_part_oem ?? '',
-                                        'nomor_part_aftermarket' => $item->nomor_part_aftermarket ?? '',
-                                        'deskripsi_spesifikasi' => $item->deskripsi_spesifikasi ?? '',
-                                        'harga_beli' => (float) $item->harga_beli,
-                                        'harga_jual' => (float) $item->harga_jual,
-                                        'stok' => (int) $item->stok,
-                                        'stok_minimum' => (int) $item->stok_minimum,
-                                        'satuan' => $item->satuan,
-                                        'status' => $item->status,
-                                        'stock_level' => $item->stockLevel(),
-                                        'photo_url' => $item->photoUrl(),
-                                        'update_url' => route('admin.sparepart.update', $item),
-                                        'show_url' => route('admin.sparepart.show', $item),
-                                    ];
-                                @endphp
-                                <script type="application/json" id="sparepart-data-{{ $item->id_sparepart }}">@json($itemPayload)</script>
-                                <div class="table-actions" style="justify-content: flex-end;">
-                                    <button type="button" class="btn-table-action" style="color:#059669; border-color:#A7F3D0; background:#ECFDF5;" onclick="openSparepartModal({{ $item->id_sparepart }}, 'stock')" title="Tambah Stok">
-                                        + Stok
-                                    </button>
-                                    <button type="button" class="btn-table-action" onclick="openSparepartModal({{ $item->id_sparepart }}, 'detail')" title="Detail">
-                                        Detail
-                                    </button>
-                                    <button type="button" class="btn-table-action" onclick="openSparepartModal({{ $item->id_sparepart }}, 'edit')" title="Edit">
-                                        Edit
-                                    </button>
-                                    <form method="post" action="{{ route('admin.sparepart.toggle', $item) }}" style="display: inline;">
-                                        @csrf
-                                        @method('PATCH')
-                                        <button type="submit" class="btn-table-action {{ $item->status === 'aktif' ? 'is-danger' : '' }}" onclick="return confirm('Apakah Anda yakin ingin mengubah status suku cadang ini?')">
-                                            {{ $item->status === 'aktif' ? 'Nonaktif' : 'Aktifkan' }}
-                                        </button>
-                                    </form>
-                                </div>
-                            </td>
-                        </tr>
-                    @empty
-                        <tr>
-                            <td colspan="11" style="text-align: center; padding: 40px 20px; color: #64748B;">
-                                <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="#94A3B8" stroke-width="1.5" style="margin-bottom: 8px;"><circle cx="12" cy="12" r="10"></circle><line x1="8" y1="12" x2="16" y2="12"></line></svg>
-                                <p style="margin: 0; font-weight: 600;">Belum ada data suku cadang yang sesuai.</p>
-                            </td>
-                        </tr>
-                    @endforelse
-                </tbody>
-            </table>
+        {{-- Card Grid 3-Kolom --}}
+        <div class="sparepart-card-grid">
+            @forelse($items as $item)
+                @php
+                    $itemPayload = [
+                        'id' => $item->id_sparepart,
+                        'kode_sparepart' => $item->kode_sparepart,
+                        'nama_sparepart' => $item->nama_sparepart,
+                        'merk' => $item->merk ?? '',
+                        'id_kategori' => $item->id_kategori,
+                        'kategori_nama' => $item->kategori?->nama_kategori ?? '—',
+                        'id_supplier' => $item->id_supplier,
+                        'supplier_nama' => $item->supplier?->nama_supplier ?? '—',
+                        'nomor_part_oem' => $item->nomor_part_oem ?? '',
+                        'nomor_part_aftermarket' => $item->nomor_part_aftermarket ?? '',
+                        'deskripsi_spesifikasi' => $item->deskripsi_spesifikasi ?? '',
+                        'harga_beli' => (float) $item->harga_beli,
+                        'harga_jual' => (float) $item->harga_jual,
+                        'stok' => (int) $item->stok,
+                        'stok_minimum' => (int) $item->stok_minimum,
+                        'satuan' => $item->satuan,
+                        'status' => $item->status,
+                        'stock_level' => $item->stockLevel(),
+                        'photo_url' => $item->photoUrl(),
+                        'update_url' => route('admin.sparepart.update', $item),
+                        'show_url' => route('admin.sparepart.show', $item),
+                    ];
+                @endphp
+                <article class="sparepart-card" id="sparepart-card-{{ $item->id_sparepart }}">
+                    <script type="application/json" id="sparepart-data-{{ $item->id_sparepart }}">@json($itemPayload)</script>
+
+                    <div class="sparepart-card-media">
+                        @if($item->photoUrl())
+                            <img src="{{ $item->photoUrl() }}" alt="{{ $item->nama_sparepart }}" loading="lazy">
+                        @else
+                            <div class="sparepart-card-placeholder">
+                                <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#94a3b8" stroke-width="1.6"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><circle cx="8.5" cy="8.5" r="1.5"></circle><polyline points="21 15 16 10 5 21"></polyline></svg>
+                                <span>Belum ada foto</span>
+                            </div>
+                        @endif
+                        <div class="sparepart-card-gradient"></div>
+                        <div class="sparepart-card-badges">
+                            <span class="badge-status {{ $item->status === 'aktif' ? 'is-active' : 'is-inactive' }}">{{ ucfirst($item->status) }}</span>
+                            <span class="stock-tag is-{{ $item->stockLevel() }}">{{ ucfirst($item->stockLevel()) }}</span>
+                        </div>
+                        <div class="sparepart-card-sku">{{ $item->kode_sparepart }}</div>
+                    </div>
+
+                    <div class="sparepart-card-body">
+                        <div class="sparepart-card-head">
+                            <h3 class="sparepart-card-title" title="{{ $item->nama_sparepart }}">{{ $item->nama_sparepart }}</h3>
+                            <p class="sparepart-card-sub">{{ $item->merk ?: 'Tanpa Merk' }} &bull; {{ $item->kategori?->nama_kategori ?? 'Umum' }}</p>
+                        </div>
+
+                        <div class="sparepart-card-price-row">
+                            <div class="sparepart-card-price">Rp {{ number_format((float)$item->harga_jual, 0, ',', '.') }}</div>
+                            <span class="sparepart-card-cost">Beli: Rp {{ number_format((float)$item->harga_beli, 0, ',', '.') }}</span>
+                        </div>
+
+                        <div class="sparepart-card-stock-panel">
+                            <div class="stock-panel-item">
+                                <span>Stok Fisik</span>
+                                <strong>{{ $item->stok }} {{ $item->satuan }}</strong>
+                            </div>
+                            <div class="stock-panel-sep"></div>
+                            <div class="stock-panel-item">
+                                <span>Batas Min.</span>
+                                <strong>{{ $item->stok_minimum }} {{ $item->satuan }}</strong>
+                            </div>
+                            <div class="stock-panel-sep"></div>
+                            <div class="stock-panel-item">
+                                <span>Satuan</span>
+                                <strong>{{ strtoupper($item->satuan) }}</strong>
+                            </div>
+                        </div>
+
+                        <div class="sparepart-card-actions">
+                            <button type="button" class="btn-sp-card is-primary" onclick="openSparepartModal({{ $item->id_sparepart }}, 'stock')" title="Tambah atau atur stok">
+                                + Stok
+                            </button>
+                            <button type="button" class="btn-sp-card" onclick="openSparepartModal({{ $item->id_sparepart }}, 'detail')" title="Detail">
+                                Detail
+                            </button>
+                            <button type="button" class="btn-sp-card" onclick="openSparepartModal({{ $item->id_sparepart }}, 'edit')" title="Edit">
+                                Edit
+                            </button>
+                            <form method="post" action="{{ route('admin.sparepart.toggle', $item) }}" style="display: inline;">
+                                @csrf
+                                @method('PATCH')
+                                <button type="submit" class="btn-sp-card {{ $item->status === 'aktif' ? 'is-danger' : '' }}" onclick="return confirm('Apakah Anda yakin ingin mengubah status suku cadang ini?')">
+                                    {{ $item->status === 'aktif' ? 'Nonaktif' : 'Aktifkan' }}
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+                </article>
+            @empty
+                <div class="sparepart-card-empty">
+                    <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="#94A3B8" stroke-width="1.5" style="margin-bottom: 8px;"><circle cx="12" cy="12" r="10"></circle><line x1="8" y1="12" x2="16" y2="12"></line></svg>
+                    <p style="margin: 0; font-weight: 600;">Belum ada data suku cadang yang sesuai.</p>
+                </div>
+            @endforelse
         </div>
 
         {{-- Pagination --}}
@@ -1150,58 +1363,6 @@
             {{ $items->onEachSide(1)->links('pagination::bootstrap-4') }}
         </div>
     </main>
-    <aside class="sparepart-analytics">
-        <section class="sparepart-analytics-card">
-            <div class="analytics-heading">
-                <div class="analytics-icon" aria-hidden="true">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"></line><line x1="12" y1="20" x2="12" y2="4"></line><line x1="6" y1="20" x2="6" y2="14"></line></svg>
-                </div>
-                <div>
-                    <h2>Distribusi Kategori</h2>
-                    <p>Jumlah SKU aktif berdasarkan kategori.</p>
-                </div>
-                <span>Lihat Semua</span>
-            </div>
-            <div class="category-list">
-                @forelse($categoryDistribution as $category)
-                    @php($categoryPercent = round(($category->active_sparepart_count / $categoryTotal) * 100))
-                    <div class="category-row"><div class="category-row-top"><span>{{ $category->nama_kategori }}</span><strong>{{ $categoryPercent }}%</strong></div><div class="category-track"><i style="width:{{ $categoryPercent }}%"></i></div><small>{{ $category->active_sparepart_count }} SKU aktif</small></div>
-                @empty
-                    <div class="analytics-empty">Belum ada kategori aktif.</div>
-                @endforelse
-            </div>
-        </section>
-        <section class="sparepart-analytics-card">
-            <div class="analytics-heading">
-                <div class="analytics-icon" aria-hidden="true">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
-                </div>
-                <div>
-                    <h2>Ringkasan Operasional</h2>
-                    <p>Informasi aktual dari aktivitas inventori.</p>
-                </div>
-            </div>
-            <div class="operational-grid">
-                <div class="operational-tile is-green">
-                    <span><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="17 11 12 6 7 11"></polyline><line x1="12" y1="18" x2="12" y2="6"></line></svg></span>
-                    <div><strong>{{ number_format($operational['restock_today']) }}</strong><small>Restock hari ini</small></div>
-                </div>
-                <div class="operational-tile is-blue">
-                    <span><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="7 13 12 18 17 13"></polyline><line x1="12" y1="6" x2="12" y2="18"></line></svg></span>
-                    <div><strong>{{ number_format($operational['goods_received']) }}</strong><small>Barang masuk</small></div>
-                </div>
-                <div class="operational-tile is-red">
-                    <span><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg></span>
-                    <div><strong>{{ number_format($operational['critical_stock']) }}</strong><small>Stok kritis</small></div>
-                </div>
-                <div class="operational-tile is-purple">
-                    <span><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"></path></svg></span>
-                    <div><strong>{{ number_format($operational['work_order_usage']) }}</strong><small>WO memakai sparepart</small></div>
-                </div>
-            </div>
-            <p class="analytics-note">Angka mengikuti riwayat stok dan status master aktual. Tidak ada perubahan stok yang dilakukan saat halaman dibuka.</p>
-        </section>
-    </aside>
     </div>
 </div>
 

@@ -63,7 +63,7 @@ class SparepartController extends Controller
                 ->when(request('compatibility') === 'without_fitment', fn($q) => $q->whereDoesntHave('fitments'))
                 ->orderByDesc('created_at')
                 ->orderByDesc('id_sparepart')
-                ->paginate(10)
+                ->paginate(9)
                 ->withQueryString(),
             'categories' => KategoriSparepart::where('status', 'aktif')->orderBy('nama_kategori')->get(),
             'suppliers' => \App\Models\Supplier::where('status', 'aktif')->orderBy('nama_supplier')->get(),

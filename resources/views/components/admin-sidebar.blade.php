@@ -1,57 +1,39 @@
 @php
     $adminSections = [
         ['title' => 'Overview', 'items' => [
-            ['label' => 'Pusat Notifikasi', 'icon' => '!', 'route' => 'admin.notifikasi.index', 'badge' => 'notifications'],
-            ['label' => 'Aktivitas & Tugas Admin', 'icon' => '◌', 'route' => 'admin.aktivitas.index'],
+            ['label' => 'Dashboard', 'route' => 'admin.dashboard'],
         ]],
-        ['title' => 'Penjualan Mobil', 'items' => [
-            ['label' => 'Pesanan Mobil', 'icon' => 'car', 'route' => 'admin.pesanan-mobil.index', 'badge' => 'orders'],
-            ['label' => 'Penjualan Mobil', 'icon' => 'car', 'route' => 'admin.penjualan-mobil.index'],
-            ['label' => 'Pre-Order', 'icon' => '◷', 'route' => 'admin.preorder-mobil.index', 'badge' => 'preorders'],
-            ['label' => 'Manajemen Mobil & Showroom', 'icon' => 'car', 'route' => 'admin.mobil.index'],
-            ['label' => 'PDI', 'icon' => '✓', 'route' => 'admin.pdi.index'],
-            ['label' => 'Jadwal Pengambilan', 'icon' => '◫', 'route' => 'admin.pengambilan.index'],
-            ['label' => 'Serah Terima', 'icon' => '⇄', 'route' => 'admin.serah-terima.index'],
+        ['title' => 'Super Admin & Akses', 'items' => [
+            ['label' => 'Role & Hak Akses', 'route' => 'admin.roles.index'],
+            ['label' => 'Data Member', 'route' => 'admin.pelanggan.index'],
+            ['label' => 'Data Karyawan', 'route' => 'admin.petugas.index'],
+            ['label' => 'Profil Admin', 'route' => 'account.password'],
         ]],
-        ['title' => 'Keuangan', 'items' => [
-            ['label' => 'Dashboard Keuangan', 'icon' => 'Rp', 'route' => 'admin.finance-dashboard.index'],
-            ['label' => 'Pembayaran Online / Offline', 'icon' => 'card', 'route' => 'admin.payments.index', 'badge' => 'payments'],
-            ['label' => 'Semua Transaksi', 'icon' => '≡', 'route' => 'admin.transaksi.index'],
-            ['label' => 'Invoice & Kwitansi', 'icon' => '▧', 'route' => 'admin.invoices.index'],
-            ['label' => 'Refund & Reversal', 'icon' => '⇆', 'route' => 'admin.financial-adjustments.index'],
+        ['title' => 'Service Advisor & Mekanik', 'items' => [
+            ['label' => 'Booking Servis', 'route' => 'admin.booking-servis.index'],
+            ['label' => 'Work Order Servis', 'route' => 'admin.servis.index'],
+            ['label' => 'Jadwal Bengkel', 'route' => 'admin.servis.schedule'],
+            ['label' => 'Personel Servis', 'route' => 'admin.servis.personnel'],
         ]],
-        ['title' => 'Layanan & Operasional', 'items' => [
-            ['label' => 'Booking Mobil', 'icon' => '▣', 'route' => 'admin.booking.index', 'badge' => 'bookings'],
-            ['label' => 'Test Drive', 'icon' => '◉', 'route' => 'admin.test-drive.index', 'badge' => 'testDrives'],
-            ['label' => 'Servis / Work Order', 'icon' => '⚙', 'route' => 'admin.servis.index'],
-            ['label' => 'Jadwal Bengkel', 'icon' => '◫', 'route' => 'admin.servis.schedule'],
-            ['label' => 'Personel Servis', 'icon' => '♙', 'route' => 'admin.servis.personnel'],
-            ['label' => 'Car Wash', 'icon' => '✦', 'route' => 'admin.booking-cuci.index'],
-            ['label' => 'Sparepart & Inventori', 'icon' => '▦', 'route' => 'admin.sparepart.index', 'badge' => 'stock'],
-            ['label' => 'Trade-In', 'icon' => '⇄', 'route' => 'admin.trade-in.index', 'badge' => 'tradeIns'],
-            ['label' => 'Pembelian Mobil Bekas', 'icon' => '▰', 'route' => 'admin.pengajuan-mobil.index'],
+        ['title' => 'Quality Control', 'items' => [
+            ['label' => 'Riwayat QC', 'route' => 'admin.servis.qc-history'],
+            ['label' => 'PDI Kendaraan', 'route' => 'admin.pdi.index'],
         ]],
-        ['title' => 'Pelanggan & Membership', 'items' => [
-            ['label' => 'Data Pelanggan', 'icon' => '♙', 'route' => 'admin.pelanggan.index'],
-            ['label' => 'Data Member', 'icon' => '♚', 'route' => 'admin.membership.index'],
-            ['label' => 'My Garage', 'icon' => '▱', 'route' => 'admin.garage.index'],
-            ['label' => 'Promo Member', 'icon' => '%', 'route' => 'admin.promo-member.index'],
+        ['title' => 'Finance', 'items' => [
+            ['label' => 'Pembayaran', 'route' => 'admin.payments.index', 'badge' => 'payments'],
+            ['label' => 'Refund & Reversal', 'route' => 'admin.financial-adjustments.index'],
+            ['label' => 'Laporan Keuangan', 'route' => 'admin.finance.report'],
         ]],
-        ['title' => 'Manajemen Perusahaan', 'items' => [
-            ['label' => 'Manajemen Karyawan', 'icon' => '♟', 'route' => 'admin.petugas.index'],
-            ['label' => 'Role & Permission', 'icon' => '♟', 'route' => 'admin.roles.index'],
-            ['label' => 'Laporan Penjualan', 'icon' => '▥', 'route' => 'owner.sales-report'],
-            ['label' => 'Laporan Keuangan', 'icon' => '▥', 'route' => 'owner.payment-report'],
-            ['label' => 'Laporan Operasional', 'icon' => '▥', 'route' => 'admin.laporan-servis.index'],
-            ['label' => 'Audit Log', 'icon' => '⌁', 'route' => 'admin.audit-log.index'],
-            ['label' => 'Pengaturan Website', 'icon' => '⚙', 'route' => 'admin.pengaturan.index'],
-            ['label' => 'Profil Admin', 'icon' => '●', 'route' => 'account.password'],
+        ['title' => 'Cuci Mobil', 'items' => [
+            ['label' => 'Booking Cuci Mobil', 'route' => 'admin.booking-cuci.index'],
+        ]],
+        ['title' => 'Gudang & Inventori', 'items' => [
+            ['label' => 'Sparepart & Inventori', 'route' => 'admin.sparepart.index', 'badge' => 'stock'],
+            ['label' => 'Stok Masuk', 'route' => 'admin.stok-masuk.index'],
+            ['label' => 'Stok Mobil', 'route' => 'admin.mobil.index'],
         ]],
     ];
-    $adminSections[0]['title'] = 'Operasional';
     $pendingLabels = ['orders' => 'pesanan menunggu verifikasi', 'preorders' => 'pre-order menunggu stok', 'payments' => 'pembayaran perlu ditinjau', 'bookings' => 'booking menunggu', 'testDrives' => 'test drive menunggu', 'tradeIns' => 'trade-in perlu diproses', 'stock' => 'sparepart mencapai stok minimum'];
-    $handoverItems = array_splice($adminSections[1]['items'], 4);
-    array_splice($adminSections, 2, 0, [['title' => 'Lainnya', 'items' => $handoverItems]]);
 @endphp
 <aside class="admin-sidebar" data-admin-sidebar aria-label="Navigasi admin">
     <div class="admin-sidebar-brand">
@@ -108,6 +90,7 @@
                     'finance' => [['Pembayaran','admin.payments.index','finance.view'],['Refund & Reversal','admin.financial-adjustments.index','finance.view'],['Laporan keuangan','admin.finance.report','reports.view']],
                     'operational_staff' => [['Booking mobil','admin.booking.index','sales.view'],['Test drive','admin.test-drive.index','sales.view']],
                     'quality_control' => [['QC Work Order','admin.servis.index','qc.manage'],['Riwayat QC','admin.servis.qc-history','qc.manage'],['PDI Kendaraan','admin.pdi.index','qc.manage']],
+                    'car_wash_staff' => [['Booking Cuci Mobil','admin.booking-cuci.index','service.view']],
                 ][$adminUser->roleKey()] ?? [];
             @endphp
             @php($roleLinks[] = ['Profil Admin', 'account.password', null])

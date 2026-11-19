@@ -14,6 +14,9 @@
     $mapWashItem = function ($b) use ($statusMeta) {
         $st = $b->status;
         $meta = $statusMeta[$st] ?? ['label' => ucfirst($st), 'short' => ucfirst($st), 'tone' => 'slate', 'group' => 'active', 'stage' => 1];
+        if ($st === 'selesai' && $b->transaksi && $b->transaksi->status !== 'lunas') {
+            $meta = ['label' => 'Menunggu Pembayaran', 'short' => 'Menunggu Pembayaran', 'tone' => 'amber', 'group' => 'active', 'stage' => 3];
+        }
         $dur = max(15, (int) ($b->paket?->estimasi_menit ?? 45));
         $durLabel = $dur >= 60 ? '± ' . intdiv($dur, 60) . ' jam' . ($dur % 60 ? ' ' . ($dur % 60) . ' mnt' : '') : '± ' . $dur . ' menit';
         $timeRaw = substr((string) $b->jam, 0, 5);
@@ -61,8 +64,8 @@
     $initialModalItem = $activeBookingData ?: $bookingsMap->first();
 
     $countAll = $collection->count();
-    $countActive = $collection->whereIn('status', ['menunggu', 'diterima', 'proses'])->count();
-    $countDone = $collection->where('status', 'selesai')->count();
+    $countActive = $collection->filter(fn ($b) => in_array($b->status, ['menunggu', 'diterima', 'proses'], true) || ($b->status === 'selesai' && $b->transaksi && $b->transaksi->status !== 'lunas'))->count();
+    $countDone = $collection->filter(fn ($b) => $b->status === 'selesai' && (!$b->transaksi || $b->transaksi->status === 'lunas'))->count();
     $countCancelled = $collection->where('status', 'dibatalkan')->count();
     $packages = $packages ?? collect();
 @endphp

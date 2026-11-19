@@ -111,7 +111,8 @@ class BookingCuciController extends Controller
                 (int) $d['id_paket'],
                 $d['tanggal'],
                 $d['jam'],
-                $d['catatan'] ?? null
+                $d['catatan'] ?? null,
+                !empty($d['id_promo']) ? (int) $d['id_promo'] : null
             );
             return redirect()
                 ->route('pelanggan.booking-cuci.index')

@@ -15,6 +15,7 @@ class PaymentManagementController extends Controller
     {
         $carTab = $request->input('car_tab', 'offline');
         $serviceTab = $request->input('service_tab', 'offline');
+        $washTab = $request->input('wash_tab', 'offline');
         $status = trim((string) $request->input('status'));
         $q = trim((string) $request->input('q'));
         $from = $request->input('from');
@@ -147,10 +148,69 @@ class PaymentManagementController extends Controller
             $serviceTab = 'unpaid';
         }
 
+        // --- BOX 3: PEMBAYARAN CAR WASH ---
+        $washOffline = Pembayaran::with(['transaksi.pelanggan', 'transaksi.bookingCuci.kendaraan', 'transaksi.bookingCuci.paket'])
+            ->where('arah', 'masuk')
+            ->whereIn('metode', ['tunai', 'transfer'])
+            ->whereHas('transaksi', fn ($trx) => $trx->where('jenis_transaksi', 'cuci_mobil'))
+            ->when($q !== '', fn ($query) => $query->where(function ($search) use ($q): void {
+                $search->where('kode_pembayaran', 'like', "%{$q}%")
+                    ->orWhereHas('transaksi.pelanggan', fn ($c) => $c->where('nama_lengkap', 'like', "%{$q}%")->orWhere('kode_pelanggan', 'like', "%{$q}%"))
+                    ->orWhereHas('transaksi.bookingCuci', fn ($b) => $b->where('kode_booking', 'like', "%{$q}%"))
+                    ->orWhereHas('transaksi', fn ($t) => $t->where('kode_transaksi', 'like', "%{$q}%"));
+            }))
+            ->when($status !== '', fn ($query) => $query->where('status', $status))
+            ->when($from, fn ($query) => $query->whereDate('tanggal', '>=', $from))
+            ->when($to, fn ($query) => $query->whereDate('tanggal', '<=', $to))
+            ->latest('tanggal')
+            ->paginate($perPage, ['*'], 'wash_offline_page')
+            ->withQueryString();
+
+        $washOnline = PembayaranGateway::with(['transaksi.pelanggan', 'transaksi.bookingCuci.kendaraan', 'transaksi.bookingCuci.paket'])
+            ->whereHas('transaksi', fn ($trx) => $trx->where('jenis_transaksi', 'cuci_mobil'))
+            ->when($q !== '', fn ($query) => $query->where(function ($search) use ($q): void {
+                $search->where('order_id', 'like', "%{$q}%")
+                    ->orWhereHas('transaksi.pelanggan', fn ($c) => $c->where('nama_lengkap', 'like', "%{$q}%")->orWhere('kode_pelanggan', 'like', "%{$q}%"))
+                    ->orWhereHas('transaksi.bookingCuci', fn ($b) => $b->where('kode_booking', 'like', "%{$q}%"))
+                    ->orWhereHas('transaksi', fn ($t) => $t->where('kode_transaksi', 'like', "%{$q}%"));
+            }))
+            ->when($from, fn ($query) => $query->whereDate('created_at', '>=', $from))
+            ->when($to, fn ($query) => $query->whereDate('created_at', '<=', $to))
+            ->latest('created_at')
+            ->paginate($perPage, ['*'], 'wash_online_page')
+            ->withQueryString();
+
+        $washUnpaid = Transaksi::with(['pelanggan', 'bookingCuci.kendaraan', 'bookingCuci.paket'])
+            ->where('jenis_transaksi', 'cuci_mobil')
+            ->where('status', 'belum_bayar')
+            ->when($q !== '', fn ($query) => $query->where(function ($search) use ($q): void {
+                $search->where('kode_transaksi', 'like', "%{$q}%")
+                    ->orWhereHas('pelanggan', fn ($c) => $c->where('nama_lengkap', 'like', "%{$q}%"))
+                    ->orWhereHas('bookingCuci', fn ($b) => $b->where('kode_booking', 'like', "%{$q}%"));
+            }))
+            ->latest('tanggal')
+            ->paginate($perPage, ['*'], 'wash_unpaid_page')
+            ->withQueryString();
+
+        $washStats = [
+            'verified_total' => (float) Pembayaran::where('arah', 'masuk')->where('status', 'terverifikasi')
+                ->whereHas('transaksi', fn ($t) => $t->where('jenis_transaksi', 'cuci_mobil'))->sum('jumlah')
+                + (float) PembayaranGateway::whereIn('status_provider', ['settlement', 'capture'])
+                ->whereHas('transaksi', fn ($t) => $t->where('jenis_transaksi', 'cuci_mobil'))->sum('gross_amount'),
+            'waiting_confirmation' => Pembayaran::where('arah', 'masuk')->where('status', 'menunggu')
+                ->whereHas('transaksi', fn ($t) => $t->where('jenis_transaksi', 'cuci_mobil'))->count(),
+            'unpaid_count' => Transaksi::where('jenis_transaksi', 'cuci_mobil')->where('status', 'belum_bayar')->count(),
+        ];
+
+        if (!$request->has('wash_tab') && $washOffline->total() === 0 && $washStats['unpaid_count'] > 0) {
+            $washTab = 'unpaid';
+        }
+
         return view('admin.pembayaran.index', compact(
-            'carTab', 'serviceTab', 'status', 'q', 'from', 'to', 'perPage',
+            'carTab', 'serviceTab', 'washTab', 'status', 'q', 'from', 'to', 'perPage',
             'carOffline', 'carOnline', 'carUnpaid', 'carStats',
-            'serviceOffline', 'serviceOnline', 'serviceUnpaid', 'serviceReadyFromQc', 'serviceStats'
+            'serviceOffline', 'serviceOnline', 'serviceUnpaid', 'serviceReadyFromQc', 'serviceStats',
+            'washOffline', 'washOnline', 'washUnpaid', 'washStats'
         ));
     }
 
@@ -202,7 +262,7 @@ class PaymentManagementController extends Controller
         $from = (string) $request->input('from', '');
         $to = (string) $request->input('to', '');
         $jenis = (string) $request->input('jenis', 'semua');
-        if (!in_array($jenis, ['semua', 'penjualan_mobil', 'servis'], true)) {
+        if (!in_array($jenis, ['semua', 'penjualan_mobil', 'servis', 'cuci_mobil'], true)) {
             $jenis = 'semua';
         }
 
@@ -212,6 +272,8 @@ class PaymentManagementController extends Controller
                 'transaksi.pesananMobilMember.mobil',
                 'transaksi.penjualanMobil.mobil',
                 'transaksi.servis.kendaraan',
+                'transaksi.bookingCuci.kendaraan',
+                'transaksi.bookingCuci.paket',
             ])
                 ->where('arah', 'masuk')
                 ->where('status', 'terverifikasi')
@@ -225,10 +287,19 @@ class PaymentManagementController extends Controller
                         $car = $trx?->pesananMobilMember?->mobil ?? $trx?->penjualanMobil?->mobil;
                         $unit = $car ? trim($car->merk . ' ' . $car->model) : ($trx?->pesananMobilMember ? trim(($trx->pesananMobilMember->snapshot_merk ?? '') . ' ' . ($trx->pesananMobilMember->snapshot_model ?? '')) : 'Unit Mobil');
                         $ref = $trx?->pesananMobilMember?->nomor_pesanan ?? ($trx?->penjualanMobil?->kode_penjualan ?? ($trx?->kode_transaksi ?? '—'));
+                        $cat = 'Pembelian Mobil';
+                    } elseif ($txType === 'cuci_mobil') {
+                        $wash = $trx?->bookingCuci;
+                        $veh = $wash?->kendaraan ? trim($wash->kendaraan->merk . ' ' . $wash->kendaraan->model) : '';
+                        $pkg = $wash?->paket?->nama_paket ?? 'Car Wash';
+                        $unit = $veh !== '' ? "{$pkg} · {$veh}" : $pkg;
+                        $ref = $wash?->kode_booking ?? ($trx?->kode_transaksi ?? '—');
+                        $cat = 'Car Wash';
                     } else {
                         $srv = $trx?->servis;
                         $unit = $srv?->kendaraan ? trim($srv->kendaraan->merk . ' ' . $srv->kendaraan->model) : 'Kendaraan Servis';
                         $ref = $srv?->kode_servis ?? ($trx?->kode_transaksi ?? '—');
+                        $cat = 'Servis Bengkel';
                     }
                     return [
                         'id' => $p->kode_pembayaran,
@@ -241,7 +312,7 @@ class PaymentManagementController extends Controller
                         'source' => 'offline',
                         'discount' => (float) ($trx?->diskon ?? 0),
                         'amount' => (float) $p->jumlah,
-                        'category' => $txType === 'penjualan_mobil' ? 'Pembelian Mobil' : 'Servis Bengkel',
+                        'category' => $cat,
                     ];
                 });
 
@@ -250,6 +321,8 @@ class PaymentManagementController extends Controller
                 'transaksi.pesananMobilMember.mobil',
                 'transaksi.penjualanMobil.mobil',
                 'transaksi.servis.kendaraan',
+                'transaksi.bookingCuci.kendaraan',
+                'transaksi.bookingCuci.paket',
             ])
                 ->whereIn('status_provider', ['settlement', 'capture'])
                 ->whereHas('transaksi', fn ($t) => $t->where('jenis_transaksi', $txType))
@@ -262,10 +335,19 @@ class PaymentManagementController extends Controller
                         $car = $trx?->pesananMobilMember?->mobil ?? $trx?->penjualanMobil?->mobil;
                         $unit = $car ? trim($car->merk . ' ' . $car->model) : ($trx?->pesananMobilMember ? trim(($trx->pesananMobilMember->snapshot_merk ?? '') . ' ' . ($trx->pesananMobilMember->snapshot_model ?? '')) : 'Unit Mobil');
                         $ref = $trx?->pesananMobilMember?->nomor_pesanan ?? ($trx?->penjualanMobil?->kode_penjualan ?? ($trx?->kode_transaksi ?? '—'));
+                        $cat = 'Pembelian Mobil';
+                    } elseif ($txType === 'cuci_mobil') {
+                        $wash = $trx?->bookingCuci;
+                        $veh = $wash?->kendaraan ? trim($wash->kendaraan->merk . ' ' . $wash->kendaraan->model) : '';
+                        $pkg = $wash?->paket?->nama_paket ?? 'Car Wash';
+                        $unit = $veh !== '' ? "{$pkg} · {$veh}" : $pkg;
+                        $ref = $wash?->kode_booking ?? ($trx?->kode_transaksi ?? '—');
+                        $cat = 'Car Wash';
                     } else {
                         $srv = $trx?->servis;
                         $unit = $srv?->kendaraan ? trim($srv->kendaraan->merk . ' ' . $srv->kendaraan->model) : 'Kendaraan Servis';
                         $ref = $srv?->kode_servis ?? ($trx?->kode_transaksi ?? '—');
+                        $cat = 'Servis Bengkel';
                     }
                     return [
                         'id' => $g->order_id,
@@ -278,7 +360,7 @@ class PaymentManagementController extends Controller
                         'source' => 'online',
                         'discount' => (float) ($trx?->diskon ?? 0),
                         'amount' => (float) $g->gross_amount,
-                        'category' => $txType === 'penjualan_mobil' ? 'Pembelian Mobil' : 'Servis Bengkel',
+                        'category' => $cat,
                     ];
                 });
 
@@ -289,6 +371,7 @@ class PaymentManagementController extends Controller
 
         $carInflows = $buildInflows('penjualan_mobil');
         $serviceInflows = $buildInflows('servis');
+        $washInflows = $buildInflows('cuci_mobil');
 
         $carTotal = (float) $carInflows->sum('amount');
         $carOfflineTotal = (float) $carInflows->where('source', 'offline')->sum('amount');
@@ -303,6 +386,15 @@ class PaymentManagementController extends Controller
             ->when($to !== '', fn ($q) => $q->whereDate('tanggal', '<=', $to))
             ->sum('diskon');
 
+        $washTotal = (float) $washInflows->sum('amount');
+        $washOfflineTotal = (float) $washInflows->where('source', 'offline')->sum('amount');
+        $washOnlineTotal = (float) $washInflows->where('source', 'online')->sum('amount');
+        $washDiscountTotal = (float) Transaksi::where('jenis_transaksi', 'cuci_mobil')
+            ->where('status', 'lunas')
+            ->when($from !== '', fn ($q) => $q->whereDate('tanggal', '>=', $from))
+            ->when($to !== '', fn ($q) => $q->whereDate('tanggal', '<=', $to))
+            ->sum('diskon');
+
         $refundTotal = (float) Pembayaran::where('arah', 'keluar')
             ->where('status', 'terverifikasi')
             ->when($from !== '', fn ($q) => $q->whereDate('tanggal', '>=', $from))
@@ -310,7 +402,7 @@ class PaymentManagementController extends Controller
             ->sum('jumlah');
 
         $summary = [
-            'total_inflow' => $carTotal + $serviceTotal,
+            'total_inflow' => $carTotal + $serviceTotal + $washTotal,
             'car_total' => $carTotal,
             'car_offline_total' => $carOfflineTotal,
             'car_online_total' => $carOnlineTotal,
@@ -320,15 +412,21 @@ class PaymentManagementController extends Controller
             'service_online_total' => $serviceOnlineTotal,
             'service_discount_total' => $serviceDiscountTotal,
             'service_count' => $serviceInflows->count(),
+            'wash_total' => $washTotal,
+            'wash_offline_total' => $washOfflineTotal,
+            'wash_online_total' => $washOnlineTotal,
+            'wash_discount_total' => $washDiscountTotal,
+            'wash_count' => $washInflows->count(),
             'refund_total' => $refundTotal,
-            'net_inflow' => max(0, ($carTotal + $serviceTotal) - $refundTotal),
+            'net_inflow' => max(0, ($carTotal + $serviceTotal + $washTotal) - $refundTotal),
         ];
 
         if ($request->input('export') === 'csv') {
             $exportRows = match ($jenis) {
                 'penjualan_mobil' => $carInflows,
                 'servis' => $serviceInflows,
-                default => $carInflows->concat($serviceInflows)->sortByDesc(fn (array $r) => $r['date']?->timestamp ?? 0)->values(),
+                'cuci_mobil' => $washInflows,
+                default => $carInflows->concat($serviceInflows)->concat($washInflows)->sortByDesc(fn (array $r) => $r['date']?->timestamp ?? 0)->values(),
             };
             $filename = 'laporan-keuangan-' . now()->format('Y-m-d') . '.csv';
             return response()->streamDownload(function () use ($exportRows): void {
@@ -351,33 +449,80 @@ class PaymentManagementController extends Controller
             }, $filename, ['Content-Type' => 'text/csv; charset=UTF-8']);
         }
 
-        $allDates = $carInflows->concat($serviceInflows)
-            ->map(fn (array $row) => $row['date']?->format('Y-m-d'))
-            ->filter()
-            ->unique()
-            ->sort()
-            ->values();
+        $allInflows = $carInflows->concat($serviceInflows)->concat($washInflows);
+        $latestDate = $allInflows->map(fn (array $r) => $r['date'])->filter()->sortByDesc(fn ($d) => $d->timestamp)->first();
+        $anchorDate = $to !== ''
+            ? \Carbon\Carbon::parse($to, 'Asia/Jakarta')->endOfDay()
+            : ($latestDate ? $latestDate->copy()->timezone('Asia/Jakarta') : now('Asia/Jakarta'));
 
-        if ($allDates->count() === 1) {
-            $single = \Carbon\Carbon::parse($allDates->first());
-            $allDates = collect([
-                $single->copy()->subDay()->format('Y-m-d'),
-                $single->format('Y-m-d'),
-            ]);
+        $buildSeries = function (array $buckets, callable $keyFn, string $title) use ($carInflows, $serviceInflows, $washInflows): array {
+            $carMap = $carInflows->groupBy(fn (array $r) => $r['date'] ? $keyFn($r['date']) : '')->map->sum('amount');
+            $srvMap = $serviceInflows->groupBy(fn (array $r) => $r['date'] ? $keyFn($r['date']) : '')->map->sum('amount');
+            $washMap = $washInflows->groupBy(fn (array $r) => $r['date'] ? $keyFn($r['date']) : '')->map->sum('amount');
+
+            $labels = [];
+            $car = [];
+            $service = [];
+            $wash = [];
+            $total = [];
+
+            foreach ($buckets as $b) {
+                $k = $b['key'];
+                $c = (float) ($carMap[$k] ?? 0);
+                $s = (float) ($srvMap[$k] ?? 0);
+                $w = (float) ($washMap[$k] ?? 0);
+                $labels[] = $b['label'];
+                $car[] = $c;
+                $service[] = $s;
+                $wash[] = $w;
+                $total[] = $c + $s + $w;
+            }
+
+            return [
+                'title' => $title,
+                'labels' => $labels,
+                'car' => $car,
+                'service' => $service,
+                'wash' => $wash,
+                'total' => $total,
+            ];
+        };
+
+        $dayStr = $anchorDate->format('Y-m-d');
+        $dayBuckets = [];
+        for ($h = 0; $h < 24; $h++) {
+            $hh = str_pad((string) $h, 2, '0', STR_PAD_LEFT);
+            $dayBuckets[] = ['key' => "{$dayStr} {$hh}", 'label' => "{$hh}:00"];
         }
 
-        $carByDate = $carInflows->groupBy(fn (array $r) => $r['date']?->format('Y-m-d') ?? '')->map->sum('amount');
-        $serviceByDate = $serviceInflows->groupBy(fn (array $r) => $r['date']?->format('Y-m-d') ?? '')->map->sum('amount');
+        $weekBuckets = [];
+        for ($i = 6; $i >= 0; $i--) {
+            $d = $anchorDate->copy()->subDays($i);
+            $weekBuckets[] = ['key' => $d->format('Y-m-d'), 'label' => $d->format('d M')];
+        }
 
-        $trendSeries = [
-            'labels' => $allDates->map(fn (string $d) => \Carbon\Carbon::parse($d)->format('d M Y'))->values()->all(),
-            'car' => $allDates->map(fn (string $d) => (float) ($carByDate[$d] ?? 0))->values()->all(),
-            'service' => $allDates->map(fn (string $d) => (float) ($serviceByDate[$d] ?? 0))->values()->all(),
-            'total' => $allDates->map(fn (string $d) => (float) ($carByDate[$d] ?? 0) + (float) ($serviceByDate[$d] ?? 0))->values()->all(),
+        $monthBuckets = [];
+        for ($i = 29; $i >= 0; $i--) {
+            $d = $anchorDate->copy()->subDays($i);
+            $monthBuckets[] = ['key' => $d->format('Y-m-d'), 'label' => $d->format('d M')];
+        }
+
+        $yearBuckets = [];
+        $startMonth = $anchorDate->copy()->startOfMonth()->subMonths(11);
+        for ($i = 0; $i < 12; $i++) {
+            $m = $startMonth->copy()->addMonths($i);
+            $yearBuckets[] = ['key' => $m->format('Y-m'), 'label' => $m->format('M Y')];
+        }
+
+        $trendByRange = [
+            '1d' => $buildSeries($dayBuckets, fn ($d) => $d->copy()->timezone('Asia/Jakarta')->format('Y-m-d H'), 'Tren Pemasukan · 1 Hari (' . $anchorDate->format('d M Y') . ')'),
+            '1w' => $buildSeries($weekBuckets, fn ($d) => $d->copy()->timezone('Asia/Jakarta')->format('Y-m-d'), 'Tren Pemasukan · 1 Minggu Terakhir'),
+            '1m' => $buildSeries($monthBuckets, fn ($d) => $d->copy()->timezone('Asia/Jakarta')->format('Y-m-d'), 'Tren Pemasukan · 1 Bulan Terakhir'),
+            '1y' => $buildSeries($yearBuckets, fn ($d) => $d->copy()->timezone('Asia/Jakarta')->format('Y-m'), 'Tren Pemasukan · 1 Tahun Terakhir'),
         ];
 
         return view('admin.pembayaran.report', compact(
-            'from', 'to', 'jenis', 'summary', 'carInflows', 'serviceInflows', 'trendSeries'
+            'from', 'to', 'jenis', 'summary', 'carInflows', 'serviceInflows', 'washInflows', 'trendByRange'
         ));
     }
 }

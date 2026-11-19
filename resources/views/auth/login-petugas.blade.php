@@ -67,6 +67,7 @@
                     <span class="staff-tag">Staf Gudang</span>
                     <span class="staff-tag">Finance</span>
                     <span class="staff-tag">Operasional / QC</span>
+                    <span class="staff-tag">Petugas Cuci</span>
                     <span class="staff-tag">Sales</span>
                     <span class="staff-tag">Admin & Owner</span>
                 </div>

@@ -133,6 +133,42 @@ class AdminAuxiliaryController extends Controller
         return view('admin.roles.index', compact('roles', 'permissions', 'roleSearch', 'permissionSearch', 'roleSort', 'mappedUsers', 'permissionUsed', 'roleDistribution', 'distributionTotal'));
     }
 
+    public function storeRole(Request $request): \Illuminate\Http\RedirectResponse
+    {
+        abort_unless($request->user()?->roleKey() === 'super_admin', 403);
+        $data = $request->validate([
+            'nama_role' => ['required', 'string', 'max:60', 'regex:/^[a-z0-9_]+$/i', 'unique:roles,nama_role'],
+            'deskripsi' => ['nullable', 'string', 'max:255'],
+            'permissions' => ['nullable', 'array'],
+            'permissions.*' => ['integer', 'exists:permissions,id_permission'],
+        ]);
+
+        $role = Role::create([
+            'nama_role' => strtolower(trim($data['nama_role'])),
+            'deskripsi' => $data['deskripsi'] ?? null,
+        ]);
+        $role->permissions()->sync($data['permissions'] ?? []);
+
+        return back()->with('success', 'Role "' . $role->nama_role . '" beserta hak aksesnya berhasil ditambahkan.');
+    }
+
+    public function updateRolePermissions(Request $request, Role $role): \Illuminate\Http\RedirectResponse
+    {
+        abort_unless($request->user()?->roleKey() === 'super_admin', 403);
+        $data = $request->validate([
+            'deskripsi' => ['nullable', 'string', 'max:255'],
+            'permissions' => ['nullable', 'array'],
+            'permissions.*' => ['integer', 'exists:permissions,id_permission'],
+        ]);
+
+        if (array_key_exists('deskripsi', $data)) {
+            $role->update(['deskripsi' => $data['deskripsi']]);
+        }
+        $role->permissions()->sync($data['permissions'] ?? []);
+
+        return back()->with('success', 'Hak akses role "' . $role->nama_role . '" berhasil diperbarui.');
+    }
+
     public function auditLog(Request $request): View
     {
         $data = $request->validate([

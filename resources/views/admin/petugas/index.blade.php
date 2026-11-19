@@ -7,13 +7,403 @@
 </style>
 @endpush
 @section('content')
-@php($formatCount = fn ($value) => $value === null ? '—' : number_format((int) $value, 0, ',', '.'))
+@php
+    $formatCount = fn ($value) => $value === null ? '—' : number_format((int) $value, 0, ',', '.');
+@endphp
 <div class="staff-page">
-    <nav class="staff-breadcrumb" aria-label="Breadcrumb"><span>⌂</span><span>Manajemen Perusahaan</span><span>›</span><strong>Petugas</strong></nav>
-    <header class="staff-heading"><h1>Petugas</h1><p>Kelola data petugas, atur jabatan, unit kerja, dan pastikan kesiapan operasional tim Anda.</p></header>
     <section class="staff-hero" aria-labelledby="staff-hero-title"><div class="staff-hero-copy"><span class="staff-eyebrow">TIM YANG SOLID, LAYANAN YANG LUAR BIASA</span><h2 id="staff-hero-title">Kelola Data Petugas<br>dengan Lebih Profesional</h2><p>Atur dan pantau seluruh data petugas, jabatan, unit kerja, serta kesiapan operasional dalam satu sistem terpadu untuk mendukung pertumbuhan bisnis YZA Automotive.</p></div><div class="staff-hero-points"><div class="staff-hero-point"><span>♟</span><div><strong>Data petugas terpusat</strong><small>Mudah dikelola dalam satu sistem</small></div></div><div class="staff-hero-point"><span>♙</span><div><strong>Monitoring jabatan &amp; peran</strong><small>Pantau pembagian tugas dengan jelas</small></div></div><div class="staff-hero-point"><span>◈</span><div><strong>Kesiapan operasional tim</strong><small>Berbasis data personel yang tercatat</small></div></div><div class="staff-hero-point"><span>●</span><div><strong>Akses terstruktur &amp; aman</strong><small>Dengan kontrol role yang berlaku</small></div></div></div></section>
     <section class="staff-stats" aria-label="Ringkasan petugas"><article class="staff-stat red"><span>♟</span><div><small>Total Petugas</small><strong>{{ $formatCount($metrics['total']) }}</strong><p>Seluruh data petugas</p></div></article><article class="staff-stat green"><span>●</span><div><small>Petugas Aktif</small><strong>{{ $formatCount($metrics['active']) }}</strong><p>Status master: aktif</p></div></article><article class="staff-stat blue"><span>▣</span><div><small>Jabatan Terdaftar</small><strong>{{ $formatCount($metrics['roles']) }}</strong><p>Jabatan unik di master</p></div></article><article class="staff-stat amber"><span>▦</span><div><small>Siap Bertugas Hari Ini</small><strong>{{ $formatCount($metrics['readyToday']) }}</strong><p>Jadwal/attendance belum tersedia</p></div></article><article class="staff-stat pink"><span>●</span><div><small>Akun Perlu Review</small><strong>{{ $formatCount($metrics['review']) }}</strong><p>Workflow review belum tersedia</p></div></article></section>
-    <div class="staff-main-grid"><section class="staff-panel"><div class="staff-panel-head"><span>♟</span><div><h2>Daftar Petugas</h2><p>Kelola data petugas, jabatan, dan status operasional yang tercatat.</p></div>@if(auth()->user()->roleKey() === 'super_admin')<a class="staff-add" href="{{ route('admin.petugas.create') }}">＋ Tambah Petugas</a>@endif</div><form class="staff-filter" method="get" action="{{ route('admin.petugas.index') }}"><input name="q" value="{{ $q }}" placeholder="Cari kode, nama, atau jabatan..." aria-label="Cari petugas"><select name="jabatan" aria-label="Filter jabatan"><option value="">Semua Jabatan</option>@foreach($jabatanOptions as $option)<option value="{{ $option }}" @selected($jabatan === $option)>{{ $option }}</option>@endforeach</select><select name="status" aria-label="Filter status"><option value="">Semua Status</option><option value="aktif" @selected($status === 'aktif')>Aktif</option><option value="nonaktif" @selected($status === 'nonaktif')>Nonaktif</option></select><button type="submit">☷ Filter</button><a class="staff-reset" href="{{ route('admin.petugas.index') }}">Reset</a></form><div class="staff-table-wrap"><table class="staff-table"><thead><tr><th>Kode Petugas</th><th>Nama</th><th>Jabatan</th><th>Unit</th><th>Status</th><th>Aktivitas Terakhir</th><th>Aksi</th></tr></thead><tbody>@forelse($items as $item)@php($initials = collect(explode(' ', trim($item->nama_lengkap)))->filter()->take(2)->map(fn ($part) => strtoupper(substr($part,0,1)))->implode(''))@php($latestActivity = collect([$item->latest_booking_at,$item->latest_test_drive_at,$item->latest_booking_cuci_at,$item->latest_servis_at,$item->latest_transaksi_at,$item->latest_sale_at,$item->latest_inspection_at])->filter()->max())<tr><td class="staff-code">{{ $item->kode_petugas }}</td><td><div class="staff-name"><span class="staff-avatar">{{ $initials ?: '?' }}</span><div><strong>{{ $item->nama_lengkap }}</strong><small>{{ $item->user?->username ?: 'Akun pengguna' }}</small></div></div></td><td>{{ $item->jabatan ?: '—' }}</td><td>—</td><td><span class="staff-status {{ $item->status !== 'aktif' ? 'inactive' : '' }}">{{ ucfirst($item->status) }}</span></td><td class="staff-activity">@if($latestActivity)<time>{{ \Illuminate\Support\Carbon::parse($latestActivity)->format('d M Y') }}</time><small>{{ \Illuminate\Support\Carbon::parse($latestActivity)->format('H:i') }} · Aktivitas tercatat</small>@else<span>—</span>@endif</td><td><div class="staff-actions"><a class="staff-action" href="{{ route('admin.petugas.show',$item) }}">Detail</a>@if(auth()->user()->roleKey() === 'super_admin')<a class="staff-action" href="{{ route('admin.petugas.edit',$item) }}">Edit</a>@endif</div></td></tr>@empty<tr><td colspan="7" class="staff-empty"><strong>Belum ada petugas yang cocok</strong><small>Coba ubah kata kunci atau filter yang digunakan.</small></td></tr>@endforelse</tbody></table></div><div class="staff-pagination"><span>Menampilkan {{ $items->firstItem() ?: 0 }}–{{ $items->lastItem() ?: 0 }} dari {{ $items->total() }} petugas</span>{{ $items->onEachSide(1)->links() }}</div></section>
+    <div class="staff-main-grid"><section class="staff-panel"><div class="staff-panel-head"><span>♟</span><div><h2>Daftar Petugas</h2><p>Kelola data petugas, jabatan, dan status operasional yang tercatat.</p></div>@if(auth()->user()->roleKey() === 'super_admin')<button type="button" class="staff-add" style="border:none;cursor:pointer;" onclick="openStaffModal('create')">＋ Tambah Petugas</button>@endif</div><form class="staff-filter" method="get" action="{{ route('admin.petugas.index') }}"><input name="q" value="{{ $q }}" placeholder="Cari kode, nama, atau jabatan..." aria-label="Cari petugas"><select name="jabatan" aria-label="Filter jabatan"><option value="">Semua Jabatan</option>@foreach($jabatanOptions as $option)<option value="{{ $option }}" @selected($jabatan === $option)>{{ $option }}</option>@endforeach</select><select name="status" aria-label="Filter status"><option value="">Semua Status</option><option value="aktif" @selected($status === 'aktif')>Aktif</option><option value="nonaktif" @selected($status === 'nonaktif')>Nonaktif</option></select><button type="submit">☷ Filter</button><a class="staff-reset" href="{{ route('admin.petugas.index') }}">Reset</a></form><div class="staff-table-wrap"><table class="staff-table"><thead><tr><th>Kode Petugas</th><th>Nama</th><th>Jabatan</th><th>Unit</th><th>Status</th><th>Aktivitas Terakhir</th><th>Aksi</th></tr></thead><tbody>
+@forelse($items as $item)
+@php
+    $initials = collect(explode(' ', trim($item->nama_lengkap)))->filter()->take(2)->map(fn ($part) => strtoupper(substr($part,0,1)))->implode('');
+    $latestActivity = collect([$item->latest_booking_at,$item->latest_test_drive_at,$item->latest_booking_cuci_at,$item->latest_servis_at,$item->latest_transaksi_at,$item->latest_sale_at,$item->latest_inspection_at])->filter()->max();
+    $staffPayload = [
+        'id' => $item->id_petugas,
+        'kode' => $item->kode_petugas,
+        'nama_lengkap' => $item->nama_lengkap,
+        'initials' => $initials ?: '?',
+        'jabatan' => $item->jabatan ?? '',
+        'no_hp' => $item->no_hp ?? '',
+        'alamat' => $item->alamat ?? '',
+        'status' => $item->status,
+        'username' => $item->user?->username ?? '',
+        'email' => $item->user?->email ?? '',
+        'id_role' => $item->user?->id_role,
+        'role_name' => $item->user?->role?->nama_role ? ucwords(str_replace('_', ' ', $item->user->role->nama_role)) : 'Petugas',
+        'latest_activity' => $latestActivity ? \Illuminate\Support\Carbon::parse($latestActivity)->format('d M Y · H:i') : 'Belum ada aktivitas',
+        'update_url' => route('admin.petugas.update', $item),
+        'toggle_url' => route('admin.petugas.toggle', $item),
+    ];
+@endphp<tr><td class="staff-code">{{ $item->kode_petugas }}</td><td><div class="staff-name"><span class="staff-avatar">{{ $initials ?: '?' }}</span><div><strong>{{ $item->nama_lengkap }}</strong><small>{{ $item->user?->username ?: 'Akun pengguna' }}</small></div></div></td><td>{{ $item->jabatan ?: '—' }}</td><td>—</td><td><span class="staff-status {{ $item->status !== 'aktif' ? 'inactive' : '' }}">{{ ucfirst($item->status) }}</span></td><td class="staff-activity">@if($latestActivity)<time>{{ \Illuminate\Support\Carbon::parse($latestActivity)->format('d M Y') }}</time><small>{{ \Illuminate\Support\Carbon::parse($latestActivity)->format('H:i') }} · Aktivitas tercatat</small>@else<span>—</span>@endif</td><td><script type="application/json" id="staff-data-{{ $item->id_petugas }}">@json($staffPayload)</script><div class="staff-actions"><button type="button" class="staff-action" style="cursor:pointer;" onclick="openStaffModal('detail', {{ $item->id_petugas }})">Detail</button>@if(auth()->user()->roleKey() === 'super_admin')<button type="button" class="staff-action" style="cursor:pointer;" onclick="openStaffModal('edit', {{ $item->id_petugas }})">Edit</button>@if(auth()->id() !== $item->id_user)<button type="button" class="staff-action" style="cursor:pointer;{{ $item->status === 'aktif' ? 'color:#dc2626;border-color:#fecaca;background:#fef2f2;' : 'color:#059669;border-color:#a7f3d0;background:#ecfdf5;' }}" onclick="openStaffModal('toggle', {{ $item->id_petugas }})">{{ $item->status === 'aktif' ? 'Nonaktifkan' : 'Aktifkan' }}</button>@endif @endif</div></td></tr>@empty<tr><td colspan="7" class="staff-empty"><strong>Belum ada petugas yang cocok</strong><small>Coba ubah kata kunci atau filter yang digunakan.</small></td></tr>@endforelse</tbody></table></div><div class="staff-pagination"><span>Menampilkan {{ $items->firstItem() ?: 0 }}–{{ $items->lastItem() ?: 0 }} dari {{ $items->total() }} petugas</span>{{ $items->onEachSide(1)->links('pagination::bootstrap-4') }}</div></section>
     <aside class="staff-side-stack"><section class="staff-panel"><div class="staff-side-head"><span>♟</span><div><h2>Distribusi Jabatan</h2><p>Jumlah petugas per jabatan resmi.</p></div></div>@forelse($distribution as $role)<div class="staff-role-row"><strong title="{{ $role['name'] }}">{{ $role['name'] }}</strong><small>{{ $role['total'] }} petugas</small><span class="staff-role-meter"><i style="width:{{ $role['percentage'] }}%"></i></span><b>{{ $role['percentage'] }}%</b></div>@empty<div class="staff-side-empty">Belum ada jabatan tercatat.</div>@endforelse</section><section class="staff-panel"><div class="staff-side-head"><span>◷</span><div><h2>Ringkasan Operasional</h2><p>Metrik dari aktivitas yang benar-benar tercatat.</p></div></div><div class="staff-ops-grid"><div class="staff-ops-tile red"><span>▦</span><div><strong>{{ $formatCount($metrics['activityToday']) }}</strong><small>Aktivitas tercatat hari ini</small></div></div><div class="staff-ops-tile green"><span>♟</span><div><strong>{{ $formatCount($metrics['onDuty']) }}</strong><small>Petugas on duty</small></div></div><div class="staff-ops-tile blue"><span>＋</span><div><strong>{{ $formatCount($metrics['newToday']) }}</strong><small>Akun petugas baru hari ini</small></div></div><div class="staff-ops-tile amber"><span>▤</span><div><strong>{{ $formatCount($metrics['hrFollowUp']) }}</strong><small>Follow-up SDM</small></div></div></div><p class="staff-ops-note">On duty dan follow-up SDM belum memiliki sumber attendance atau workflow resmi; keduanya ditampilkan sebagai unavailable.</p></section></aside></div>
 </div>
+
+<style>
+.stf-modal-backdrop {
+    position: fixed;
+    inset: 0;
+    z-index: 1050;
+    background: rgba(15, 23, 42, 0.48);
+    backdrop-filter: blur(3px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+}
+.stf-modal-backdrop[hidden] { display: none !important; }
+.stf-modal-dialog {
+    width: 100%;
+    max-width: 600px;
+    max-height: 90vh;
+    background: #ffffff;
+    border-radius: 18px;
+    border: 1px solid #e2e8f0;
+    box-shadow: 0 24px 60px rgba(15, 23, 42, 0.22);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+.stf-modal-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 18px 22px;
+    border-bottom: 1px solid #f1f5f9;
+}
+.stf-modal-kicker {
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    color: #ed172b;
+    text-transform: uppercase;
+}
+.stf-modal-title {
+    margin: 3px 0 0;
+    font-size: 18px;
+    font-weight: 800;
+    color: #0f172a;
+}
+.stf-modal-close {
+    width: 32px;
+    height: 32px;
+    border-radius: 9px;
+    border: 1px solid #e2e8f0;
+    background: #ffffff;
+    color: #64748b;
+    font-size: 20px;
+    line-height: 1;
+    cursor: pointer;
+}
+.stf-modal-close:hover { background: #f8fafc; color: #0f172a; }
+.stf-modal-body {
+    padding: 20px 22px;
+    overflow-y: auto;
+    flex: 1;
+}
+.stf-modal-footer {
+    padding: 14px 22px;
+    background: #f8fafc;
+    border-top: 1px solid #f1f5f9;
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 8px;
+}
+.stf-btn-primary {
+    height: 38px;
+    padding: 0 18px;
+    border-radius: 9px;
+    border: none;
+    background: #ed172b;
+    color: #ffffff;
+    font-size: 13px;
+    font-weight: 700;
+    cursor: pointer;
+}
+.stf-btn-primary:hover { background: #d11124; }
+.stf-btn-secondary {
+    height: 38px;
+    padding: 0 16px;
+    border-radius: 9px;
+    border: 1px solid #cbd5e1;
+    background: #ffffff;
+    color: #334155;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+}
+.stf-btn-secondary:hover { background: #f1f5f9; color: #0f172a; }
+.stf-detail-hero {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 14px 16px;
+    border-radius: 12px;
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    margin-bottom: 16px;
+}
+.stf-detail-avatar {
+    width: 48px;
+    height: 48px;
+    border-radius: 999px;
+    background: linear-gradient(135deg, #ed172b, #991b1b);
+    color: #ffffff;
+    display: grid;
+    place-items: center;
+    font-size: 16px;
+    font-weight: 800;
+    flex-shrink: 0;
+}
+.stf-detail-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 12px 16px;
+}
+@media (max-width: 560px) { .stf-detail-grid { grid-template-columns: 1fr; } }
+.stf-detail-item small { display: block; font-size: 11px; color: #64748b; font-weight: 600; margin-bottom: 2px; }
+.stf-detail-item span { font-size: 13px; color: #0f172a; font-weight: 600; }
+.stf-form-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 14px;
+}
+@media (max-width: 560px) { .stf-form-grid { grid-template-columns: 1fr; } }
+.stf-form-group { display: flex; flex-direction: column; gap: 5px; }
+.stf-form-group.is-full { grid-column: 1 / -1; }
+.stf-form-group label { font-size: 11.5px; font-weight: 700; color: #475569; }
+.stf-form-input, .stf-form-select, .stf-form-textarea {
+    width: 100%;
+    padding: 9px 12px;
+    border-radius: 9px;
+    border: 1px solid #cbd5e1;
+    background: #f8fafc;
+    color: #0f172a;
+    font-size: 13px;
+    box-sizing: border-box;
+}
+.stf-form-input:focus, .stf-form-select:focus, .stf-form-textarea:focus {
+    outline: none;
+    background: #ffffff;
+    border-color: #ed172b;
+    box-shadow: 0 0 0 3px rgba(237, 23, 43, 0.1);
+}
+.stf-form-error {
+    margin-top: 10px;
+    padding: 10px 12px;
+    border-radius: 9px;
+    background: #fef2f2;
+    border: 1px solid #fecaca;
+    color: #b91c1c;
+    font-size: 12.5px;
+    font-weight: 600;
+}
+</style>
+
+<div id="staffModalBackdrop" class="stf-modal-backdrop" hidden onclick="if(event.target===this) closeStaffModal()">
+    <div class="stf-modal-dialog" role="dialog" aria-modal="true" aria-labelledby="staffModalTitle">
+        <div class="stf-modal-header">
+            <div>
+                <div id="staffModalKicker" class="stf-modal-kicker">DATA KARYAWAN</div>
+                <h3 id="staffModalTitle" class="stf-modal-title">Detail Petugas</h3>
+            </div>
+            <button type="button" class="stf-modal-close" onclick="closeStaffModal()" aria-label="Tutup">&times;</button>
+        </div>
+        <div id="staffModalBody" class="stf-modal-body"></div>
+        <div id="staffModalFooter" class="stf-modal-footer"></div>
+    </div>
+</div>
+
+@php
+    $staffRoleOptions = ($roles ?? collect())->map(function ($r) {
+        return ['id' => $r->id_role, 'name' => ucwords(str_replace('_', ' ', $r->nama_role))];
+    })->values();
+@endphp
+<script>
+const staffRoles = @json($staffRoleOptions);
+const staffStoreUrl = @json(route('admin.petugas.store'));
+
+function stfEsc(v) {
+    const el = document.createElement('span');
+    el.textContent = String(v ?? '');
+    return el.innerHTML;
+}
+
+function closeStaffModal() {
+    const b = document.getElementById('staffModalBackdrop');
+    if (b) {
+        b.setAttribute('hidden', '');
+        b.style.display = 'none';
+    }
+}
+
+document.addEventListener('keydown', function (e) {
+    if (e.key === 'Escape') closeStaffModal();
+});
+
+function openStaffModal(mode, id) {
+    const backdrop = document.getElementById('staffModalBackdrop');
+    const kicker = document.getElementById('staffModalKicker');
+    const title = document.getElementById('staffModalTitle');
+    const body = document.getElementById('staffModalBody');
+    const footer = document.getElementById('staffModalFooter');
+    const csrf = document.querySelector('meta[name="csrf-token"]')?.content || '';
+
+    let item = null;
+    if (id) {
+        const el = document.getElementById('staff-data-' + id);
+        if (el) item = JSON.parse(el.textContent);
+    }
+
+    if (mode === 'detail' && item) {
+        kicker.textContent = 'DETAIL KARYAWAN · ' + item.kode;
+        title.textContent = item.nama_lengkap;
+        body.innerHTML = `
+            <div class="stf-detail-hero">
+                <div class="stf-detail-avatar">${stfEsc(item.initials)}</div>
+                <div style="flex:1;min-width:0;">
+                    <div style="font-size:15.5px;font-weight:800;color:#0f172a;">${stfEsc(item.nama_lengkap)}</div>
+                    <div style="font-size:12.5px;color:#64748b;margin-top:2px;">${stfEsc(item.jabatan || '—')} &bull; Role: <strong style="color:#0f172a;">${stfEsc(item.role_name)}</strong></div>
+                </div>
+                <span class="staff-status ${item.status !== 'aktif' ? 'inactive' : ''}">${stfEsc(item.status === 'aktif' ? 'Aktif' : 'Nonaktif')}</span>
+            </div>
+            <div class="stf-detail-grid">
+                <div class="stf-detail-item"><small>Kode Petugas</small><span>${stfEsc(item.kode)}</span></div>
+                <div class="stf-detail-item"><small>Username</small><span>${stfEsc(item.username || '—')}</span></div>
+                <div class="stf-detail-item"><small>Email</small><span>${stfEsc(item.email || '—')}</span></div>
+                <div class="stf-detail-item"><small>No. HP</small><span>${stfEsc(item.no_hp || '—')}</span></div>
+                <div class="stf-detail-item"><small>Aktivitas Terakhir</small><span>${stfEsc(item.latest_activity)}</span></div>
+                <div class="stf-detail-item"><small>Role Akses</small><span>${stfEsc(item.role_name)}</span></div>
+                <div class="stf-detail-item" style="grid-column:1 / -1;"><small>Alamat</small><span>${stfEsc(item.alamat || '—')}</span></div>
+            </div>
+        `;
+        footer.innerHTML = `
+            <button type="button" class="stf-btn-secondary" onclick="closeStaffModal()">Tutup</button>
+            <button type="button" class="stf-btn-primary" onclick="openStaffModal('edit', ${item.id})">Edit Petugas</button>
+        `;
+    } else if (mode === 'toggle' && item) {
+        const isDeactivating = item.status === 'aktif';
+        kicker.textContent = 'KONFIRMASI AKSES KARYAWAN';
+        title.textContent = isDeactivating ? 'Nonaktifkan Akses Karyawan?' : 'Aktifkan Kembali Akses?';
+        body.innerHTML = `
+            <p style="margin:0;font-size:13.5px;line-height:1.55;color:#475569;">
+                Apakah Anda yakin ingin <strong>${isDeactivating ? 'menonaktifkan' : 'mengaktifkan kembali'}</strong> akses akun untuk <strong>${stfEsc(item.nama_lengkap)}</strong> (${stfEsc(item.kode)})?
+                ${isDeactivating ? 'Karyawan ini tidak akan dapat masuk ke sistem sampai diaktifkan kembali.' : ''}
+            </p>
+            <form id="staffToggleForm" method="POST" action="${stfEsc(item.toggle_url)}">
+                <input type="hidden" name="_token" value="${stfEsc(csrf)}">
+                <input type="hidden" name="_method" value="PATCH">
+            </form>
+        `;
+        footer.innerHTML = `
+            <button type="button" class="stf-btn-secondary" onclick="closeStaffModal()">Batal</button>
+            <button type="submit" form="staffToggleForm" class="stf-btn-primary" style="background:${isDeactivating ? '#dc2626' : '#059669'};">${isDeactivating ? 'Ya, Nonaktifkan' : 'Ya, Aktifkan'}</button>
+        `;
+    } else {
+        const isEdit = mode === 'edit' && item;
+        kicker.textContent = isEdit ? ('EDIT KARYAWAN · ' + item.kode) : 'TAMBAH KARYAWAN BARU';
+        title.textContent = isEdit ? ('Edit ' + item.nama_lengkap) : 'Tambah Petugas Baru';
+        body.innerHTML = `
+            <form id="staffModalForm" onsubmit="submitStaffModal(event, ${isEdit ? item.id : 'null'})">
+                <input type="hidden" name="_token" value="${stfEsc(csrf)}">
+                ${isEdit ? '<input type="hidden" name="_method" value="PUT">' : ''}
+                <div class="stf-form-grid">
+                    <div class="stf-form-group">
+                        <label for="stf_nama">Nama Lengkap *</label>
+                        <input id="stf_nama" name="nama_lengkap" class="stf-form-input" value="${isEdit ? stfEsc(item.nama_lengkap) : ''}" required>
+                    </div>
+                    <div class="stf-form-group">
+                        <label for="stf_jabatan">Jabatan *</label>
+                        <input id="stf_jabatan" name="jabatan" class="stf-form-input" value="${isEdit ? stfEsc(item.jabatan) : ''}" placeholder="contoh: Service Advisor" required>
+                    </div>
+                    <div class="stf-form-group">
+                        <label for="stf_role">Role Akses *</label>
+                        <select id="stf_role" name="id_role" class="stf-form-select">
+                            ${staffRoles.map(r => `<option value="${r.id}" ${isEdit && Number(r.id) === Number(item.id_role) ? 'selected' : ''}>${stfEsc(r.name)}</option>`).join('')}
+                        </select>
+                    </div>
+                    <div class="stf-form-group">
+                        <label for="stf_hp">No. HP ${isEdit ? '' : '*'}</label>
+                        <input id="stf_hp" name="no_hp" class="stf-form-input" value="${isEdit ? stfEsc(item.no_hp) : ''}" ${isEdit ? '' : 'required'}>
+                    </div>
+                    <div class="stf-form-group">
+                        <label for="stf_user">Username *</label>
+                        <input id="stf_user" name="username" class="stf-form-input" value="${isEdit ? stfEsc(item.username) : ''}" required>
+                    </div>
+                    <div class="stf-form-group">
+                        <label for="stf_email">Email *</label>
+                        <input id="stf_email" name="email" type="email" class="stf-form-input" value="${isEdit ? stfEsc(item.email) : ''}" required>
+                    </div>
+                    ${!isEdit ? `
+                        <div class="stf-form-group">
+                            <label for="stf_pass">Password (min. 8 karakter) *</label>
+                            <input id="stf_pass" name="password" type="password" minlength="8" class="stf-form-input" required>
+                        </div>
+                        <div class="stf-form-group">
+                            <label for="stf_pass_conf">Konfirmasi Password *</label>
+                            <input id="stf_pass_conf" name="password_confirmation" type="password" minlength="8" class="stf-form-input" required>
+                        </div>
+                    ` : ''}
+                    <div class="stf-form-group is-full">
+                        <label for="stf_alamat">Alamat</label>
+                        <textarea id="stf_alamat" name="alamat" rows="2" class="stf-form-textarea">${isEdit ? stfEsc(item.alamat) : ''}</textarea>
+                    </div>
+                </div>
+                <div id="staffModalError" class="stf-form-error" style="display:none;"></div>
+            </form>
+        `;
+        footer.innerHTML = `
+            <button type="button" class="stf-btn-secondary" onclick="closeStaffModal()">Batal</button>
+            <button type="submit" form="staffModalForm" id="staffModalSubmitBtn" class="stf-btn-primary">${isEdit ? 'Simpan Perubahan' : '+ Simpan Petugas'}</button>
+        `;
+    }
+
+    backdrop.style.display = 'flex';
+    backdrop.removeAttribute('hidden');
+}
+
+async function submitStaffModal(e, id) {
+    e.preventDefault();
+    const form = e.target;
+    const errBox = document.getElementById('staffModalError');
+    const btn = document.getElementById('staffModalSubmitBtn');
+    let targetUrl = staffStoreUrl;
+    if (id) {
+        const el = document.getElementById('staff-data-' + id);
+        if (el) targetUrl = JSON.parse(el.textContent).update_url;
+    }
+
+    errBox.style.display = 'none';
+    btn.disabled = true;
+    btn.textContent = 'Menyimpan...';
+
+    try {
+        const res = await fetch(targetUrl, {
+            method: 'POST',
+            headers: {
+                'Accept': 'application/json',
+                'X-Requested-With': 'XMLHttpRequest',
+            },
+            body: new FormData(form),
+        });
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok) {
+            const firstErr = data.errors ? Object.values(data.errors).flat()[0] : null;
+            errBox.textContent = firstErr || data.message || 'Gagal menyimpan data petugas.';
+            errBox.style.display = 'block';
+            btn.disabled = false;
+            btn.textContent = id ? 'Simpan Perubahan' : '+ Simpan Petugas';
+            return;
+        }
+        window.location.reload();
+    } catch (err) {
+        errBox.textContent = 'Terjadi kesalahan koneksi: ' + err.message;
+        errBox.style.display = 'block';
+        btn.disabled = false;
+        btn.textContent = id ? 'Simpan Perubahan' : '+ Simpan Petugas';
+    }
+}
+</script>
 @endsection
